@@ -73,6 +73,378 @@ function cloneState(s) {
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
 })(typeof window !== 'undefined' ? window : globalThis, { createCharacter, createNewGame, cloneState });
 
+// === src/data/sprites.js ===
+// === sprites.js ===
+// ドット絵データ（文字列配列＋パレット方式）
+// map: 各行は同じ長さの文字列。'.' と ' ' は透明。
+// 16×16 ピクセル チビキャラ＋タイル定義
+
+var SPRITES = (function () {
+
+  // ── ユイト（主人公・ヴィッセル神戸・クリムゾンユニ）──
+  // 全行 16文字
+  var yuito = {
+    palette: {
+      'H': '#3d1a00',
+      'h': '#5c2800',
+      'S': '#f5c89a',
+      's': '#e0a87a',
+      'U': '#9b1b3a',
+      'u': '#7a1230',
+      'N': '#ffffff',
+      'P': '#1a2f8a',
+      'p': '#132270',
+      'L': '#f5c89a',
+      'l': '#c8966a',
+      'B': '#ffffff',
+      'b': '#555555',
+      'E': '#111111',
+      'K': '#f0f0f0',
+      'k': '#cccccc',
+      'Z': '#333322',
+    },
+    map: [
+      '....HHHHHHHH....',
+      '...HhHhHhHhHH...',
+      '...HSSSSSSSH....',
+      '...HSEssSEsH....',
+      '...HSSNNSSSH....',
+      '...HssSSSssH....',
+      '..HHUUUUUUHH....',
+      '.UUUuUNuUuUUU...',
+      '.UUuuNNNuuUU....',
+      '.UUUuUNuUuUUU...',
+      'SUUU..UUU..UUUS.',
+      '.PPPPpPPpPPPP...',
+      '.PPppPPPPppPP...',
+      '.LLl..LLl..LL...',
+      '.KKK..KKK..KK...',
+      '.ZZZ.BbBbB.ZZ...',
+    ]
+  };
+
+  // ── イクマ（青ユニ・金髪）──
+  var ikuma = {
+    palette: {
+      'H': '#c8a000',
+      'h': '#e0c000',
+      'S': '#f5c89a',
+      's': '#e0a87a',
+      'U': '#1a4dbf',
+      'u': '#123a9e',
+      'N': '#ffffff',
+      'P': '#0e2f6e',
+      'p': '#091f50',
+      'L': '#f5c89a',
+      'l': '#c8966a',
+      'E': '#111111',
+      'K': '#f0f0f0',
+      'k': '#cccccc',
+      'Z': '#222211',
+    },
+    map: [
+      '....HHHHHHHH....',
+      '...HhHhHhHhHH...',
+      '...HSSSSSSSH....',
+      '...HSEssSEsH....',
+      '...HSSsSSSSH....',
+      '...HsSSSSSsH....',
+      '..HHUUUUUUHH....',
+      '.UUUuUUuUuUUU...',
+      '.UUuuNUNuuUU....',
+      '.UUUuUUuUuUUU...',
+      'SUUU..UUU..UUUS.',
+      '.PPPPpPPpPPPP...',
+      '.PPppPPPPppPP...',
+      '.LLl..LLl..LL...',
+      '.KKK..KKK..KK...',
+      '.ZZZ..ZZZ..ZZ...',
+    ]
+  };
+
+  // ── アオシ（緑ユニ・茶髪）──
+  var aoshi = {
+    palette: {
+      'H': '#6b3a00',
+      'h': '#8b5200',
+      'S': '#f5c89a',
+      's': '#e0a87a',
+      'U': '#1a8c3a',
+      'u': '#12642a',
+      'N': '#ffffff',
+      'P': '#0d5a24',
+      'p': '#084018',
+      'L': '#f5c89a',
+      'l': '#c8966a',
+      'E': '#111111',
+      'K': '#f0f0f0',
+      'k': '#cccccc',
+      'Z': '#222211',
+    },
+    map: [
+      '....HHHHHHHH....',
+      '...HhHhHhHhHH...',
+      '...HSSSSSSSH....',
+      '...HSEssSEsH....',
+      '...HSSsSSSSH....',
+      '...HsSSSSSsH....',
+      '..HHUUUUUUHH....',
+      '.UUUuUUuUuUUU...',
+      '.UUuuNUNuuUU....',
+      '.UUUuUUuUuUUU...',
+      'SUUU..UUU..UUUS.',
+      '.PPPPpPPpPPPP...',
+      '.PPppPPPPppPP...',
+      '.LLl..LLl..LL...',
+      '.KKK..KKK..KK...',
+      '.ZZZ..ZZZ..ZZ...',
+    ]
+  };
+
+  // ── トモキ（黄ユニ・黒髪・GK）──
+  var tomoki = {
+    palette: {
+      'H': '#1a1a1a',
+      'h': '#333333',
+      'S': '#f0b87a',
+      's': '#d09050',
+      'U': '#e8c400',
+      'u': '#c0a000',
+      'N': '#ffffff',
+      'P': '#1a1a1a',
+      'p': '#0a0a0a',
+      'L': '#f0b87a',
+      'l': '#c08050',
+      'E': '#111111',
+      'K': '#ffffff',
+      'k': '#dddddd',
+      'Z': '#222211',
+      'G': '#f5c89a',
+    },
+    map: [
+      '....HHHHHHHH....',
+      '...HhHhHhHhHH...',
+      '...HSSSSSSSH....',
+      '...HSEssSEsH....',
+      '...HSSsSSSSH....',
+      '...HsSSSSSsH....',
+      '..HHUUUUUUHH....',
+      '.UUUuUUuUuUUU...',
+      '.UUuuUUUuuUU....',
+      '.UUUuUUuUuUUU...',
+      'GUUU..UUU..UUUG.',
+      '.PPPPpPPpPPPP...',
+      '.PPppPPPPppPP...',
+      '.LLl..LLl..LL...',
+      '.KKK..KKK..KK...',
+      '.ZZZ..ZZZ..ZZ...',
+    ]
+  };
+
+  // ── イツキ（白ユニ・赤髪）──
+  var itsuki = {
+    palette: {
+      'H': '#cc2200',
+      'h': '#ff4422',
+      'S': '#f5c89a',
+      's': '#e0a87a',
+      'U': '#f0f0f0',
+      'u': '#cccccc',
+      'N': '#cc2200',
+      'P': '#cc2200',
+      'p': '#991a00',
+      'L': '#f5c89a',
+      'l': '#c8966a',
+      'E': '#111111',
+      'K': '#f0f0f0',
+      'k': '#cccccc',
+      'Z': '#222211',
+    },
+    map: [
+      '....HHHHHHHH....',
+      '...HhHhHhHhHH...',
+      '...HSSSSSSSH....',
+      '...HSEssSEsH....',
+      '...HSSsSSSSH....',
+      '...HsSSSSSsH....',
+      '..HHUUUUUuHH....',
+      '.UUUuNNNuuUUU...',
+      '.UUuuUUUuuUU....',
+      '.UUUuNNNuuUUU...',
+      'SUUU..UUU..UUUS.',
+      '.PPPPpPPpPPPP...',
+      '.PPppPPPPppPP...',
+      '.LLl..LLl..LL...',
+      '.KKK..KKK..KK...',
+      '.ZZZ..ZZZ..ZZ...',
+    ]
+  };
+
+  // ── タイル: 草（明るい緑）16×16 ──
+  var t_grass = {
+    palette: {
+      'G': '#4caf50',
+      'g': '#66bb6a',
+      'd': '#388e3c',
+      'f': '#2e7d32',
+      'F': '#81c784',
+    },
+    map: [
+      'GGgGGGgGGGgGGGgG',
+      'GGGGdGGGGdGGGGdG',
+      'gGGGGGgGGGGGgGGG',
+      'GdGGGGGdGGGGGdGG',
+      'GGGfGGGGGfGGGGGf',
+      'GGGGGGGGGGGGGGGg',
+      'gGGGGgGGGGgGGGGG',
+      'GGGGGGGdGGGGGGdG',
+      'GGgGGGGGGgGGGGGG',
+      'GGGGfGGGGGGfGGGG',
+      'GdGGGGGGGGGGGdGG',
+      'GGGGGgGGGGgGGGGG',
+      'GGGGGGGGGfGGGGGf',
+      'gGGGdGGGGGGGdGGG',
+      'GGGGGGGGGGGGGGGG',
+      'GGgGGgGGGGgGGgGG',
+    ]
+  };
+
+  // ── タイル: 土の道（茶）16×16 ──
+  var t_road = {
+    palette: {
+      'R': '#a0622a',
+      'r': '#b8783a',
+      'd': '#7a4a18',
+      'f': '#5a3210',
+      'F': '#c89060',
+    },
+    map: [
+      'RRrRRRrRRRrRRRrR',
+      'RRRRdRRRRdRRRRdR',
+      'rRRRRRrRRRRRrRRR',
+      'RdRRRRRdRRRRRdRR',
+      'RRRfRRRRRfRRRRRf',
+      'RRRRFRRRRFRRRRFr',
+      'rRRRRrRRRRrRRRRR',
+      'RRRRRRRdRRRRRRdR',
+      'RRrRRRRRRrRRRRRR',
+      'RRRRfRRRRRRfRRRR',
+      'RdRRRRRRRRRRRdRR',
+      'RRRRRrRRRRrRRRRR',
+      'RRRRRRRRRfRRRRRf',
+      'rRRRdRRRRRRRdRRR',
+      'RRRRRRRRRRRRRRRR',
+      'RRrRRrRRRRrRRrRR',
+    ]
+  };
+
+  // ── タイル: 石壁（グレー）16×16 ──
+  var t_wall = {
+    palette: {
+      'W': '#8a8a8a',
+      'w': '#aaaaaa',
+      'd': '#5a5a5a',
+      'f': '#3a3a3a',
+      'j': '#666666',
+    },
+    map: [
+      'wwwwwwwwwwwwwwww',
+      'wWWWWWWWwWWWWWWw',
+      'wWWWWWWWwWWWWWWw',
+      'wWWWWWWWwWWWWWWw',
+      'wWWWWWWWwWWWWWWw',
+      'wWWWWWWWwWWWWWWw',
+      'jjjjjjjjjjjjjjjj',
+      'wWWWWwWWWWWwWWWw',
+      'wWWWWwWWWWWwWWWw',
+      'wWWWWwWWWWWwWWWw',
+      'wWWWWwWWWWWwWWWw',
+      'wWWWWwWWWWWwWWWw',
+      'wWWWWwWWWWWwWWWw',
+      'jjjjjjjjjjjjjjjj',
+      'wWWWWWWWwWWWWWWw',
+      'dddddddddddddddd',
+    ]
+  };
+
+  // ── タイル: 水（青）16×16 ──
+  var t_water = {
+    palette: {
+      'W': '#1565c0',
+      'w': '#1e88e5',
+      'f': '#0d47a1',
+      'F': '#42a5f5',
+      'C': '#bbdefb',
+    },
+    map: [
+      'WWWwWWWWWwWWWWwW',
+      'WwWWWWwWWWWWWWWW',
+      'WWWWWWWWwWWwWWWW',
+      'CCCCWWWWWWWWCCCC',
+      'WWWWWWWWWWWWWWwW',
+      'WfWWfWWWfWWWfWWW',
+      'WWWWWWwWWWWWWWWW',
+      'WwWWWWWWWwWWWWwW',
+      'WWWWCCCCWWWWCCCC',
+      'WWWWWWWWWWWwWWWW',
+      'WfWWWfWWWfWWWfWW',
+      'WWWWWWWWWWWWWWwW',
+      'WwWWWwWWWWWWWWWW',
+      'CCCCWWWWCCCCWWWW',
+      'WWWWWWWWWWWWWwWW',
+      'WfWWfWWWfWWWfWWW',
+    ]
+  };
+
+  // ── タイル: 床（ベージュ）16×16 ──
+  var t_floor = {
+    palette: {
+      'B': '#d4b896',
+      'b': '#e8ccaa',
+      'd': '#b09070',
+      'f': '#8c6c50',
+      'j': '#c4a882',
+    },
+    map: [
+      'bBBBBBBBbBBBBBBb',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'jjjjjjjjjjjjjjjj',
+      'bBBBBBBBbBBBBBBb',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'BBBBBBBBBBBBBBBj',
+      'jjjjjjjjjjjjjjjj',
+    ]
+  };
+
+  return {
+    yuito:   yuito,
+    ikuma:   ikuma,
+    aoshi:   aoshi,
+    tomoki:  tomoki,
+    itsuki:  itsuki,
+    t_grass: t_grass,
+    t_road:  t_road,
+    t_wall:  t_wall,
+    t_water: t_water,
+    t_floor: t_floor,
+  };
+
+})();
+
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, { SPRITES: SPRITES });
+
 // === src/data/characters.js ===
 const CHARACTERS = {
   yuito: {
@@ -539,5 +911,180 @@ function deserialize(str) {
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
 })(typeof window !== 'undefined' ? window : globalThis, { serialize, deserialize });
+
+// === src/engine/canvas.js ===
+// === canvas.js ===
+// 仮想解像度キャンバス & スケーリング
+// window/document はすべて関数内でのみアクセスする（Node require 対応）
+
+var VW = 240;
+var VH = 320;
+
+var _ctx = null;
+var _canvasEl = null;
+
+function resize() {
+  if (!_canvasEl) return;
+  var dpr = (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1;
+  var iw = (typeof window !== 'undefined') ? window.innerWidth : VW;
+  var ih = (typeof window !== 'undefined') ? window.innerHeight : VH;
+  var cssScale = Math.min(iw / VW, ih / VH);
+
+  _canvasEl.style.width  = (VW * cssScale) + 'px';
+  _canvasEl.style.height = (VH * cssScale) + 'px';
+
+  _canvasEl.width  = Math.round(VW * cssScale * dpr);
+  _canvasEl.height = Math.round(VH * cssScale * dpr);
+
+  _ctx = _canvasEl.getContext('2d');
+  _ctx.setTransform(cssScale * dpr, 0, 0, cssScale * dpr, 0, 0);
+  _ctx.imageSmoothingEnabled = false;
+}
+
+function initCanvas(canvasEl) {
+  _canvasEl = canvasEl;
+  resize();
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', resize);
+  }
+}
+
+function getCtx() {
+  return _ctx;
+}
+
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, {
+  VW: VW,
+  VH: VH,
+  initCanvas: initCanvas,
+  getCtx: getCtx,
+  resize: resize,
+});
+
+// === src/engine/render.js ===
+// === render.js ===
+// 描画ヘルパ
+// window/document はすべて関数内でのみアクセスする（Node require 対応）
+
+/**
+ * drawSprite: スプライトを描画する
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {Object} sprite  { map: string[], palette: Object }
+ * @param {number} x       左上X（仮想座標）
+ * @param {number} y       左上Y（仮想座標）
+ * @param {number} [scale] 1ピクセル=何仮想px か（デフォルト1）
+ */
+function drawSprite(ctx, sprite, x, y, scale) {
+  if (!sprite || !sprite.map) return;
+  scale = scale || 1;
+  var map = sprite.map;
+  var palette = sprite.palette;
+  for (var row = 0; row < map.length; row++) {
+    var line = map[row];
+    for (var col = 0; col < line.length; col++) {
+      var ch = line[col];
+      if (ch === '.' || ch === ' ') continue;
+      var color = palette[ch];
+      if (!color) continue;
+      ctx.fillStyle = color;
+      ctx.fillRect(x + col * scale, y + row * scale, scale, scale);
+    }
+  }
+}
+
+/**
+ * drawTileMap: タイルマップを描画する
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {string[][]} grid       2次元配列（各文字が tileSprites のキー）
+ * @param {Object} tileSprites    { key: sprite, ... }
+ * @param {number} tileSize       タイルの仮想px（スプライトは16px前提）
+ * @param {number} offsetX
+ * @param {number} offsetY
+ */
+function drawTileMap(ctx, grid, tileSprites, tileSize, offsetX, offsetY) {
+  var scale = tileSize / 16;
+  for (var r = 0; r < grid.length; r++) {
+    for (var c = 0; c < grid[r].length; c++) {
+      var key = grid[r][c];
+      var sp = tileSprites[key];
+      if (!sp) continue;
+      drawSprite(ctx, sp, offsetX + c * tileSize, offsetY + r * tileSize, scale);
+    }
+  }
+}
+
+/**
+ * drawText: テキストを描画する（日本語くっきりシステムフォント使用）
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {string} str
+ * @param {number} x
+ * @param {number} y
+ * @param {Object} [opts]  { size: number, color: string, align: string }
+ */
+function drawText(ctx, str, x, y, opts) {
+  opts = opts || {};
+  var size  = opts.size  || 12;
+  var color = opts.color || '#ffffff';
+  var align = opts.align || 'left';
+  ctx.font          = size + 'px "Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",sans-serif';
+  ctx.textBaseline  = 'top';
+  ctx.textAlign     = align;
+  ctx.fillStyle     = color;
+  ctx.fillText(str, x, y);
+}
+
+/**
+ * drawWindow: ドラクエ風メッセージ枠を描画する
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} x
+ * @param {number} y
+ * @param {number} w
+ * @param {number} h
+ * @param {Object} [opts]  { fill: string, border: string, radius: number }
+ */
+function drawWindow(ctx, x, y, w, h, opts) {
+  opts = opts || {};
+  var fill   = opts.fill   || '#0a1230';
+  var border = opts.border || '#ffffff';
+  var radius = (opts.radius !== undefined) ? opts.radius : 6;
+
+  ctx.save();
+
+  // 塗り
+  ctx.fillStyle = fill;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, radius);
+    ctx.fill();
+  } else {
+    ctx.fillRect(x, y, w, h);
+  }
+
+  // 枠線
+  ctx.strokeStyle = border;
+  ctx.lineWidth   = 2;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, radius);
+    ctx.stroke();
+  } else {
+    ctx.strokeRect(x, y, w, h);
+  }
+
+  ctx.restore();
+}
+
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, {
+  drawSprite:  drawSprite,
+  drawTileMap: drawTileMap,
+  drawText:    drawText,
+  drawWindow:  drawWindow,
+});
 
 </script></body></html>
