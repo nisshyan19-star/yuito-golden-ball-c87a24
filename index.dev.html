@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>ユイトと黄金のサッカーボール [dev]</title>
+  <style>
+    html,body{margin:0;height:100%;background:#0b0b12;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
+    #game{display:block;margin:0 auto;image-rendering:pixelated;background:#000}
+  </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<!-- src/ を ORDER 順で読み込み。未作成のファイルはブラウザが404を無視する。順次追加予定 -->
+<script src="src/core/rng.js"></script>
+<script src="src/core/game-state.js"></script>
+<script src="src/data/sprites.js"></script>
+<script src="src/data/characters.js"></script>
+<script src="src/data/skills.js"></script>
+<script src="src/data/enemies.js"></script>
+<script src="src/data/items.js"></script>
+<script src="src/data/maps.js"></script>
+<script src="src/data/story.js"></script>
+<script src="src/logic/progression.js"></script>
+<script src="src/logic/items-effect.js"></script>
+<script src="src/logic/battle.js"></script>
+<script src="src/logic/ally-ai.js"></script>
+<script src="src/logic/save.js"></script>
+<script src="src/engine/canvas.js"></script>
+<script src="src/engine/render.js"></script>
+<script src="src/engine/input.js"></script>
+<script src="src/engine/scene.js"></script>
+<script src="src/engine/storage.js"></script>
+<script src="src/scenes/dialog.js"></script>
+<script src="src/scenes/title-scene.js"></script>
+<script src="src/scenes/field-scene.js"></script>
+<script src="src/scenes/battle-scene.js"></script>
+<script src="src/scenes/menu-scene.js"></script>
+<script src="src/scenes/shop-scene.js"></script>
+<script src="src/main.js"></script>
+</body>
+</html>
