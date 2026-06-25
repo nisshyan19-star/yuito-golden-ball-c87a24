@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "soccer-rpg",
+      "runtimeExecutable": "/Users/gensu/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node",
+      "runtimeArgs": ["dev-server.js"],
+      "port": 5599
+    }
+  ]
+}

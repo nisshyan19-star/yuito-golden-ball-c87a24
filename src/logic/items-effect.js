@@ -1,6 +1,10 @@
-const ITEMS = (typeof require !== 'undefined')
-  ? require('../data/items.js').ITEMS
-  : (typeof window !== 'undefined' && window.SRPG && window.SRPG.ITEMS);
+// ITEMS は data/items.js で定義済み。単一バンドル時に同名 const が衝突して
+// スクリプト全体がパース失敗する（black screen）のを避けるため、トップレベルで
+// const キャプチャせず、game-state.js の _characters() と同じく遅延解決する。
+function _items() {
+  if (typeof require !== 'undefined') return require('../data/items.js').ITEMS;
+  return (typeof window !== 'undefined' && window.SRPG && window.SRPG.ITEMS) || {};
+}
 
 /**
  * useItem(target, item)
@@ -59,6 +63,7 @@ function applyEquip(character) {
   const weaponId = character.equip && character.equip.weapon;
   const armorId  = character.equip && character.equip.armor;
 
+  const ITEMS = _items();
   const weaponAtk = (weaponId && ITEMS && ITEMS[weaponId]) ? ITEMS[weaponId].atk : 0;
   const armorDef  = (armorId  && ITEMS && ITEMS[armorId])  ? ITEMS[armorId].def  : 0;
 

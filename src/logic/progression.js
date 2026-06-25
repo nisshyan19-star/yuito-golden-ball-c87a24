@@ -1,6 +1,10 @@
-const SKILLS = (typeof require !== 'undefined')
-  ? require('../data/skills.js').SKILLS
-  : (typeof window !== 'undefined' && window.SRPG && window.SRPG.SKILLS);
+// SKILLS は data/skills.js で定義済み。単一バンドル時に同名 const が衝突して
+// スクリプト全体がパース失敗する（black screen）のを避けるため、トップレベルで
+// const キャプチャせず、game-state.js の _characters() と同じく遅延解決する。
+function _skills() {
+  if (typeof require !== 'undefined') return require('../data/skills.js').SKILLS;
+  return (typeof window !== 'undefined' && window.SRPG && window.SRPG.SKILLS) || {};
+}
 
 /**
  * 次のレベルに必要な経験値
@@ -39,7 +43,7 @@ function gainExp(character, amount) {
 
   // 技習得判定（レベルアップが1回でも発生した場合）
   if (leveledUp) {
-    for (const skill of Object.values(SKILLS)) {
+    for (const skill of Object.values(_skills())) {
       if (
         skill.user === character.id &&
         skill.learnLevel != null &&

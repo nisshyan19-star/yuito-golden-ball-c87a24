@@ -1,6 +1,10 @@
-const SKILLS = (typeof require !== 'undefined')
-  ? require('../data/skills.js').SKILLS
-  : (typeof window !== 'undefined' && window.SRPG && window.SRPG.SKILLS);
+// SKILLS は data/skills.js で定義済み。単一バンドル時に同名 const が衝突して
+// スクリプト全体がパース失敗する（black screen）のを避けるため、トップレベルで
+// const キャプチャせず、game-state.js の _characters() と同じく遅延解決する。
+function _skills() {
+  if (typeof require !== 'undefined') return require('../data/skills.js').SKILLS;
+  return (typeof window !== 'undefined' && window.SRPG && window.SRPG.SKILLS) || {};
+}
 
 // ヘルパ関数
 function isDead(u) {
@@ -23,6 +27,7 @@ function ratio(u) {
 function chooseAllyAction(actor, party, enemies, rng) {
   const aliveEnemies = enemies.filter(e => !isDead(e));
   const aliveAllies = party.filter(p => !isDead(p));
+  const SKILLS = _skills();
   const mySkills = actor.skills.map(id => SKILLS[id]).filter(Boolean);
 
   function canUse(s) {
