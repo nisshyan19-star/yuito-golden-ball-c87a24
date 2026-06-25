@@ -1,351 +1,277 @@
 // === sprites.js ===
 // ドット絵データ（文字列配列＋パレット方式）
 // map: 各行は同じ長さの文字列。'.' と ' ' は透明。
-// 16×16 ピクセル チビキャラ＋タイル定義
+// キャラ=32×32 / タイル=16×16。輪郭線＋陰影3〜4階調のモダンピクセルアート。
+// 純粋データのみ。トップレベルで document / window に触れない（Node require 対応）。
 
 var SPRITES = (function () {
 
-  // ── ユイト（主人公・ヴィッセル神戸・クリムゾンユニ）──
-  // 全行 16文字
-  var yuito = {
-    palette: {
-      'H': '#3d1a00',
-      'h': '#5c2800',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#9b1b3a',
-      'u': '#7a1230',
-      'N': '#ffffff',
-      'P': '#1a2f8a',
-      'p': '#132270',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'B': '#ffffff',
-      'b': '#555555',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#333322',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSNNSSSH....',
-      '...HssSSSssH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUNuUuUUU...',
-      '.UUuuNNNuuUU....',
-      '.UUUuUNuUuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ.BbBbB.ZZ...',
-    ]
-  };
+  // ────────────────────────────────────────────────────────────
+  // キャラ共通テンプレート（32×32・左右シンメトリー・約2.5頭身）
+  //   O=輪郭線  H=髪明  h=髪中  g=髪影
+  //   S=肌明  s=肌中  k=肌影  E=目  m=口
+  //   U=ユニ明  u=ユニ中  v=ユニ影  N=背番号
+  //   P=ズボン明  p=ズボン影
+  //   L=脚明  l=脚影  K=靴明  c=靴影
+  //   W=ボール白  b=ボール黒線  G=グローブ(GKのみ)
+  // 各行きっちり32文字。透明は '.'。
+  // ────────────────────────────────────────────────────────────
+  function buildChar(pal, num, gk) {
+    var n = num;            // 背番号テキスト用フラグ（描画はマップで表現）
+    var glove = gk ? 'G' : 's'; // 手: GKは白グローブ、それ以外は肌
+    var gl = gk ? 'G' : 'k';
+    // 32×32 マップ。左右対称ベースで丁寧に陰影を入れる。
+    var map = [
+      '............OOOOOO..............',
+      '..........OOhhhhhhOO............',
+      '.........OHHhhhhhhHHO...........',
+      '........OHHHhhhhhhHHHO..........',
+      '........OHHhhhgggghhHO..........',
+      '........OHhggOOOOgghHO..........',
+      '........OOSSSSSSSSSSOO..........',
+      '.......OSSSSSSSSSSSSSSO.........',
+      '.......OSSSSSSSSSSSSSSO.........',
+      '.......OSSEESSSSSSEESSO.........',
+      '.......OSSEESSSSSSEESSO.........',
+      '.......OSSSSSSSSSSSSSSO.........',
+      '.......OSSSkSSmmSSkSSSO.........',
+      '.......OSSSSSmmmmSSSSSO.........',
+      '........OkSSSSSSSSSSkO..........',
+      '........OOSSSSSSSSSSOO..........',
+      '......OOOuuuuuuuuuuuuOOO........',
+      '....OO'+glove+glove+'uUUUUUUUUUUuu'+glove+glove+'OO.......',
+      '...O'+gl+glove+glove+'uUUUuNNUUUUuvv'+glove+glove+gl+'O.......',
+      '...O'+gl+glove+glove+'uUUuNNNNUUUuvv'+glove+glove+gl+'O.......',
+      '...OO'+gl+glove+'uUUUNNUUUUUuvv'+glove+gl+'OO.......',
+      '.....OOuuUUUUUUUUUUuuOO.........',
+      '.......OvUUUUUUUUUUvO...........',
+      '.......OOPPPPpPPPPPOO...........',
+      '.......OPPPPpppPPPPPO...........',
+      '.......OLLLOOOOLLLLLO...........',
+      '.......OLLLO..OLLLLLO...........',
+      '.......OllLO..OLllllO...........',
+      '......OKKKKO..OKKKKKO...WWWW....',
+      '......OKKcKO..OKccKKO..WbbWWW...',
+      '......OOcccO..OcccOOO..WWbbbW...',
+      '.......OOOO....OOOO.....WWWW....',
+    ];
+    return { palette: pal, map: map };
+  }
 
-  // ── イクマ（青ユニ・金髪）──
-  var ikuma = {
-    palette: {
-      'H': '#c8a000',
-      'h': '#e0c000',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#1a4dbf',
-      'u': '#123a9e',
-      'N': '#ffffff',
-      'P': '#0e2f6e',
-      'p': '#091f50',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#222211',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUUuUuUUU...',
-      '.UUuuNUNuuUU....',
-      '.UUUuUUuUuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── ユイト（主人公・FW・背番号10・ヴィッセル神戸クリムゾン・黒髪）──
+  var yuito = buildChar({
+    'O': '#2a0a14',
+    'H': '#5a3d28', 'h': '#3d2a1c', 'g': '#2a1a12',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#c43a58', 'u': '#a01d3c', 'v': '#6e0f28', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '10', false);
 
-  // ── アオシ（緑ユニ・茶髪）──
-  var aoshi = {
-    palette: {
-      'H': '#6b3a00',
-      'h': '#8b5200',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#1a8c3a',
-      'u': '#12642a',
-      'N': '#ffffff',
-      'P': '#0d5a24',
-      'p': '#084018',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#222211',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUUuUuUUU...',
-      '.UUuuNUNuuUU....',
-      '.UUUuUUuUuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── イクマ（FW・背番号9・青ユニ・金髪）──
+  var ikuma = buildChar({
+    'O': '#0a142e',
+    'H': '#ffe884', 'h': '#f5d35a', 'g': '#e0b430',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#3d7be8', 'u': '#1b59c9', 'v': '#103a8f', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '9', false);
 
-  // ── トモキ（黄ユニ・黒髪・GK）──
-  var tomoki = {
-    palette: {
-      'H': '#1a1a1a',
-      'h': '#333333',
-      'S': '#f0b87a',
-      's': '#d09050',
-      'U': '#e8c400',
-      'u': '#c0a000',
-      'N': '#ffffff',
-      'P': '#1a1a1a',
-      'p': '#0a0a0a',
-      'L': '#f0b87a',
-      'l': '#c08050',
-      'E': '#111111',
-      'K': '#ffffff',
-      'k': '#dddddd',
-      'Z': '#222211',
-      'G': '#f5c89a',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUUuUuUUU...',
-      '.UUuuUUUuuUU....',
-      '.UUUuUUuUuUUU...',
-      'GUUU..UUU..UUUG.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── アオシ（MF・背番号7・緑ユニ・茶髪）──
+  var aoshi = buildChar({
+    'O': '#0a200f',
+    'H': '#a06a35', 'h': '#8a5a2c', 'g': '#6b4220',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#3cc46c', 'u': '#1f9d4d', 'v': '#127a38', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '7', false);
 
-  // ── イツキ（白ユニ・赤髪）──
-  var itsuki = {
-    palette: {
-      'H': '#cc2200',
-      'h': '#ff4422',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#f0f0f0',
-      'u': '#cccccc',
-      'N': '#cc2200',
-      'P': '#cc2200',
-      'p': '#991a00',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#222211',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUuHH....',
-      '.UUUuNNNuuUUU...',
-      '.UUuuUUUuuUU....',
-      '.UUUuNNNuuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── トモキ（DF・背番号4・黄ユニ・黒髪・がっしり）──
+  var tomoki = buildChar({
+    'O': '#1a1a0a',
+    'H': '#4a4a4a', 'h': '#333333', 'g': '#1a1a1a',
+    'S': '#f7d2a8', 's': '#e6b487', 'k': '#cc8f5e',
+    'E': '#2a1a12', 'm': '#a85040',
+    'U': '#f5d84a', 'u': '#e8c21e', 'v': '#bf9e10', 'N': '#5a3a00',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#e6b487', 'l': '#cc8f5e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '4', false);
 
-  // ── タイル: 草（明るい緑）16×16 ──
+  // ── イツキ（GK・背番号1・ティール/青緑ユニ・赤髪・GKグローブ）──
+  var itsuki = buildChar({
+    'O': '#0a2422',
+    'H': '#ff7a64', 'h': '#f05a44', 'g': '#d23a26',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#2fc7bd', 'u': '#16a39a', 'v': '#0e7a73', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+    'G': '#f2f2f7',
+  }, '1', true);
+
+  // ────────────────────────────────────────────────────────────
+  // タイル5種（各16×16）— なめらかな陰影・規則的で上品なテクスチャ
+  //   タイル境界が極端に目立たないよう端を揃える。
+  // ────────────────────────────────────────────────────────────
+
+  // ── t_grass（草原）控えめな縦グラデ＋点在しすぎない草葉 ──
   var t_grass = {
     palette: {
-      'G': '#4caf50',
-      'g': '#66bb6a',
-      'd': '#388e3c',
-      'f': '#2e7d32',
-      'F': '#81c784',
+      'a': '#5cba5f', // 最明（上）
+      'b': '#52b257',
+      'G': '#4caf50', // 基調
+      'c': '#46a04a',
+      'd': '#3f9444', // 影（下）
+      'l': '#6fc873', // 草葉ハイライト
     },
     map: [
-      'GGgGGGgGGGgGGGgG',
-      'GGGGdGGGGdGGGGdG',
-      'gGGGGGgGGGGGgGGG',
-      'GdGGGGGdGGGGGdGG',
-      'GGGfGGGGGfGGGGGf',
-      'GGGGGGGGGGGGGGGg',
-      'gGGGGgGGGGgGGGGG',
-      'GGGGGGGdGGGGGGdG',
-      'GGgGGGGGGgGGGGGG',
-      'GGGGfGGGGGGfGGGG',
-      'GdGGGGGGGGGGGdGG',
-      'GGGGGgGGGGgGGGGG',
-      'GGGGGGGGGfGGGGGf',
-      'gGGGdGGGGGGGdGGG',
+      'aaaaaaaaaaaaaaaa',
+      'aaaaaaaaaaaaaaaa',
+      'bbbbbbbbbbbbbbbb',
+      'bbbblbbbbbbbbbbb',
+      'GGGGGGGGGGGlGGGG',
       'GGGGGGGGGGGGGGGG',
-      'GGgGGgGGGGgGGgGG',
-    ]
-  };
-
-  // ── タイル: 土の道（茶）16×16 ──
-  var t_road = {
-    palette: {
-      'R': '#a0622a',
-      'r': '#b8783a',
-      'd': '#7a4a18',
-      'f': '#5a3210',
-      'F': '#c89060',
-    },
-    map: [
-      'RRrRRRrRRRrRRRrR',
-      'RRRRdRRRRdRRRRdR',
-      'rRRRRRrRRRRRrRRR',
-      'RdRRRRRdRRRRRdRR',
-      'RRRfRRRRRfRRRRRf',
-      'RRRRFRRRRFRRRRFr',
-      'rRRRRrRRRRrRRRRR',
-      'RRRRRRRdRRRRRRdR',
-      'RRrRRRRRRrRRRRRR',
-      'RRRRfRRRRRRfRRRR',
-      'RdRRRRRRRRRRRdRR',
-      'RRRRRrRRRRrRRRRR',
-      'RRRRRRRRRfRRRRRf',
-      'rRRRdRRRRRRRdRRR',
-      'RRRRRRRRRRRRRRRR',
-      'RRrRRrRRRRrRRrRR',
-    ]
-  };
-
-  // ── タイル: 石壁（グレー）16×16 ──
-  var t_wall = {
-    palette: {
-      'W': '#8a8a8a',
-      'w': '#aaaaaa',
-      'd': '#5a5a5a',
-      'f': '#3a3a3a',
-      'j': '#666666',
-    },
-    map: [
-      'wwwwwwwwwwwwwwww',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'jjjjjjjjjjjjjjjj',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'jjjjjjjjjjjjjjjj',
-      'wWWWWWWWwWWWWWWw',
+      'GGlGGGGGGGGGGGGG',
+      'GGGGGGGGGGGGGlGG',
+      'cccccccccccccccc',
+      'ccccccclcccccccc',
+      'cccccccccccccccc',
+      'ccccccccccclcccc',
+      'dddddddddddddddd',
+      'ddddlddddddddddd',
+      'dddddddddddddddd',
       'dddddddddddddddd',
     ]
   };
 
-  // ── タイル: 水（青）16×16 ──
-  var t_water = {
+  // ── t_road（土の道）暖かいベージュ茶＋小石数個 ──
+  var t_road = {
     palette: {
-      'W': '#1565c0',
-      'w': '#1e88e5',
-      'f': '#0d47a1',
-      'F': '#42a5f5',
-      'C': '#bbdefb',
+      'a': '#c79461', // 最明（上）
+      'b': '#bd8a55',
+      'R': '#b5824a', // 基調
+      'c': '#a8763f',
+      'd': '#9a6a37', // 影（下）
+      's': '#d8b48a', // 小石明
+      'o': '#8a5a2e', // 小石影
     },
     map: [
-      'WWWwWWWWWwWWWWwW',
-      'WwWWWWwWWWWWWWWW',
-      'WWWWWWWWwWWwWWWW',
-      'CCCCWWWWWWWWCCCC',
-      'WWWWWWWWWWWWWWwW',
-      'WfWWfWWWfWWWfWWW',
-      'WWWWWWwWWWWWWWWW',
-      'WwWWWWWWWwWWWWwW',
-      'WWWWCCCCWWWWCCCC',
-      'WWWWWWWWWWWwWWWW',
-      'WfWWWfWWWfWWWfWW',
-      'WWWWWWWWWWWWWWwW',
-      'WwWWWwWWWWWWWWWW',
-      'CCCCWWWWCCCCWWWW',
-      'WWWWWWWWWWWWWwWW',
-      'WfWWfWWWfWWWfWWW',
+      'aaaaaaaaaaaaaaaa',
+      'aaaaaaaaaaaaaaaa',
+      'bbbbbbbbbbbbbbbb',
+      'bbbbbbbbsobbbbbb',
+      'RRRRRRRRRRRRRRRR',
+      'RRRRRRRRRRRRRRRR',
+      'RRsoRRRRRRRRRRRR',
+      'RRRRRRRRRRRRRRRR',
+      'cccccccccccccccc',
+      'ccccccccccccsocc',
+      'cccccccccccccccc',
+      'cccccccccccccccc',
+      'dddddddddddddddd',
+      'ddddsodddddddddd',
+      'dddddddddddddddd',
+      'dddddddddddddddd',
     ]
   };
 
-  // ── タイル: 床（ベージュ）16×16 ──
-  var t_floor = {
+  // ── t_wall（石壁/レンガ）上辺ハイライト・下辺影で立体 ──
+  var t_wall = {
     palette: {
-      'B': '#d4b896',
-      'b': '#e8ccaa',
-      'd': '#b09070',
-      'f': '#8c6c50',
-      'j': '#c4a882',
+      'H': '#a8a8b0', // ハイライト
+      'W': '#8a8a92', // 石面
+      'd': '#6e6e76', // 影
+      'j': '#56565e', // 目地
     },
     map: [
-      'bBBBBBBBbBBBBBBb',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
+      'HHHHHHHjHHHHHHHj',
+      'WWWWWWWjWWWWWWWj',
+      'WWWWWWWjWWWWWWWj',
+      'dddddddjdddddddj',
       'jjjjjjjjjjjjjjjj',
-      'bBBBBBBBbBBBBBBb',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
+      'HHHjHHHHHHHjHHHH',
+      'WWWjWWWWWWWjWWWW',
+      'WWWjWWWWWWWjWWWW',
+      'dddjdddddddjdddd',
       'jjjjjjjjjjjjjjjj',
+      'HHHHHHHjHHHHHHHj',
+      'WWWWWWWjWWWWWWWj',
+      'WWWWWWWjWWWWWWWj',
+      'dddddddjdddddddj',
+      'jjjjjjjjjjjjjjjj',
+      'HHHjHHHHHHHjHHHH',
+    ]
+  };
+
+  // ── t_water（水）横方向の波バンド＋柔らかい白ハイライト ──
+  var t_water = {
+    palette: {
+      'a': '#42a5f5', // 明バンド
+      'W': '#1e88e5', // 基調
+      'd': '#1769bb', // 影バンド
+      'C': '#bbdefb', // 白ハイライト
+    },
+    map: [
+      'WWWWWWWWWWWWWWWW',
+      'aaaaaaaaaaaaaaaa',
+      'WWWWWWWWWWWWWWWW',
+      'WWCCCWWWWWWCCCWW',
+      'WWWWWWWWWWWWWWWW',
+      'dddddddddddddddd',
+      'WWWWWWWWWWWWWWWW',
+      'aaaaaaaaaaaaaaaa',
+      'WWWWWWCCCWWWWWWW',
+      'WWWWWWWWWWWWWWWW',
+      'dddddddddddddddd',
+      'WWWWWWWWWWWWWWWW',
+      'aaaaaaaaaaaaaaaa',
+      'WWCCCWWWWWWCCCWW',
+      'WWWWWWWWWWWWWWWW',
+      'dddddddddddddddd',
+    ]
+  };
+
+  // ── t_floor（室内の床/木）落ち着いた木目・継ぎ目控えめ ──
+  var t_floor = {
+    palette: {
+      'a': '#caa97e', // 板明
+      'B': '#bb9a6f', // 板基調
+      'c': '#ab8a60', // 板影
+      'g': '#caa97e', // 木目筋（明）
+      'j': '#8c6c4a', // 継ぎ目
+    },
+    map: [
+      'aaaaaaaaaaaaaaaa',
+      'BBBBBBBBBBBBBBBB',
+      'BBBBgBBBBBBBBBBB',
+      'BBBBBBBBBBBgBBBB',
+      'cccccccccccccccc',
+      'jjjjjjjjjjjjjjjj',
+      'aaaaaaaaaaaaaaaa',
+      'BBBBBBBBBgBBBBBB',
+      'BBgBBBBBBBBBBBBB',
+      'BBBBBBBBBBBBBgBB',
+      'cccccccccccccccc',
+      'jjjjjjjjjjjjjjjj',
+      'aaaaaaaaaaaaaaaa',
+      'BBBBBBgBBBBBBBBB',
+      'BBBBBBBBBBBBBBBB',
+      'cccccccccccccccc',
     ]
   };
 

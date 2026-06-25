@@ -26,12 +26,15 @@ function makeRng(seed) {
 })(typeof window !== 'undefined' ? window : globalThis, { makeRng });
 
 // === src/core/game-state.js ===
-const CHARACTERS = (typeof require !== 'undefined')
-  ? require('../data/characters.js').CHARACTERS
-  : (typeof window !== 'undefined' && window.SRPG && window.SRPG.CHARACTERS);
+// CHARACTERS は遅延解決する。ブラウザでは <script> の読み込み順に依存せず、
+// 実際に呼ばれた時点で window.SRPG.CHARACTERS を参照する（characters.js が後でも安全）。
+function _characters() {
+  if (typeof require !== 'undefined') return require('../data/characters.js').CHARACTERS;
+  return (typeof window !== 'undefined' && window.SRPG && window.SRPG.CHARACTERS) || {};
+}
 
 function createCharacter(id) {
-  const def = CHARACTERS[id];
+  const def = _characters()[id];
   if (!def) throw new Error('Unknown character id: ' + id);
   return {
     id:       def.id,
@@ -77,351 +80,277 @@ function cloneState(s) {
 // === sprites.js ===
 // ドット絵データ（文字列配列＋パレット方式）
 // map: 各行は同じ長さの文字列。'.' と ' ' は透明。
-// 16×16 ピクセル チビキャラ＋タイル定義
+// キャラ=32×32 / タイル=16×16。輪郭線＋陰影3〜4階調のモダンピクセルアート。
+// 純粋データのみ。トップレベルで document / window に触れない（Node require 対応）。
 
 var SPRITES = (function () {
 
-  // ── ユイト（主人公・ヴィッセル神戸・クリムゾンユニ）──
-  // 全行 16文字
-  var yuito = {
-    palette: {
-      'H': '#3d1a00',
-      'h': '#5c2800',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#9b1b3a',
-      'u': '#7a1230',
-      'N': '#ffffff',
-      'P': '#1a2f8a',
-      'p': '#132270',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'B': '#ffffff',
-      'b': '#555555',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#333322',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSNNSSSH....',
-      '...HssSSSssH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUNuUuUUU...',
-      '.UUuuNNNuuUU....',
-      '.UUUuUNuUuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ.BbBbB.ZZ...',
-    ]
-  };
+  // ────────────────────────────────────────────────────────────
+  // キャラ共通テンプレート（32×32・左右シンメトリー・約2.5頭身）
+  //   O=輪郭線  H=髪明  h=髪中  g=髪影
+  //   S=肌明  s=肌中  k=肌影  E=目  m=口
+  //   U=ユニ明  u=ユニ中  v=ユニ影  N=背番号
+  //   P=ズボン明  p=ズボン影
+  //   L=脚明  l=脚影  K=靴明  c=靴影
+  //   W=ボール白  b=ボール黒線  G=グローブ(GKのみ)
+  // 各行きっちり32文字。透明は '.'。
+  // ────────────────────────────────────────────────────────────
+  function buildChar(pal, num, gk) {
+    var n = num;            // 背番号テキスト用フラグ（描画はマップで表現）
+    var glove = gk ? 'G' : 's'; // 手: GKは白グローブ、それ以外は肌
+    var gl = gk ? 'G' : 'k';
+    // 32×32 マップ。左右対称ベースで丁寧に陰影を入れる。
+    var map = [
+      '............OOOOOO..............',
+      '..........OOhhhhhhOO............',
+      '.........OHHhhhhhhHHO...........',
+      '........OHHHhhhhhhHHHO..........',
+      '........OHHhhhgggghhHO..........',
+      '........OHhggOOOOgghHO..........',
+      '........OOSSSSSSSSSSOO..........',
+      '.......OSSSSSSSSSSSSSSO.........',
+      '.......OSSSSSSSSSSSSSSO.........',
+      '.......OSSEESSSSSSEESSO.........',
+      '.......OSSEESSSSSSEESSO.........',
+      '.......OSSSSSSSSSSSSSSO.........',
+      '.......OSSSkSSmmSSkSSSO.........',
+      '.......OSSSSSmmmmSSSSSO.........',
+      '........OkSSSSSSSSSSkO..........',
+      '........OOSSSSSSSSSSOO..........',
+      '......OOOuuuuuuuuuuuuOOO........',
+      '....OO'+glove+glove+'uUUUUUUUUUUuu'+glove+glove+'OO.......',
+      '...O'+gl+glove+glove+'uUUUuNNUUUUuvv'+glove+glove+gl+'O.......',
+      '...O'+gl+glove+glove+'uUUuNNNNUUUuvv'+glove+glove+gl+'O.......',
+      '...OO'+gl+glove+'uUUUNNUUUUUuvv'+glove+gl+'OO.......',
+      '.....OOuuUUUUUUUUUUuuOO.........',
+      '.......OvUUUUUUUUUUvO...........',
+      '.......OOPPPPpPPPPPOO...........',
+      '.......OPPPPpppPPPPPO...........',
+      '.......OLLLOOOOLLLLLO...........',
+      '.......OLLLO..OLLLLLO...........',
+      '.......OllLO..OLllllO...........',
+      '......OKKKKO..OKKKKKO...WWWW....',
+      '......OKKcKO..OKccKKO..WbbWWW...',
+      '......OOcccO..OcccOOO..WWbbbW...',
+      '.......OOOO....OOOO.....WWWW....',
+    ];
+    return { palette: pal, map: map };
+  }
 
-  // ── イクマ（青ユニ・金髪）──
-  var ikuma = {
-    palette: {
-      'H': '#c8a000',
-      'h': '#e0c000',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#1a4dbf',
-      'u': '#123a9e',
-      'N': '#ffffff',
-      'P': '#0e2f6e',
-      'p': '#091f50',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#222211',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUUuUuUUU...',
-      '.UUuuNUNuuUU....',
-      '.UUUuUUuUuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── ユイト（主人公・FW・背番号10・ヴィッセル神戸クリムゾン・黒髪）──
+  var yuito = buildChar({
+    'O': '#2a0a14',
+    'H': '#5a3d28', 'h': '#3d2a1c', 'g': '#2a1a12',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#c43a58', 'u': '#a01d3c', 'v': '#6e0f28', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '10', false);
 
-  // ── アオシ（緑ユニ・茶髪）──
-  var aoshi = {
-    palette: {
-      'H': '#6b3a00',
-      'h': '#8b5200',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#1a8c3a',
-      'u': '#12642a',
-      'N': '#ffffff',
-      'P': '#0d5a24',
-      'p': '#084018',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#222211',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUUuUuUUU...',
-      '.UUuuNUNuuUU....',
-      '.UUUuUUuUuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── イクマ（FW・背番号9・青ユニ・金髪）──
+  var ikuma = buildChar({
+    'O': '#0a142e',
+    'H': '#ffe884', 'h': '#f5d35a', 'g': '#e0b430',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#3d7be8', 'u': '#1b59c9', 'v': '#103a8f', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '9', false);
 
-  // ── トモキ（黄ユニ・黒髪・GK）──
-  var tomoki = {
-    palette: {
-      'H': '#1a1a1a',
-      'h': '#333333',
-      'S': '#f0b87a',
-      's': '#d09050',
-      'U': '#e8c400',
-      'u': '#c0a000',
-      'N': '#ffffff',
-      'P': '#1a1a1a',
-      'p': '#0a0a0a',
-      'L': '#f0b87a',
-      'l': '#c08050',
-      'E': '#111111',
-      'K': '#ffffff',
-      'k': '#dddddd',
-      'Z': '#222211',
-      'G': '#f5c89a',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUUHH....',
-      '.UUUuUUuUuUUU...',
-      '.UUuuUUUuuUU....',
-      '.UUUuUUuUuUUU...',
-      'GUUU..UUU..UUUG.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── アオシ（MF・背番号7・緑ユニ・茶髪）──
+  var aoshi = buildChar({
+    'O': '#0a200f',
+    'H': '#a06a35', 'h': '#8a5a2c', 'g': '#6b4220',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#3cc46c', 'u': '#1f9d4d', 'v': '#127a38', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '7', false);
 
-  // ── イツキ（白ユニ・赤髪）──
-  var itsuki = {
-    palette: {
-      'H': '#cc2200',
-      'h': '#ff4422',
-      'S': '#f5c89a',
-      's': '#e0a87a',
-      'U': '#f0f0f0',
-      'u': '#cccccc',
-      'N': '#cc2200',
-      'P': '#cc2200',
-      'p': '#991a00',
-      'L': '#f5c89a',
-      'l': '#c8966a',
-      'E': '#111111',
-      'K': '#f0f0f0',
-      'k': '#cccccc',
-      'Z': '#222211',
-    },
-    map: [
-      '....HHHHHHHH....',
-      '...HhHhHhHhHH...',
-      '...HSSSSSSSH....',
-      '...HSEssSEsH....',
-      '...HSSsSSSSH....',
-      '...HsSSSSSsH....',
-      '..HHUUUUUuHH....',
-      '.UUUuNNNuuUUU...',
-      '.UUuuUUUuuUU....',
-      '.UUUuNNNuuUUU...',
-      'SUUU..UUU..UUUS.',
-      '.PPPPpPPpPPPP...',
-      '.PPppPPPPppPP...',
-      '.LLl..LLl..LL...',
-      '.KKK..KKK..KK...',
-      '.ZZZ..ZZZ..ZZ...',
-    ]
-  };
+  // ── トモキ（DF・背番号4・黄ユニ・黒髪・がっしり）──
+  var tomoki = buildChar({
+    'O': '#1a1a0a',
+    'H': '#4a4a4a', 'h': '#333333', 'g': '#1a1a1a',
+    'S': '#f7d2a8', 's': '#e6b487', 'k': '#cc8f5e',
+    'E': '#2a1a12', 'm': '#a85040',
+    'U': '#f5d84a', 'u': '#e8c21e', 'v': '#bf9e10', 'N': '#5a3a00',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#e6b487', 'l': '#cc8f5e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '4', false);
 
-  // ── タイル: 草（明るい緑）16×16 ──
+  // ── イツキ（GK・背番号1・ティール/青緑ユニ・赤髪・GKグローブ）──
+  var itsuki = buildChar({
+    'O': '#0a2422',
+    'H': '#ff7a64', 'h': '#f05a44', 'g': '#d23a26',
+    'S': '#ffe0bd', 's': '#f0c79a', 'k': '#d99d6e',
+    'E': '#3a241a', 'm': '#b85c4a',
+    'U': '#2fc7bd', 'u': '#16a39a', 'v': '#0e7a73', 'N': '#ffffff',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#f0c79a', 'l': '#d99d6e',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+    'G': '#f2f2f7',
+  }, '1', true);
+
+  // ────────────────────────────────────────────────────────────
+  // タイル5種（各16×16）— なめらかな陰影・規則的で上品なテクスチャ
+  //   タイル境界が極端に目立たないよう端を揃える。
+  // ────────────────────────────────────────────────────────────
+
+  // ── t_grass（草原）控えめな縦グラデ＋点在しすぎない草葉 ──
   var t_grass = {
     palette: {
-      'G': '#4caf50',
-      'g': '#66bb6a',
-      'd': '#388e3c',
-      'f': '#2e7d32',
-      'F': '#81c784',
+      'a': '#5cba5f', // 最明（上）
+      'b': '#52b257',
+      'G': '#4caf50', // 基調
+      'c': '#46a04a',
+      'd': '#3f9444', // 影（下）
+      'l': '#6fc873', // 草葉ハイライト
     },
     map: [
-      'GGgGGGgGGGgGGGgG',
-      'GGGGdGGGGdGGGGdG',
-      'gGGGGGgGGGGGgGGG',
-      'GdGGGGGdGGGGGdGG',
-      'GGGfGGGGGfGGGGGf',
-      'GGGGGGGGGGGGGGGg',
-      'gGGGGgGGGGgGGGGG',
-      'GGGGGGGdGGGGGGdG',
-      'GGgGGGGGGgGGGGGG',
-      'GGGGfGGGGGGfGGGG',
-      'GdGGGGGGGGGGGdGG',
-      'GGGGGgGGGGgGGGGG',
-      'GGGGGGGGGfGGGGGf',
-      'gGGGdGGGGGGGdGGG',
+      'aaaaaaaaaaaaaaaa',
+      'aaaaaaaaaaaaaaaa',
+      'bbbbbbbbbbbbbbbb',
+      'bbbblbbbbbbbbbbb',
+      'GGGGGGGGGGGlGGGG',
       'GGGGGGGGGGGGGGGG',
-      'GGgGGgGGGGgGGgGG',
-    ]
-  };
-
-  // ── タイル: 土の道（茶）16×16 ──
-  var t_road = {
-    palette: {
-      'R': '#a0622a',
-      'r': '#b8783a',
-      'd': '#7a4a18',
-      'f': '#5a3210',
-      'F': '#c89060',
-    },
-    map: [
-      'RRrRRRrRRRrRRRrR',
-      'RRRRdRRRRdRRRRdR',
-      'rRRRRRrRRRRRrRRR',
-      'RdRRRRRdRRRRRdRR',
-      'RRRfRRRRRfRRRRRf',
-      'RRRRFRRRRFRRRRFr',
-      'rRRRRrRRRRrRRRRR',
-      'RRRRRRRdRRRRRRdR',
-      'RRrRRRRRRrRRRRRR',
-      'RRRRfRRRRRRfRRRR',
-      'RdRRRRRRRRRRRdRR',
-      'RRRRRrRRRRrRRRRR',
-      'RRRRRRRRRfRRRRRf',
-      'rRRRdRRRRRRRdRRR',
-      'RRRRRRRRRRRRRRRR',
-      'RRrRRrRRRRrRRrRR',
-    ]
-  };
-
-  // ── タイル: 石壁（グレー）16×16 ──
-  var t_wall = {
-    palette: {
-      'W': '#8a8a8a',
-      'w': '#aaaaaa',
-      'd': '#5a5a5a',
-      'f': '#3a3a3a',
-      'j': '#666666',
-    },
-    map: [
-      'wwwwwwwwwwwwwwww',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'wWWWWWWWwWWWWWWw',
-      'jjjjjjjjjjjjjjjj',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'wWWWWwWWWWWwWWWw',
-      'jjjjjjjjjjjjjjjj',
-      'wWWWWWWWwWWWWWWw',
+      'GGlGGGGGGGGGGGGG',
+      'GGGGGGGGGGGGGlGG',
+      'cccccccccccccccc',
+      'ccccccclcccccccc',
+      'cccccccccccccccc',
+      'ccccccccccclcccc',
+      'dddddddddddddddd',
+      'ddddlddddddddddd',
+      'dddddddddddddddd',
       'dddddddddddddddd',
     ]
   };
 
-  // ── タイル: 水（青）16×16 ──
-  var t_water = {
+  // ── t_road（土の道）暖かいベージュ茶＋小石数個 ──
+  var t_road = {
     palette: {
-      'W': '#1565c0',
-      'w': '#1e88e5',
-      'f': '#0d47a1',
-      'F': '#42a5f5',
-      'C': '#bbdefb',
+      'a': '#c79461', // 最明（上）
+      'b': '#bd8a55',
+      'R': '#b5824a', // 基調
+      'c': '#a8763f',
+      'd': '#9a6a37', // 影（下）
+      's': '#d8b48a', // 小石明
+      'o': '#8a5a2e', // 小石影
     },
     map: [
-      'WWWwWWWWWwWWWWwW',
-      'WwWWWWwWWWWWWWWW',
-      'WWWWWWWWwWWwWWWW',
-      'CCCCWWWWWWWWCCCC',
-      'WWWWWWWWWWWWWWwW',
-      'WfWWfWWWfWWWfWWW',
-      'WWWWWWwWWWWWWWWW',
-      'WwWWWWWWWwWWWWwW',
-      'WWWWCCCCWWWWCCCC',
-      'WWWWWWWWWWWwWWWW',
-      'WfWWWfWWWfWWWfWW',
-      'WWWWWWWWWWWWWWwW',
-      'WwWWWwWWWWWWWWWW',
-      'CCCCWWWWCCCCWWWW',
-      'WWWWWWWWWWWWWwWW',
-      'WfWWfWWWfWWWfWWW',
+      'aaaaaaaaaaaaaaaa',
+      'aaaaaaaaaaaaaaaa',
+      'bbbbbbbbbbbbbbbb',
+      'bbbbbbbbsobbbbbb',
+      'RRRRRRRRRRRRRRRR',
+      'RRRRRRRRRRRRRRRR',
+      'RRsoRRRRRRRRRRRR',
+      'RRRRRRRRRRRRRRRR',
+      'cccccccccccccccc',
+      'ccccccccccccsocc',
+      'cccccccccccccccc',
+      'cccccccccccccccc',
+      'dddddddddddddddd',
+      'ddddsodddddddddd',
+      'dddddddddddddddd',
+      'dddddddddddddddd',
     ]
   };
 
-  // ── タイル: 床（ベージュ）16×16 ──
-  var t_floor = {
+  // ── t_wall（石壁/レンガ）上辺ハイライト・下辺影で立体 ──
+  var t_wall = {
     palette: {
-      'B': '#d4b896',
-      'b': '#e8ccaa',
-      'd': '#b09070',
-      'f': '#8c6c50',
-      'j': '#c4a882',
+      'H': '#a8a8b0', // ハイライト
+      'W': '#8a8a92', // 石面
+      'd': '#6e6e76', // 影
+      'j': '#56565e', // 目地
     },
     map: [
-      'bBBBBBBBbBBBBBBb',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
+      'HHHHHHHjHHHHHHHj',
+      'WWWWWWWjWWWWWWWj',
+      'WWWWWWWjWWWWWWWj',
+      'dddddddjdddddddj',
       'jjjjjjjjjjjjjjjj',
-      'bBBBBBBBbBBBBBBb',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
-      'BBBBBBBBBBBBBBBj',
+      'HHHjHHHHHHHjHHHH',
+      'WWWjWWWWWWWjWWWW',
+      'WWWjWWWWWWWjWWWW',
+      'dddjdddddddjdddd',
       'jjjjjjjjjjjjjjjj',
+      'HHHHHHHjHHHHHHHj',
+      'WWWWWWWjWWWWWWWj',
+      'WWWWWWWjWWWWWWWj',
+      'dddddddjdddddddj',
+      'jjjjjjjjjjjjjjjj',
+      'HHHjHHHHHHHjHHHH',
+    ]
+  };
+
+  // ── t_water（水）横方向の波バンド＋柔らかい白ハイライト ──
+  var t_water = {
+    palette: {
+      'a': '#42a5f5', // 明バンド
+      'W': '#1e88e5', // 基調
+      'd': '#1769bb', // 影バンド
+      'C': '#bbdefb', // 白ハイライト
+    },
+    map: [
+      'WWWWWWWWWWWWWWWW',
+      'aaaaaaaaaaaaaaaa',
+      'WWWWWWWWWWWWWWWW',
+      'WWCCCWWWWWWCCCWW',
+      'WWWWWWWWWWWWWWWW',
+      'dddddddddddddddd',
+      'WWWWWWWWWWWWWWWW',
+      'aaaaaaaaaaaaaaaa',
+      'WWWWWWCCCWWWWWWW',
+      'WWWWWWWWWWWWWWWW',
+      'dddddddddddddddd',
+      'WWWWWWWWWWWWWWWW',
+      'aaaaaaaaaaaaaaaa',
+      'WWCCCWWWWWWCCCWW',
+      'WWWWWWWWWWWWWWWW',
+      'dddddddddddddddd',
+    ]
+  };
+
+  // ── t_floor（室内の床/木）落ち着いた木目・継ぎ目控えめ ──
+  var t_floor = {
+    palette: {
+      'a': '#caa97e', // 板明
+      'B': '#bb9a6f', // 板基調
+      'c': '#ab8a60', // 板影
+      'g': '#caa97e', // 木目筋（明）
+      'j': '#8c6c4a', // 継ぎ目
+    },
+    map: [
+      'aaaaaaaaaaaaaaaa',
+      'BBBBBBBBBBBBBBBB',
+      'BBBBgBBBBBBBBBBB',
+      'BBBBBBBBBBBgBBBB',
+      'cccccccccccccccc',
+      'jjjjjjjjjjjjjjjj',
+      'aaaaaaaaaaaaaaaa',
+      'BBBBBBBBBgBBBBBB',
+      'BBgBBBBBBBBBBBBB',
+      'BBBBBBBBBBBBBgBB',
+      'cccccccccccccccc',
+      'jjjjjjjjjjjjjjjj',
+      'aaaaaaaaaaaaaaaa',
+      'BBBBBBgBBBBBBBBB',
+      'BBBBBBBBBBBBBBBB',
+      'cccccccccccccccc',
     ]
   };
 
@@ -917,8 +846,8 @@ function deserialize(str) {
 // 仮想解像度キャンバス & スケーリング
 // window/document はすべて関数内でのみアクセスする（Node require 対応）
 
-var VW = 240;
-var VH = 320;
+var VW = 288;
+var VH = 512;
 
 var _ctx = null;
 var _canvasEl = null;
@@ -1022,57 +951,109 @@ function drawTileMap(ctx, grid, tileSprites, tileSize, offsetX, offsetY) {
  * @param {string} str
  * @param {number} x
  * @param {number} y
- * @param {Object} [opts]  { size: number, color: string, align: string }
+ * @param {Object} [opts]  { size, color, align, shadow:boolean, weight:string }
  */
 function drawText(ctx, str, x, y, opts) {
   opts = opts || {};
-  var size  = opts.size  || 12;
-  var color = opts.color || '#ffffff';
-  var align = opts.align || 'left';
-  ctx.font          = size + 'px "Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",sans-serif';
+  var size   = opts.size  || 12;
+  var color  = opts.color || '#ffffff';
+  var align  = opts.align || 'left';
+  var weight = opts.weight ? (opts.weight + ' ') : '';
+  ctx.font          = weight + size + 'px "Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",sans-serif';
   ctx.textBaseline  = 'top';
   ctx.textAlign     = align;
+  // 影（任意）: 1px 右下にずらして先に描く
+  if (opts.shadow) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillText(str, x + 1, y + 1);
+  }
   ctx.fillStyle     = color;
   ctx.fillText(str, x, y);
 }
 
 /**
- * drawWindow: ドラクエ風メッセージ枠を描画する
+ * drawShadow: キャラ足元の楕円影（接地感）
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} cx  中心X
+ * @param {number} cy  中心Y
+ * @param {number} rx  横半径
+ * @param {number} ry  縦半径
+ */
+function drawShadow(ctx, cx, cy, rx, ry) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  if (ctx.ellipse) {
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  } else {
+    // ellipse 非対応環境: scale で円を楕円化
+    ctx.translate(cx, cy);
+    ctx.scale(1, ry / rx);
+    ctx.arc(0, 0, rx, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.restore();
+}
+
+/**
+ * _rectPath: 角丸（roundRect 非対応環境は通常矩形）でパスを切る内部ヘルパ
+ */
+function _rectPath(ctx, x, y, w, h, radius) {
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, w, h, radius);
+  } else {
+    ctx.rect(x, y, w, h);
+  }
+}
+
+/**
+ * drawWindow: 今風のパネル枠を描画する
+ *  - ドロップシャドウ / 縦グラデ本体 / アクセント枠線 / 上辺ハイライト
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} x
  * @param {number} y
  * @param {number} w
  * @param {number} h
- * @param {Object} [opts]  { fill: string, border: string, radius: number }
+ * @param {Object} [opts]  { radius:10, border:'#5ec8ff', fill?:string }
  */
 function drawWindow(ctx, x, y, w, h, opts) {
   opts = opts || {};
-  var fill   = opts.fill   || '#0a1230';
-  var border = opts.border || '#ffffff';
-  var radius = (opts.radius !== undefined) ? opts.radius : 6;
+  var radius = (opts.radius !== undefined) ? opts.radius : 10;
+  var border = opts.border || '#5ec8ff';
 
   ctx.save();
 
-  // 塗り
-  ctx.fillStyle = fill;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, radius);
-    ctx.fill();
-  } else {
-    ctx.fillRect(x, y, w, h);
-  }
+  // 1. ドロップシャドウ（本体より +3px 右下）
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  _rectPath(ctx, x + 3, y + 3, w, h, radius);
+  ctx.fill();
 
-  // 枠線
+  // 2. 本体塗り（opts.fill があればベタ、無ければ縦グラデ）
+  if (opts.fill) {
+    ctx.fillStyle = opts.fill;
+  } else {
+    var grad = ctx.createLinearGradient(x, y, x, y + h);
+    grad.addColorStop(0, 'rgba(30,34,58,0.95)');
+    grad.addColorStop(1, 'rgba(16,18,34,0.97)');
+    ctx.fillStyle = grad;
+  }
+  _rectPath(ctx, x, y, w, h, radius);
+  ctx.fill();
+
+  // 3. 枠線（2px アクセント色）
   ctx.strokeStyle = border;
   ctx.lineWidth   = 2;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, radius);
-    ctx.stroke();
-  } else {
-    ctx.strokeRect(x, y, w, h);
-  }
+  _rectPath(ctx, x, y, w, h, radius);
+  ctx.stroke();
+
+  // 4. 上辺内側の 1px ハイライト
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y + 1.5);
+  ctx.lineTo(x + w - radius, y + 1.5);
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -1085,6 +1066,812 @@ function drawWindow(ctx, x, y, w, h, opts) {
   drawTileMap: drawTileMap,
   drawText:    drawText,
   drawWindow:  drawWindow,
+  drawShadow:  drawShadow,
 });
+
+// === src/engine/input.js ===
+// === input.js ===
+// 仮想十字キー＋決定/キャンセル ＆ キーボード を統一入力に変換する
+// window/document はすべて関数内でのみアクセスする（Node require 対応）
+
+var VW = 288;
+var VH = 512;
+
+// --- 仮想パッドのボタン矩形（位置・サイズの単一の真実：当たり判定と描画で共有） ---
+// 十字キーは画面左下、決定/キャンセルは右下。各ボタンは指で押しやすい大きさ。
+var DPAD_CX = 80;   // 十字キー中心X（左ボタンが画面左端に収まるよう DPAD_BTN*1.5=75 以上）
+var DPAD_CY = 432;  // 十字キー中心Y
+var DPAD_BTN = 50;  // 各方向ボタンの一辺（≒直径）
+var ACT_R = 27;     // 決定/キャンセルボタンの半径
+var BTN_DEFS = {
+  up:    { type: 'rect', x: DPAD_CX - DPAD_BTN / 2,         y: DPAD_CY - DPAD_BTN * 1.5, w: DPAD_BTN, h: DPAD_BTN },
+  down:  { type: 'rect', x: DPAD_CX - DPAD_BTN / 2,         y: DPAD_CY + DPAD_BTN / 2,   w: DPAD_BTN, h: DPAD_BTN },
+  left:  { type: 'rect', x: DPAD_CX - DPAD_BTN * 1.5,       y: DPAD_CY - DPAD_BTN / 2,   w: DPAD_BTN, h: DPAD_BTN },
+  right: { type: 'rect', x: DPAD_CX + DPAD_BTN / 2,         y: DPAD_CY - DPAD_BTN / 2,   w: DPAD_BTN, h: DPAD_BTN },
+  confirm: { type: 'circle', cx: VW - 48, cy: 440, r: ACT_R, label: 'けってい' },
+  cancel:  { type: 'circle', cx: VW - 104, cy: 410, r: ACT_R, label: 'もどる' },
+};
+var DIR_KEYS = ['up', 'down', 'left', 'right'];
+
+// --- 入力状態 ---
+function _blankState() {
+  return { up: false, down: false, left: false, right: false, confirm: false, cancel: false };
+}
+
+var _canvasEl = null;
+var _held = _blankState();      // 現在押されている状態（タッチ or キーボードの OR）
+var _touchHeld = _blankState(); // タッチ由来の押下
+var _keyHeld = _blankState();   // キーボード由来の押下
+var _prevHeld = _blankState();  // 前フレームの held（エッジ算出用）
+var _inited = false;
+
+function _mergeHeld() {
+  _held.up = _touchHeld.up || _keyHeld.up;
+  _held.down = _touchHeld.down || _keyHeld.down;
+  _held.left = _touchHeld.left || _keyHeld.left;
+  _held.right = _touchHeld.right || _keyHeld.right;
+  _held.confirm = _touchHeld.confirm || _keyHeld.confirm;
+  _held.cancel = _touchHeld.cancel || _keyHeld.cancel;
+}
+
+// クライアント座標 → 仮想座標（0..VW × 0..VH）
+function _toVirtual(clientX, clientY) {
+  if (!_canvasEl || !_canvasEl.getBoundingClientRect) return { x: -1, y: -1 };
+  var rect = _canvasEl.getBoundingClientRect();
+  if (!rect.width || !rect.height) return { x: -1, y: -1 };
+  return {
+    x: (clientX - rect.left) * (VW / rect.width),
+    y: (clientY - rect.top) * (VH / rect.height),
+  };
+}
+
+// 仮想座標がどのボタンに当たるか（複数当たれば最初の一つ）
+function _hitButton(vx, vy) {
+  for (var key in BTN_DEFS) {
+    if (!Object.prototype.hasOwnProperty.call(BTN_DEFS, key)) continue;
+    var b = BTN_DEFS[key];
+    if (b.type === 'rect') {
+      if (vx >= b.x && vx <= b.x + b.w && vy >= b.y && vy <= b.y + b.h) return key;
+    } else {
+      var dx = vx - b.cx;
+      var dy = vy - b.cy;
+      if (dx * dx + dy * dy <= b.r * b.r) return key;
+    }
+  }
+  return null;
+}
+
+// 全タッチ点を見て _touchHeld を作り直す（複数指の簡易対応）
+function _updateTouches(touchList) {
+  var next = _blankState();
+  for (var i = 0; i < touchList.length; i++) {
+    var t = touchList[i];
+    var v = _toVirtual(t.clientX, t.clientY);
+    var key = _hitButton(v.x, v.y);
+    if (key) next[key] = true;
+  }
+  _touchHeld = next;
+  _mergeHeld();
+}
+
+function _onTouch(e) {
+  if (e.preventDefault) e.preventDefault();
+  _updateTouches(e.touches || []);
+}
+
+function _keyToInput(key) {
+  switch (key) {
+    case 'ArrowUp': case 'Up': return 'up';
+    case 'ArrowDown': case 'Down': return 'down';
+    case 'ArrowLeft': case 'Left': return 'left';
+    case 'ArrowRight': case 'Right': return 'right';
+    case 'Enter': case ' ': case 'Spacebar': return 'confirm';
+    case 'Escape': case 'Esc': case 'Backspace': return 'cancel';
+    default: return null;
+  }
+}
+
+function _onKeyDown(e) {
+  var k = _keyToInput(e.key);
+  if (!k) return;
+  if (e.preventDefault) e.preventDefault();
+  _keyHeld[k] = true;
+  _mergeHeld();
+}
+
+function _onKeyUp(e) {
+  var k = _keyToInput(e.key);
+  if (!k) return;
+  _keyHeld[k] = false;
+  _mergeHeld();
+}
+
+function initInput(canvasEl) {
+  _canvasEl = canvasEl;
+  if (_inited) return;
+  if (typeof window === 'undefined') return;
+  var opts = { passive: false };
+  if (canvasEl && canvasEl.addEventListener) {
+    canvasEl.addEventListener('touchstart', _onTouch, opts);
+    canvasEl.addEventListener('touchmove', _onTouch, opts);
+    canvasEl.addEventListener('touchend', _onTouch, opts);
+    canvasEl.addEventListener('touchcancel', _onTouch, opts);
+  }
+  window.addEventListener('keydown', _onKeyDown);
+  window.addEventListener('keyup', _onKeyUp);
+  _inited = true;
+}
+
+// メインループから毎フレーム呼ぶ。{held, pressed} を返す。
+// pressed = 今フレームで新たに押された（前フレームでは押されていなかった）エッジ。
+function pollInput() {
+  var pressed = {
+    up: _held.up && !_prevHeld.up,
+    down: _held.down && !_prevHeld.down,
+    left: _held.left && !_prevHeld.left,
+    right: _held.right && !_prevHeld.right,
+    confirm: _held.confirm && !_prevHeld.confirm,
+    cancel: _held.cancel && !_prevHeld.cancel,
+  };
+  var held = {
+    up: _held.up, down: _held.down, left: _held.left,
+    right: _held.right, confirm: _held.confirm, cancel: _held.cancel,
+  };
+  // 次フレームのエッジ算出のため前フレーム状態を更新
+  _prevHeld = {
+    up: _held.up, down: _held.down, left: _held.left,
+    right: _held.right, confirm: _held.confirm, cancel: _held.cancel,
+  };
+  return { held: held, pressed: pressed };
+}
+
+// --- 描画 ---
+function _drawDirButton(ctx, key, label) {
+  var b = BTN_DEFS[key];
+  var active = _held[key];
+  var fill = active ? 'rgba(94,200,255,0.55)' : 'rgba(40,46,72,0.85)';
+  var border = active ? '#bff0ff' : '#5ec8ff';
+  ctx.save();
+  ctx.fillStyle = fill;
+  ctx.strokeStyle = border;
+  ctx.lineWidth = 2;
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(b.x, b.y, b.w, b.h, 10);
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.strokeRect(b.x, b.y, b.w, b.h);
+  }
+  // 矢印グリフ
+  ctx.fillStyle = active ? '#0b0b12' : '#dff4ff';
+  ctx.font = '20px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, b.x + b.w / 2, b.y + b.h / 2 + 1);
+  ctx.restore();
+}
+
+function _drawActButton(ctx, key) {
+  var b = BTN_DEFS[key];
+  var active = _held[key];
+  var base = key === 'confirm' ? '#4caf50' : '#e0556b';
+  var hi = key === 'confirm' ? '#a5ffb0' : '#ffb3c0';
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(b.cx, b.cy, b.r, 0, Math.PI * 2);
+  ctx.fillStyle = active ? hi : base;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.stroke();
+  ctx.fillStyle = active ? '#0b0b12' : '#ffffff';
+  ctx.font = '11px "Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(b.label, b.cx, b.cy + 1);
+  ctx.restore();
+}
+
+// 仮想座標で画面下部に十字キー＋決定/キャンセルを描画。押下中はハイライト。
+function drawPad(ctx) {
+  if (!ctx) return;
+  _drawDirButton(ctx, 'up', '▲');
+  _drawDirButton(ctx, 'down', '▼');
+  _drawDirButton(ctx, 'left', '◀');
+  _drawDirButton(ctx, 'right', '▶');
+  _drawActButton(ctx, 'confirm');
+  _drawActButton(ctx, 'cancel');
+}
+
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, {
+  initInput: initInput,
+  pollInput: pollInput,
+  drawPad: drawPad,
+});
+
+// === src/engine/scene.js ===
+// === scene.js ===
+// シーンスタック。シーンは {update(dt,input), draw(ctx), onEnter?(), onExit?()} のダックタイプ。
+// window/document はすべて関数内でのみアクセスする（Node require 対応）
+
+var _stack = [];
+
+function pushScene(scene) {
+  if (!scene) return;
+  _stack.push(scene);
+  if (typeof scene.onEnter === 'function') scene.onEnter();
+}
+
+function popScene() {
+  var scene = _stack.pop();
+  if (scene && typeof scene.onExit === 'function') scene.onExit();
+  return scene || null;
+}
+
+function replaceScene(scene) {
+  popScene();
+  pushScene(scene);
+}
+
+function currentScene() {
+  return _stack.length ? _stack[_stack.length - 1] : null;
+}
+
+// 一番上のシーンだけ更新する。
+function updateScenes(dt, input) {
+  var top = currentScene();
+  if (top && typeof top.update === 'function') top.update(dt, input);
+}
+
+// 一番上のシーンを描画する。transparent フラグを持つシーンは下も描く（軽い拡張）。
+function drawScenes(ctx) {
+  if (!_stack.length) return;
+  // 不透明な最下層を探す（透明なシーンが重なっていれば下から描く）
+  var start = _stack.length - 1;
+  while (start > 0 && _stack[start].transparent) start--;
+  for (var i = start; i < _stack.length; i++) {
+    var s = _stack[i];
+    if (s && typeof s.draw === 'function') s.draw(ctx);
+  }
+}
+
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, {
+  pushScene: pushScene,
+  popScene: popScene,
+  replaceScene: replaceScene,
+  currentScene: currentScene,
+  updateScenes: updateScenes,
+  drawScenes: drawScenes,
+});
+
+// === src/engine/storage.js ===
+// === storage.js ===
+// localStorage + save.js のラッパ。
+// save.js の関数は Node なら require、ブラウザなら window.SRPG から取得（二刀流）。
+// localStorage が無い環境（Node）でも落ちないようガードする。
+
+var _save = (typeof require !== 'undefined')
+  ? require('../logic/save.js')
+  : (typeof window !== 'undefined' && window.SRPG ? window.SRPG : null);
+
+var SAVE_KEY = 'srpg_save';
+
+// 利用可能なら localStorage を返す。無い／例外なら null。
+function _ls() {
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage) return localStorage;
+  } catch (e) { /* セキュリティ設定等でアクセス不可 */ }
+  return null;
+}
+
+// state を保存。成功 true / 失敗 false。
+function saveGame(state) {
+  var ls = _ls();
+  if (!ls || !_save || !_save.serialize) return false;
+  try {
+    ls.setItem(SAVE_KEY, _save.serialize(state));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+// 保存済み state を返す。無ければ null。
+function loadGame() {
+  var ls = _ls();
+  if (!ls || !_save || !_save.deserialize) return null;
+  try {
+    var str = ls.getItem(SAVE_KEY);
+    if (str == null) return null;
+    return _save.deserialize(str);
+  } catch (e) {
+    return null;
+  }
+}
+
+// セーブが存在するか。
+function hasSave() {
+  var ls = _ls();
+  if (!ls) return false;
+  try {
+    return ls.getItem(SAVE_KEY) != null;
+  } catch (e) {
+    return false;
+  }
+}
+
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, {
+  saveGame: saveGame,
+  loadGame: loadGame,
+  hasSave: hasSave,
+  SAVE_KEY: SAVE_KEY,
+});
+
+// === src/scenes/dialog.js ===
+// === dialog.js ===
+// メッセージウィンドウ（タイプライター文字送り・ページ送り対応のモーダルシーン）。
+// window/document は draw 内でのみアクセスし、Node require でも副作用ゼロ。
+
+// ── 純粋ロジック（テスト対象） ──────────────────────────────────────
+
+/**
+ * wrapText: 文字列を最大文字数で折り返す。
+ * '\n' で先に分割し、各行を maxCharsPerLine 文字で詰める。
+ * @param {string} str
+ * @param {number} maxCharsPerLine
+ * @returns {string[]}
+ */
+function wrapText(str, maxCharsPerLine) {
+  var lines = str.split('\n');
+  var result = [];
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    if (line.length === 0) {
+      result.push('');
+      continue;
+    }
+    var pos = 0;
+    while (pos < line.length) {
+      result.push(line.slice(pos, pos + maxCharsPerLine));
+      pos += maxCharsPerLine;
+    }
+  }
+  return result;
+}
+
+/**
+ * DialogState: dialog の純粋ロジック状態。draw 不要な部分だけを分離。
+ * update(dt, pressedConfirm) → { done: bool, changed: bool }
+ */
+function createDialogState(pages) {
+  var _pages       = pages || [''];
+  var _pageIndex   = 0;       // 現在のページ番号
+  var _charIndex   = 0;       // 表示済み文字数（現在ページ内）
+  var _elapsed     = 0;       // 文字送り用タイマー
+  var _done        = false;
+  var CHARS_PER_SEC = 45;     // 文字送り速度
+
+  function _currentPage() { return _pages[_pageIndex] || ''; }
+  function _isLastPage()  { return _pageIndex >= _pages.length - 1; }
+  function _isFullyShown(){ return _charIndex >= _currentPage().length; }
+
+  function update(dt, pressedConfirm) {
+    if (_done) return { done: true, changed: false };
+
+    // 文字送り（確定押されていない間）
+    if (!pressedConfirm) {
+      _elapsed += dt;
+      var newChars = Math.floor(_elapsed * CHARS_PER_SEC);
+      if (newChars > _charIndex) {
+        _charIndex = Math.min(newChars, _currentPage().length);
+      }
+      return { done: false, changed: false };
+    }
+
+    // confirm が押された
+    if (!_isFullyShown()) {
+      // 送り途中 → 全部表示
+      _charIndex = _currentPage().length;
+      return { done: false, changed: false };
+    }
+
+    // 全部表示済み → 次ページへ or 完了
+    if (!_isLastPage()) {
+      _pageIndex++;
+      _charIndex = 0;
+      _elapsed   = 0;
+      return { done: false, changed: true };
+    }
+
+    // 最終ページで confirm → 完了
+    _done = true;
+    return { done: true, changed: false };
+  }
+
+  function getVisibleText() {
+    return _currentPage().slice(0, _charIndex);
+  }
+
+  function isDone() { return _done; }
+  function isPageComplete() { return _isFullyShown(); }
+
+  return {
+    update: update,
+    getVisibleText: getVisibleText,
+    isDone: isDone,
+    isPageComplete: isPageComplete,
+  };
+}
+
+// ── シーンファクトリ ────────────────────────────────────────────────
+
+/**
+ * createDialog: メッセージウィンドウシーンを生成して返す。
+ * @param {string[]} pages   1要素＝1ページの本文（'\n' 含んでよい）
+ * @param {Object}  [opts]   { onComplete: function }
+ * @returns シーンオブジェクト { transparent, update, draw, isDone }
+ */
+function createDialog(pages, opts) {
+  opts = opts || {};
+  var state   = createDialogState(pages);
+  var _popped = false;
+
+  // ウィンドウの仮想座標（仮想解像度 288×512）
+  // 仮想パッド（input.js）は画面下部 y≈357〜507 を占有するため、
+  // メッセージ窓はその上に収める。winY = VH - 287 = 225、窓底 345 でパッド上端 357 と衝突しない。
+  var WIN_X = 12;
+  var WIN_Y_OFFSET = 287; // VH - この値（パッドの上に窓を置く）
+  var WIN_W = 264;        // VW - 24
+  var WIN_H = 120;
+  var PAD_X = 12;         // ウィンドウ内パディング
+  var PAD_Y = 10;
+  var FONT_SIZE = 14;
+  var LINE_H   = 20;
+  var MAX_CHARS_PER_LINE = 17; // 264px ÷ 約14px/字（日本語等幅換算）
+
+  return {
+    transparent: true,
+
+    update: function (dt, input) {
+      if (_popped) return;
+      var result = state.update(dt, !!(input && input.pressed && input.pressed.confirm));
+      if (result.done && !_popped) {
+        _popped = true;
+        // 先に pop、その後 onComplete（onComplete が push しても破綻しない）
+        if (typeof window !== 'undefined' && window.SRPG && typeof window.SRPG.popScene === 'function') {
+          window.SRPG.popScene();
+        }
+        if (typeof opts.onComplete === 'function') opts.onComplete();
+      }
+    },
+
+    draw: function (ctx) {
+      var S = (typeof window !== 'undefined') ? window.SRPG : null;
+      if (!S) return;
+      var VH = S.VH;
+      var winY = VH - WIN_Y_OFFSET;
+
+      // ウィンドウ枠
+      S.drawWindow(ctx, WIN_X, winY, WIN_W, WIN_H, {
+        radius: 8,
+        border: '#5ec8ff',
+      });
+
+      // テキスト折り返し・描画
+      var visible = state.getVisibleText();
+      var wrapped = wrapText(visible, MAX_CHARS_PER_LINE);
+      for (var i = 0; i < wrapped.length; i++) {
+        S.drawText(ctx, wrapped[i], WIN_X + PAD_X, winY + PAD_Y + i * LINE_H, {
+          size: FONT_SIZE,
+          color: '#dff4ff',
+        });
+      }
+
+      // ページ送り促進インジケーター（▼）― 現在ページを全文表示済みかつ未完了のとき右下に点滅
+      if (state.isPageComplete() && !state.isDone()) {
+        var blink = Math.floor(Date.now() / 400) % 2 === 0;
+        if (blink) {
+          S.drawText(ctx, '▼', WIN_X + WIN_W - PAD_X - 12, winY + WIN_H - 18, {
+            size: 12,
+            color: '#5ec8ff',
+          });
+        }
+      }
+    },
+
+    isDone: function () { return state.isDone(); },
+
+    // テスト用: 内部 state を公開（Node テストのみ利用）
+    _state: state,
+  };
+}
+
+// ── UMD エクスポート ──────────────────────────────────────────────────
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, {
+  createDialog:      createDialog,
+  wrapText:          wrapText,
+  createDialogState: createDialogState,
+});
+
+// === src/scenes/title-scene.js ===
+// === title-scene.js ===
+// タイトル画面シーン。「はじめから」「つづきから」を選択して冒険へ。
+// window/document はすべて関数内でのみアクセスし、Node require でも副作用ゼロ。
+
+/**
+ * _createStubScene: フィールドシーン（Task10）が未実装の間の仮代用シーン。
+ */
+function _createStubScene(state) {
+  return {
+    update: function (dt, input) {
+      if (input && input.pressed && input.pressed.cancel) {
+        if (typeof window !== 'undefined' && window.SRPG) {
+          window.SRPG.replaceScene(createTitleScene());
+        }
+      }
+    },
+    draw: function (ctx) {
+      var S = (typeof window !== 'undefined') ? window.SRPG : null;
+      if (!S) return;
+      ctx.fillStyle = '#13203a';
+      ctx.fillRect(0, 0, S.VW, S.VH);
+      S.drawText(ctx, 'ぼうけんのはじまり！', S.VW / 2, S.VH / 2 - 40, {
+        size: 20, color: '#ffd76e', align: 'center', shadow: true, weight: 'bold',
+      });
+      S.drawText(ctx, '（フィールドは Task10 でつくるよ）', S.VW / 2, S.VH / 2, {
+        size: 13, color: '#aaccff', align: 'center',
+      });
+      S.drawText(ctx, '「もどる」で タイトルへ', S.VW / 2, S.VH / 2 + 30, {
+        size: 13, color: '#aaaaaa', align: 'center',
+      });
+    },
+  };
+}
+
+/**
+ * _startGame: フィールドシーン or スタブへ遷移する。
+ * Task10 で field-scene.js が追加されれば自動的にフィールドへ遷移する。
+ */
+function _startGame(state) {
+  if (typeof window !== 'undefined' && window.SRPG) {
+    var S = window.SRPG;
+    if (typeof S.createFieldScene === 'function') {
+      S.replaceScene(S.createFieldScene(state));
+    } else {
+      S.replaceScene(_createStubScene(state));
+    }
+  }
+}
+
+/**
+ * createTitleScene: タイトル画面シーンを生成して返す。
+ * @returns シーンオブジェクト { update, draw }
+ */
+function createTitleScene() {
+  // 選択項目: 0=はじめから, 1=つづきから
+  var _cursor = 0; // 現在のカーソル位置
+  var _time   = 0; // アニメーション用タイマー
+
+  // 選択可能な項目インデックスの配列を動的に返す（セーブ無しは「はじめから」のみ）
+  function _selectableItems() {
+    var S = (typeof window !== 'undefined') ? window.SRPG : null;
+    var hasSave = S && typeof S.hasSave === 'function' && S.hasSave();
+    return hasSave ? [0, 1] : [0];
+  }
+
+  return {
+    update: function (dt, input) {
+      _time += dt;
+      if (!input || !input.pressed) return;
+      var pr = input.pressed;
+      var selectable = _selectableItems();
+
+      // 上下でカーソル移動（選択可能項目だけを巡回）
+      if (pr.up || pr.down) {
+        var idx = selectable.indexOf(_cursor);
+        if (pr.down) idx = (idx + 1) % selectable.length;
+        if (pr.up)   idx = (idx - 1 + selectable.length) % selectable.length;
+        _cursor = selectable[idx];
+      }
+
+      // 決定
+      if (pr.confirm) {
+        var S = (typeof window !== 'undefined') ? window.SRPG : null;
+        if (!S) return;
+
+        if (_cursor === 0) {
+          // はじめから
+          var newState = S.createNewGame();
+          S.saveGame(newState);
+          // 導入ダイアログを push（onComplete でゲーム開始）
+          S.pushScene(S.createDialog(
+            [
+              'ユイトは サッカーが だいすきな 9さいの しょうねん。',
+              'ある日、町の たからもの「黄金のサッカーボール」が ぬすまれた！',
+              'ユイトの ぼうけんが はじまる！',
+            ],
+            {
+              onComplete: function () { _startGame(newState); },
+            }
+          ));
+
+        } else if (_cursor === 1) {
+          // つづきから
+          var saved = S.loadGame();
+          if (saved) {
+            _startGame(saved);
+          }
+        }
+      }
+    },
+
+    draw: function (ctx) {
+      var S = (typeof window !== 'undefined') ? window.SRPG : null;
+      if (!S) return;
+      var VW = S.VW;
+      var VH = S.VH;
+
+      // ── 背景（濃紺グラデ） ─────────────────────────────────────────
+      var grad = ctx.createLinearGradient(0, 0, 0, VH);
+      grad.addColorStop(0, '#0a0e1c');
+      grad.addColorStop(1, '#0e1830');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, VW, VH);
+
+      // ── 星の装飾（シンプルドット） ────────────────────────────────
+      // 固定シードで擬似ランダムな星を描く（毎フレーム同じ位置）
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      var stars = [
+        [30,20],[80,40],[150,15],[220,35],[260,18],
+        [50,60],[190,55],[240,70],[100,80],[170,90],
+        [20,100],[270,105],[140,50],[60,130],[200,120],
+      ];
+      for (var si = 0; si < stars.length; si++) {
+        ctx.fillRect(stars[si][0], stars[si][1], 1, 1);
+      }
+
+      // ── タイトルロゴ ──────────────────────────────────────────────
+      var logoY = 50;
+      S.drawText(ctx, 'ユイトと黄金の', VW / 2, logoY, {
+        size: 24, color: '#ffd76e', align: 'center', shadow: true, weight: 'bold',
+      });
+      S.drawText(ctx, 'サッカーボール', VW / 2, logoY + 32, {
+        size: 24, color: '#ffd76e', align: 'center', shadow: true, weight: 'bold',
+      });
+
+      // ── ユイトのスプライト（ロゴ下） ──────────────────────────────
+      if (S.SPRITES && S.SPRITES.yuito) {
+        var spriteScale = 4;
+        // スプライトのサイズ（16×16前提）でセンタリング
+        var spriteW = S.SPRITES.yuito.map[0].length * spriteScale;
+        var spriteX = Math.floor((VW - spriteW) / 2);
+        var spriteY = logoY + 72;
+        S.drawShadow(ctx, VW / 2, spriteY + S.SPRITES.yuito.map.length * spriteScale + 4, 20, 5);
+        S.drawSprite(ctx, S.SPRITES.yuito, spriteX, spriteY, spriteScale);
+      }
+
+      // ── メニュー ──────────────────────────────────────────────────
+      var menuStartY = 280;
+      var menuItems  = [
+        { label: 'はじめから', idx: 0 },
+        { label: 'つづきから', idx: 1 },
+      ];
+      var hasSave = typeof S.hasSave === 'function' && S.hasSave();
+
+      // メニュー背景ウィンドウ
+      S.drawWindow(ctx, VW / 2 - 80, menuStartY - 12, 160, 80, {
+        radius: 10,
+        border: '#3a5a8a',
+      });
+
+      for (var mi = 0; mi < menuItems.length; mi++) {
+        var item  = menuItems[mi];
+        var itemY = menuStartY + mi * 36;
+        var isSelected = _cursor === item.idx;
+        var isEnabled  = (item.idx === 0) || hasSave;
+
+        // テキスト色
+        var color = isEnabled ? '#dff4ff' : '#556677';
+        if (isSelected && isEnabled) color = '#ffffff';
+
+        // カーソル（▶ または ハイライト）
+        if (isSelected && isEnabled) {
+          // 点滅カーソル
+          var blink = Math.floor(_time / 0.5) % 2 === 0;
+          if (blink) {
+            S.drawText(ctx, '▶', VW / 2 - 56, itemY + 2, {
+              size: 16, color: '#ffd76e', align: 'left',
+            });
+          }
+        }
+
+        S.drawText(ctx, item.label, VW / 2, itemY, {
+          size: 18, color: color, align: 'center', shadow: isSelected && isEnabled,
+        });
+      }
+
+      // ── バージョン表示 ────────────────────────────────────────────
+      S.drawText(ctx, 'ver 0.1', 4, VH - 20, {
+        size: 10, color: '#445566', align: 'left',
+      });
+    },
+  };
+}
+
+// ── UMD エクスポート ────────────────────────────────────────────────
+(function (root, api) {
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
+})(typeof window !== 'undefined' ? window : globalThis, {
+  createTitleScene: createTitleScene,
+});
+
+// === src/main.js ===
+// === main.js ===
+// 起動エントリ。window がある時だけ動く（Node で読まれても副作用ゼロ）。
+// canvas#game → initCanvas → initInput → タイトルシーン push → rAF ループ。
+
+(function () {
+  if (typeof window === 'undefined') return; // Node では何もしない
+
+  function start() {
+    var S = window.SRPG;
+    var canvas = document.getElementById('game');
+    if (!canvas) {
+      console.error('[main] canvas#game が見つかりません');
+      return;
+    }
+
+    S.initCanvas(canvas);
+    S.initInput(canvas);
+
+    // タイトル画面からゲームを開始する（Task9 〜）
+    S.pushScene(S.createTitleScene());
+
+    var last = (typeof performance !== 'undefined' && performance.now)
+      ? performance.now() : Date.now();
+
+    function frame(now) {
+      var dt = (now - last) / 1000;
+      if (dt > 0.1) dt = 0.1; // 大きなフレーム飛びを抑制
+      last = now;
+
+      var input = S.pollInput();
+
+      S.updateScenes(dt, input);
+
+      var ctx = S.getCtx();
+      if (ctx) {
+        ctx.clearRect(0, 0, S.VW, S.VH);
+        S.drawScenes(ctx);
+        S.drawPad(ctx); // パッドは最前面
+      }
+
+      window.requestAnimationFrame(frame);
+    }
+
+    window.requestAnimationFrame(frame);
+  }
+
+  if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
 
 </script></body></html>

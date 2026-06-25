@@ -55,57 +55,109 @@ function drawTileMap(ctx, grid, tileSprites, tileSize, offsetX, offsetY) {
  * @param {string} str
  * @param {number} x
  * @param {number} y
- * @param {Object} [opts]  { size: number, color: string, align: string }
+ * @param {Object} [opts]  { size, color, align, shadow:boolean, weight:string }
  */
 function drawText(ctx, str, x, y, opts) {
   opts = opts || {};
-  var size  = opts.size  || 12;
-  var color = opts.color || '#ffffff';
-  var align = opts.align || 'left';
-  ctx.font          = size + 'px "Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",sans-serif';
+  var size   = opts.size  || 12;
+  var color  = opts.color || '#ffffff';
+  var align  = opts.align || 'left';
+  var weight = opts.weight ? (opts.weight + ' ') : '';
+  ctx.font          = weight + size + 'px "Hiragino Maru Gothic ProN","Hiragino Kaku Gothic ProN",sans-serif';
   ctx.textBaseline  = 'top';
   ctx.textAlign     = align;
+  // 影（任意）: 1px 右下にずらして先に描く
+  if (opts.shadow) {
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillText(str, x + 1, y + 1);
+  }
   ctx.fillStyle     = color;
   ctx.fillText(str, x, y);
 }
 
 /**
- * drawWindow: ドラクエ風メッセージ枠を描画する
+ * drawShadow: キャラ足元の楕円影（接地感）
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} cx  中心X
+ * @param {number} cy  中心Y
+ * @param {number} rx  横半径
+ * @param {number} ry  縦半径
+ */
+function drawShadow(ctx, cx, cy, rx, ry) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  if (ctx.ellipse) {
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  } else {
+    // ellipse 非対応環境: scale で円を楕円化
+    ctx.translate(cx, cy);
+    ctx.scale(1, ry / rx);
+    ctx.arc(0, 0, rx, 0, Math.PI * 2);
+  }
+  ctx.fill();
+  ctx.restore();
+}
+
+/**
+ * _rectPath: 角丸（roundRect 非対応環境は通常矩形）でパスを切る内部ヘルパ
+ */
+function _rectPath(ctx, x, y, w, h, radius) {
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(x, y, w, h, radius);
+  } else {
+    ctx.rect(x, y, w, h);
+  }
+}
+
+/**
+ * drawWindow: 今風のパネル枠を描画する
+ *  - ドロップシャドウ / 縦グラデ本体 / アクセント枠線 / 上辺ハイライト
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} x
  * @param {number} y
  * @param {number} w
  * @param {number} h
- * @param {Object} [opts]  { fill: string, border: string, radius: number }
+ * @param {Object} [opts]  { radius:10, border:'#5ec8ff', fill?:string }
  */
 function drawWindow(ctx, x, y, w, h, opts) {
   opts = opts || {};
-  var fill   = opts.fill   || '#0a1230';
-  var border = opts.border || '#ffffff';
-  var radius = (opts.radius !== undefined) ? opts.radius : 6;
+  var radius = (opts.radius !== undefined) ? opts.radius : 10;
+  var border = opts.border || '#5ec8ff';
 
   ctx.save();
 
-  // 塗り
-  ctx.fillStyle = fill;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, radius);
-    ctx.fill();
-  } else {
-    ctx.fillRect(x, y, w, h);
-  }
+  // 1. ドロップシャドウ（本体より +3px 右下）
+  ctx.fillStyle = 'rgba(0,0,0,0.35)';
+  _rectPath(ctx, x + 3, y + 3, w, h, radius);
+  ctx.fill();
 
-  // 枠線
+  // 2. 本体塗り（opts.fill があればベタ、無ければ縦グラデ）
+  if (opts.fill) {
+    ctx.fillStyle = opts.fill;
+  } else {
+    var grad = ctx.createLinearGradient(x, y, x, y + h);
+    grad.addColorStop(0, 'rgba(30,34,58,0.95)');
+    grad.addColorStop(1, 'rgba(16,18,34,0.97)');
+    ctx.fillStyle = grad;
+  }
+  _rectPath(ctx, x, y, w, h, radius);
+  ctx.fill();
+
+  // 3. 枠線（2px アクセント色）
   ctx.strokeStyle = border;
   ctx.lineWidth   = 2;
-  if (ctx.roundRect) {
-    ctx.beginPath();
-    ctx.roundRect(x, y, w, h, radius);
-    ctx.stroke();
-  } else {
-    ctx.strokeRect(x, y, w, h);
-  }
+  _rectPath(ctx, x, y, w, h, radius);
+  ctx.stroke();
+
+  // 4. 上辺内側の 1px ハイライト
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y + 1.5);
+  ctx.lineTo(x + w - radius, y + 1.5);
+  ctx.stroke();
 
   ctx.restore();
 }
@@ -118,4 +170,5 @@ function drawWindow(ctx, x, y, w, h, opts) {
   drawTileMap: drawTileMap,
   drawText:    drawText,
   drawWindow:  drawWindow,
+  drawShadow:  drawShadow,
 });

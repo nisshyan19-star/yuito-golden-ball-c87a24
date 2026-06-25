@@ -2,8 +2,8 @@
 // 仮想解像度キャンバス & スケーリング
 // window/document はすべて関数内でのみアクセスする（Node require 対応）
 
-var VW = 240;
-var VH = 320;
+var VW = 288;
+var VH = 512;
 
 var _ctx = null;
 var _canvasEl = null;

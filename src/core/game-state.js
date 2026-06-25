@@ -1,9 +1,12 @@
-const CHARACTERS = (typeof require !== 'undefined')
-  ? require('../data/characters.js').CHARACTERS
-  : (typeof window !== 'undefined' && window.SRPG && window.SRPG.CHARACTERS);
+// CHARACTERS は遅延解決する。ブラウザでは <script> の読み込み順に依存せず、
+// 実際に呼ばれた時点で window.SRPG.CHARACTERS を参照する（characters.js が後でも安全）。
+function _characters() {
+  if (typeof require !== 'undefined') return require('../data/characters.js').CHARACTERS;
+  return (typeof window !== 'undefined' && window.SRPG && window.SRPG.CHARACTERS) || {};
+}
 
 function createCharacter(id) {
-  const def = CHARACTERS[id];
+  const def = _characters()[id];
   if (!def) throw new Error('Unknown character id: ' + id);
   return {
     id:       def.id,
