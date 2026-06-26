@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const ORDER = [
   'src/core/rng.js', 'src/core/game-state.js',
-  'src/data/sprites.js', 'src/data/enemy-art.js', 'src/data/characters.js', 'src/data/skills.js',
+  'src/data/sprites.js', 'src/data/enemy-art.js', 'src/data/bg-art.js', 'src/data/ally-art.js', 'src/data/field-art.js', 'src/data/walk-art.js', 'src/data/characters.js', 'src/data/skills.js',
   'src/data/enemies.js', 'src/data/items.js', 'src/data/maps.js', 'src/data/story.js',
   'src/logic/progression.js', 'src/logic/items-effect.js', 'src/logic/battle.js',
   'src/logic/ally-ai.js', 'src/logic/save.js',

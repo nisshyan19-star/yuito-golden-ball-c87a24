@@ -79,6 +79,18 @@ var MAPS = {
     chests: [
       { id: 'field1_chest1', x: 12, y: 13, item: 'drink', amount: 1, label: 'スポーツドリンク' },
     ],
+    // 飾りオブジェクト（grid とは別レイヤ。solid:true は通行不可）。
+    // ※テスト固定の (5,5)/(3,2) と中央の道(col7)・NPC/宝箱マスは避ける。
+    objects: [
+      { x: 1,  y: 1,  type: 'tree',   solid: true },
+      { x: 14, y: 1,  type: 'tree',   solid: true },
+      { x: 10, y: 5,  type: 'ball'   },
+      { x: 1,  y: 7,  type: 'flower' },
+      { x: 14, y: 7,  type: 'flower' },
+      { x: 2,  y: 9,  type: 'sign',   solid: true },
+      { x: 2,  y: 13, type: 'bush',   solid: true },
+      { x: 10, y: 13, type: 'goal',   solid: true },
+    ],
     exits: [
       { x: 7, y: 16, to: 'field2', tx: 7, ty: 2 },
     ],
@@ -130,6 +142,17 @@ var MAPS = {
     chests: [
       { id: 'field2_chest1', x: 12, y: 11, item: 'jelly', amount: 1, label: 'スタミナゼリー' },
     ],
+    objects: [
+      { x: 3,  y: 1,  type: 'goal',   solid: true },
+      { x: 11, y: 1,  type: 'goal',   solid: true },
+      { x: 5,  y: 6,  type: 'ball'   },
+      { x: 9,  y: 6,  type: 'ball'   },
+      { x: 1,  y: 8,  type: 'bench',  solid: true },
+      { x: 14, y: 8,  type: 'bench',  solid: true },
+      { x: 2,  y: 12, type: 'sign',   solid: true },
+      { x: 5,  y: 14, type: 'flower' },
+      { x: 10, y: 14, type: 'flower' },
+    ],
     exits: [
       { x: 7, y: 16, to: 'field3', tx: 7, ty: 2 },
     ],
@@ -173,6 +196,18 @@ var MAPS = {
     ],
     chests: [
       { id: 'field3_chest1', x: 3, y: 13, item: 'firstaid', amount: 1, label: 'きゅうきゅうセット' },
+    ],
+    objects: [
+      { x: 1,  y: 1,  type: 'tree',   solid: true },
+      { x: 14, y: 1,  type: 'tree',   solid: true },
+      { x: 2,  y: 3,  type: 'bush',   solid: true },
+      { x: 13, y: 3,  type: 'bush',   solid: true },
+      { x: 6,  y: 6,  type: 'ball'   },
+      { x: 9,  y: 10, type: 'ball'   },
+      { x: 12, y: 8,  type: 'sign',   solid: true },
+      { x: 1,  y: 13, type: 'flower' },
+      { x: 13, y: 13, type: 'flower' },
+      { x: 10, y: 14, type: 'goal',   solid: true },
     ],
     exits: [
       { x: 7, y: 16, to: 'field4', tx: 7, ty: 2 },
@@ -224,6 +259,18 @@ var MAPS = {
     ],
     chests: [
       { id: 'field4_chest1', x: 12, y: 13, item: 'spike2', amount: 1, label: 'ハヤテスパイク' },
+    ],
+    objects: [
+      { x: 1,  y: 1,  type: 'tree',   solid: true },
+      { x: 14, y: 1,  type: 'tree',   solid: true },
+      { x: 2,  y: 3,  type: 'sign',   solid: true },
+      { x: 13, y: 3,  type: 'bush',   solid: true },
+      { x: 6,  y: 6,  type: 'ball'   },
+      { x: 8,  y: 10, type: 'ball'   },
+      { x: 1,  y: 8,  type: 'bench',  solid: true },
+      { x: 14, y: 11, type: 'bench',  solid: true },
+      { x: 3,  y: 13, type: 'flower' },
+      { x: 10, y: 14, type: 'goal',   solid: true },
     ],
     exits: [
       { x: 7, y: 16, to: 'field5', tx: 7, ty: 2 },
@@ -278,6 +325,18 @@ var MAPS = {
     ],
     chests: [
       { id: 'field5_chest1', x: 11, y: 5, item: 'restart_whistle', amount: 1, label: 'さいかいの ホイッスル' },
+    ],
+    // ※ r9 の壁の帯と唯一の通路(7,9)は絶対に塞がない（col7 と r9 は避ける）。
+    objects: [
+      { x: 11, y: 1,  type: 'goal',   solid: true },
+      { x: 5,  y: 2,  type: 'ball'   },
+      { x: 1,  y: 4,  type: 'bench',  solid: true },
+      { x: 13, y: 7,  type: 'sign',   solid: true },
+      { x: 2,  y: 11, type: 'goal',   solid: true },
+      { x: 13, y: 11, type: 'bench',  solid: true },
+      { x: 9,  y: 12, type: 'ball'   },
+      { x: 4,  y: 14, type: 'flower' },
+      { x: 11, y: 14, type: 'flower' },
     ],
     exits: [
       {
@@ -334,6 +393,18 @@ var MAPS = {
     ],
     chests: [
       { id: 'field6_chest1', x: 11, y: 4, item: 'firstaid', amount: 1, label: 'きゅうきゅうセット' },
+    ],
+    objects: [
+      { x: 2,  y: 1,  type: 'tree',   solid: true },
+      { x: 13, y: 1,  type: 'tree',   solid: true },
+      { x: 11, y: 3,  type: 'goal',   solid: true },
+      { x: 5,  y: 6,  type: 'ball'   },
+      { x: 1,  y: 8,  type: 'sign',   solid: true },
+      { x: 14, y: 8,  type: 'bench',  solid: true },
+      { x: 3,  y: 12, type: 'goal',   solid: true },
+      { x: 12, y: 12, type: 'ball'   },
+      { x: 6,  y: 14, type: 'flower' },
+      { x: 9,  y: 14, type: 'flower' },
     ],
     exits: [],
     encounter: { rate: 0.10, enemies: ['redcard_devil', 'yellowcard_bat'] },

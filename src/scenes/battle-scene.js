@@ -647,8 +647,13 @@ function createBattleScene(state, enemyPool, opts) {
     if (S && S.drawShadow) S.drawShadow(ctx, cx, cy + size * 0.55, size * 0.5, size * 0.16);
     // AI生成アート（あれば優先）。全身立ち絵なので足元を影に乗せる。
     const ART = (S && S.ENEMY_ART) ? S.ENEMY_ART : null;
-    if (ART && ART[e.baseId] && S && S.drawImageSprite) {
-      if (S.drawImageSprite(ctx, e.baseId, ART[e.baseId], cx, cy - size * 0.18, size * 2.55)) {
+    // ラスボスは第二形態(_phase>=2)で「怒り形態」の絵に差し替える。
+    let artKey = e.baseId;
+    if (e.baseId === 'dark_kaiser' && e._phase >= 2 && ART && ART.dark_kaiser_rage) {
+      artKey = 'dark_kaiser_rage';
+    }
+    if (ART && ART[artKey] && S && S.drawImageSprite) {
+      if (S.drawImageSprite(ctx, artKey, ART[artKey], cx, cy - size * 0.18, size * 2.55)) {
         return;
       }
     }
@@ -671,6 +676,24 @@ function createBattleScene(state, enemyPool, opts) {
   }
 
   function _drawBg(ctx) {
+    // AI生成の背景（夜スタジアム）があれば cover（短辺合わせ）で全面描画する。
+    const BG = (S && S.BG_ART) ? S.BG_ART : null;
+    if (BG && BG.battle && S && S.getImageAsset) {
+      const ent = S.getImageAsset('battle_bg', BG.battle);
+      if (ent && ent.ready && ent.img) {
+        const iw = ent.img.naturalWidth || VW;
+        const ih = ent.img.naturalHeight || VH;
+        const scale = Math.max(VW / iw, VH / ih);
+        const dw = iw * scale, dh = ih * scale;
+        ctx.save();
+        ctx.imageSmoothingEnabled = true;
+        if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(ent.img, (VW - dw) / 2, (VH - dh) / 2, dw, dh);
+        ctx.restore();
+        return;
+      }
+    }
+    // フォールバック：従来のグラデーション背景＋ピッチ
     const g = ctx.createLinearGradient(0, 0, 0, VH);
     g.addColorStop(0, '#13294a');
     g.addColorStop(0.55, '#1c3a2a');
@@ -712,6 +735,29 @@ function createBattleScene(state, enemyPool, opts) {
           S.drawText(ctx, '▼', cx, cy - size * 0.72, { size: 16, color: '#ffd76e', align: 'center' });
         }
       }
+    }
+  }
+
+  function _drawAllies(ctx) {
+    // 味方5人のAI立ち絵を、状態ストリップの真上に横並びで描く（敵=奥／味方=手前）。
+    // 足元をストリップ上端へ少し潜らせ、_drawPartyStrip の窓で隠して地に着けて見せる。
+    const ART = (S && S.ALLY_ART) ? S.ALLY_ART : null;
+    if (!ART || !(S && S.drawImageSprite)) return;
+    const p = state.party, n = p.length || 1;
+    const colW = AW / n;
+    const boxH = Math.min(60, colW * 1.05);
+    const yFeet = PSY + 4;
+    for (let i = 0; i < p.length; i++) {
+      const m = p[i];
+      if (!ART[m.id]) continue;
+      const cx = AX + colW * i + colW / 2;
+      const cy = yFeet - boxH / 2;
+      const dead = _isDead(m);
+      ctx.save();
+      if (dead) ctx.globalAlpha = 0.3;
+      // 敵アートとキー衝突しないよう 'ally_' を前置（getImageAsset はキー単位でキャッシュ）。
+      S.drawImageSprite(ctx, 'ally_' + m.id, ART[m.id], cx, cy, boxH);
+      ctx.restore();
     }
   }
 
@@ -782,6 +828,7 @@ function createBattleScene(state, enemyPool, opts) {
       if (!S) return;
       _drawBg(ctx);
       _drawEnemies(ctx);
+      _drawAllies(ctx);
       _drawPartyStrip(ctx);
       if (_msg) _drawMessage(ctx);
       else if (phase === 'command') _drawActionMenu(ctx);

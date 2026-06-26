@@ -189,8 +189,9 @@ function getImageAsset(key, dataUrl) {
 }
 
 // 画像を (cx, cy) 中心・高さ boxH（仮想px）でアスペクト比維持して描画する。
+// flipX=true で左右反転（横向き歩行スプライトを逆向きに使い回す）。
 // 未ロードや失敗時は false を返す（呼び出し側が従来描画にフォールバックする）。
-function drawImageSprite(ctx, key, dataUrl, cx, cy, boxH) {
+function drawImageSprite(ctx, key, dataUrl, cx, cy, boxH, flipX) {
   var entry = getImageAsset(key, dataUrl);
   if (!entry || !entry.ready || !entry.img) return false;
   var img = entry.img;
@@ -201,7 +202,28 @@ function drawImageSprite(ctx, key, dataUrl, cx, cy, boxH) {
   // AI絵だけ滑らかに（他のドット絵は imageSmoothingEnabled=false のまま）
   ctx.imageSmoothingEnabled = true;
   if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
+  if (flipX) {
+    // (cx,cy) を原点にして水平反転してから中心合わせで描く
+    ctx.translate(cx, cy);
+    ctx.scale(-1, 1);
+    ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  } else {
+    ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
+  }
+  ctx.restore();
+  return true;
+}
+
+// 画像を (x, y) 左上・size×size のマスへぴったり伸ばして敷く（タイル用）。
+// アスペクト比は無視してセルを完全に埋めるので、隣接マスとの隙間が出ない。
+// 未ロードや失敗時は false を返す（呼び出し側が従来のドット絵へフォールバックする）。
+function drawImageTile(ctx, key, dataUrl, x, y, size) {
+  var entry = getImageAsset(key, dataUrl);
+  if (!entry || !entry.ready || !entry.img) return false;
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(entry.img, x, y, size, size);
   ctx.restore();
   return true;
 }
@@ -217,4 +239,5 @@ function drawImageSprite(ctx, key, dataUrl, cx, cy, boxH) {
   drawShadow:  drawShadow,
   getImageAsset:   getImageAsset,
   drawImageSprite: drawImageSprite,
+  drawImageTile:   drawImageTile,
 });

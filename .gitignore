@@ -1,0 +1,6 @@
+# 作業用の中間ファイル（生画像・切り抜き途中・生成スクリプト）
+# AI画像データは各 src/data/*-art.js に base64 で焼き込み済みなので不要
+scratchpad/
+
+# OS
+.DS_Store
