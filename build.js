@@ -13,9 +13,20 @@ const ORDER = [
   'src/main.js',
 ];
 const js = ORDER.filter(f => fs.existsSync(f)).map(f => `// === ${f} ===\n` + fs.readFileSync(f, 'utf8')).join('\n');
+// ホーム画面アイコン(apple-touch-icon)を data URI で埋め込む（あれば）
+const iconPath = 'assets/app-icon-180.png';
+const iconTag = fs.existsSync(iconPath)
+  ? `<link rel="apple-touch-icon" href="data:image/png;base64,${fs.readFileSync(iconPath).toString('base64')}">\n`
+  : '';
 const html = `<!doctype html><html lang="ja"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ユイトと黄金のサッカーボール</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ユイトの冒険">
+<meta name="theme-color" content="#0b0b12">
+${iconTag}<title>ユイトと黄金のサッカーボール</title>
 <style>html,body{margin:0;height:100%;background:#0b0b12;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
 #game{display:block;margin:0 auto;image-rendering:pixelated;background:#000}</style></head>
 <body><canvas id="game"></canvas><script>\n${js}\n</script></body></html>`;
