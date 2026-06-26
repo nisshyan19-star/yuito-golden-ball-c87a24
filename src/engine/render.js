@@ -162,6 +162,50 @@ function drawWindow(ctx, x, y, w, h, opts) {
   ctx.restore();
 }
 
+// ── 画像アセット（AI生成PNG）の遅延ロード＆描画 ──
+// ★バンドル注意：全srcが1スコープを共有するため top-level の状態変数を作らない。
+//   キャッシュは関数オブジェクトのプロパティに保持して名前衝突を避ける。
+function _imgAssetCache() {
+  if (!_imgAssetCache._c) _imgAssetCache._c = {};
+  return _imgAssetCache._c;
+}
+
+// dataURL から Image を1度だけ生成し、ロード完了状態を保持する。
+function getImageAsset(key, dataUrl) {
+  var cache = _imgAssetCache();
+  var entry = cache[key];
+  if (!entry) {
+    entry = { img: null, ready: false };
+    cache[key] = entry;
+    if (typeof Image !== 'undefined' && dataUrl) {
+      var im = new Image();
+      im.onload = function () { entry.ready = true; };
+      im.onerror = function () { entry.ready = false; entry.failed = true; };
+      im.src = dataUrl;
+      entry.img = im;
+    }
+  }
+  return entry;
+}
+
+// 画像を (cx, cy) 中心・高さ boxH（仮想px）でアスペクト比維持して描画する。
+// 未ロードや失敗時は false を返す（呼び出し側が従来描画にフォールバックする）。
+function drawImageSprite(ctx, key, dataUrl, cx, cy, boxH) {
+  var entry = getImageAsset(key, dataUrl);
+  if (!entry || !entry.ready || !entry.img) return false;
+  var img = entry.img;
+  var ar = (img.naturalWidth && img.naturalHeight) ? (img.naturalWidth / img.naturalHeight) : 1;
+  var h = boxH;
+  var w = h * ar;
+  ctx.save();
+  // AI絵だけ滑らかに（他のドット絵は imageSmoothingEnabled=false のまま）
+  ctx.imageSmoothingEnabled = true;
+  if (ctx.imageSmoothingQuality) ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
+  ctx.restore();
+  return true;
+}
+
 (function (root, api) {
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
@@ -171,4 +215,6 @@ function drawWindow(ctx, x, y, w, h, opts) {
   drawText:    drawText,
   drawWindow:  drawWindow,
   drawShadow:  drawShadow,
+  getImageAsset:   getImageAsset,
+  drawImageSprite: drawImageSprite,
 });

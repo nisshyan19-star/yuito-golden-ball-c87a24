@@ -89,6 +89,26 @@ function clampCamera(desired, screen, mapPx) {
   return desired;
 }
 
+/**
+ * _withActiveNpcs: vanishFlag が立っている NPC（加入済みの仲間・撃破済みのボス）を
+ * 取り除いた表示用マップを返す。元マップは破壊せず npcs だけ差し替えた浅いクローン。
+ * @param {Object} srcMap
+ * @param {Object} flags state.flags
+ * @returns {Object}
+ */
+function _withActiveNpcs(srcMap, flags) {
+  if (!srcMap) return srcMap;
+  flags = flags || {};
+  var out = {};
+  for (var k in srcMap) {
+    if (Object.prototype.hasOwnProperty.call(srcMap, k)) out[k] = srcMap[k];
+  }
+  out.npcs = (srcMap.npcs || []).filter(function (n) {
+    return !(n.vanishFlag && flags[n.vanishFlag]);
+  });
+  return out;
+}
+
 // ── シーンファクトリ ────────────────────────────────────────────────
 
 /**
@@ -102,7 +122,10 @@ function createFieldScene(state) {
   // ── マップ取得（ブラウザでは window.SRPG.MAPS、保険で field1 へフォールバック） ──
   var allMaps = (S && S.MAPS) ? S.MAPS : _maps();
   var pos = (state && state.position) || {};
-  var map = allMaps[pos.map] || allMaps.field1;
+  var rawMap = allMaps[pos.map] || allMaps.field1;
+  // 加入済み/撃破済みの NPC（vanishFlag が立っている）を除いた表示用マップ。
+  // 元データは壊さず、npcs だけ差し替えた浅いクローンを使う。
+  var map = _withActiveNpcs(rawMap, (state && state.flags) || {});
 
   // ── プレイヤー状態 ───────────────────────────────────────────────
   var px = (pos.x !== undefined && pos.x !== null) ? pos.x : 5;
@@ -141,6 +164,70 @@ function createFieldScene(state) {
     return null;
   }
 
+  // (x,y) にある出口を返す（なければ null）
+  function _exitAt(x, y) {
+    var exits = map.exits || [];
+    for (var i = 0; i < exits.length; i++) {
+      if (exits[i].x === x && exits[i].y === y) return exits[i];
+    }
+    return null;
+  }
+
+  // NPC に話しかける（ショップ / 仲間加入 / ボス / 通常会話）
+  function _talkTo(npc) {
+    if (!S || !npc) return;
+
+    // ① ショップ
+    if (npc.shop) {
+      if (typeof S.createShopScene === 'function') {
+        S.pushScene(S.createShopScene(state, npc.shop));
+      } else {
+        S.pushScene(S.createDialog(npc.pages || ['みせは じゅんびちゅう…']));
+      }
+      return;
+    }
+
+    // ② 仲間加入
+    if (npc.joinId) {
+      var already = (state.party || []).some(function (p) { return p.id === npc.joinId; });
+      if (already) {
+        S.pushScene(S.createDialog(npc.afterPages || ['いっしょに がんばろう！']));
+        return;
+      }
+      // 会話 → 加入処理 → 「○○が なかまになった！」→ フィールド再構築（NPC を消す）
+      S.pushScene(S.createDialog(npc.pages, { onComplete: function () {
+        var name = (typeof S.joinAlly === 'function') ? S.joinAlly(state, npc.joinId) : null;
+        if (npc.vanishFlag) {
+          if (!state.flags) state.flags = {};
+          state.flags[npc.vanishFlag] = true;
+        }
+        if (S.saveGame) S.saveGame(state);
+        S.pushScene(S.createDialog([(name || 'なかま') + ' が なかまに なった！'], { onComplete: function () {
+          if (S.replaceScene) S.replaceScene(S.createFieldScene(state));
+        } }));
+      } }));
+      return;
+    }
+
+    // ③ ボス（強制バトル）
+    if (npc.boss) {
+      var b = npc.boss;
+      if (b.winFlag && state.flags && state.flags[b.winFlag]) {
+        S.pushScene(S.createDialog(npc.afterPages || ['…もう てきは いない。']));
+        return;
+      }
+      S.pushScene(S.createDialog(npc.pages, { onComplete: function () {
+        S.pushScene(S.createBattleScene(state, null, {
+          forced: b.enemies, winFlag: b.winFlag, vanishFlag: b.vanishFlag, ending: b.ending,
+        }));
+      } }));
+      return;
+    }
+
+    // ④ 通常会話
+    S.pushScene(S.createDialog(npc.pages));
+  }
+
   // 調べる/話す
   function _interact() {
     if (!S) return;
@@ -148,7 +235,7 @@ function createFieldScene(state) {
     // NPC と会話
     var npc = _npcAt(f.x, f.y);
     if (npc) {
-      S.pushScene(S.createDialog(npc.pages));
+      _talkTo(npc);
       return;
     }
     // 宝箱を開封
@@ -225,6 +312,25 @@ function createFieldScene(state) {
       if (moveTimer > 0) return;
 
       var nt = frontTile(px, py, dir);
+
+      // 出口（マップ移動）：踏み込む前に判定する
+      var exit = _exitAt(nt.x, nt.y);
+      if (exit) {
+        if (exit.requireFlag && !(state.flags && state.flags[exit.requireFlag])) {
+          // まだ開放されていない（ボス未撃破など）
+          moveTimer = STEP_TIME * 0.7;
+          S.pushScene(S.createDialog([exit.lockedMsg || 'まだ さきへは すすめないようだ…']));
+          return;
+        }
+        // ワープしてフィールドを作り直す
+        state.position.map = exit.to;
+        state.position.x = exit.tx;
+        state.position.y = exit.ty;
+        if (S.saveGame) S.saveGame(state);
+        if (S.replaceScene) S.replaceScene(S.createFieldScene(state));
+        return;
+      }
+
       if (isWalkable(map, nt.x, nt.y, opened)) {
         px = nt.x; py = nt.y;
         state.position.x = px;

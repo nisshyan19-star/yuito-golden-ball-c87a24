@@ -61,6 +61,41 @@ function spawnEnemies(pool, rng) {
 }
 
 /**
+ * spawnForced(ids)
+ * ボス戦など、出現する敵idを固定して生成する（エンカウント抽選しない）。
+ * 多段フェーズ(phases)を持つ敵は phases を引き継ぎ、_phase=1 で開始する。
+ * @returns {object[]}
+ */
+function spawnForced(ids) {
+  const ENEMIES = _bsEnemies();
+  const valid = (ids || []).filter((id) => ENEMIES[id]);
+  const insts = valid.map((id, idx) => {
+    const base = ENEMIES[id];
+    const inst = {
+      id: id + '#' + idx,
+      baseId: id,
+      name: base.name,
+      maxHp: base.hp, hp: base.hp,
+      atk: base.atk, def: base.def, spd: base.spd,
+      exp: base.exp, gold: base.gold,
+      isBoss: !!base.isBoss,
+      isEnemy: true,
+      dead: false,
+    };
+    if (base.phases) { inst.phases = base.phases; inst._phase = 1; }
+    return inst;
+  });
+  insts.forEach((inst) => {
+    const same = insts.filter((x) => x.baseId === inst.baseId);
+    if (same.length > 1) {
+      const pos = same.indexOf(inst);
+      inst.name = inst.name + ' ' + 'ABCDE'.charAt(pos);
+    }
+  });
+  return insts;
+}
+
+/**
  * buildTurnOrder(units)
  * 素早さ降順・同速は入力順（安定）に並べた配列を返す（非破壊）。
  */
@@ -102,7 +137,8 @@ function calcReward(enemies) {
  * @param {string[]} enemyPool - エンカウントの敵idプール
  * @returns {{ update:Function, draw:Function }}
  */
-function createBattleScene(state, enemyPool) {
+function createBattleScene(state, enemyPool, opts) {
+  opts = opts || {};
   const S = (typeof window !== 'undefined') ? window.SRPG : null;
 
   // 仮想解像度
@@ -122,7 +158,10 @@ function createBattleScene(state, enemyPool) {
     pick: function (arr) { return arr[Math.floor(Math.random() * arr.length)]; },
   };
 
-  const enemies = spawnEnemies(enemyPool, rng);
+  // 強制出現（ボス戦）なら opts.forced を生成、それ以外は通常エンカウント抽選。
+  const enemies = (opts.forced && opts.forced.length)
+    ? spawnForced(opts.forced)
+    : spawnEnemies(enemyPool, rng);
 
   // ── 状態 ──
   let phase = 'intro';        // 'intro' | 'command' | 'resolve' | 'over'
@@ -146,6 +185,21 @@ function createBattleScene(state, enemyPool) {
   }
   function _enemiesCleared() { return enemies.every(_isDead); }
   function _partyWiped() { return state.party.every(_isDead); }
+
+  // ボスの第2フェーズ移行：HPが閾値以下になったら攻撃/防御/素早さを強化する。
+  // 移行したらメッセージ文字列を返す（しなければ null）。
+  function _applyPhaseIfNeeded(e) {
+    if (!e || !e.phases || _isDead(e) || e._phase >= 2) return null;
+    const ph = e.phases[1];
+    if (!ph) return null;
+    const ratio = (ph.hpRatio != null) ? ph.hpRatio : 0.5;
+    if (e.hp / e.maxHp > ratio) return null;
+    if (ph.atk != null) e.atk = ph.atk;
+    if (ph.def != null) e.def = ph.def;
+    if (ph.spd != null) e.spd = ph.spd;
+    e._phase = 2;
+    return e.name + 'は ほんきを だしてきた！';
+  }
 
   function _eff(u) {
     if (u.isEnemy) return { atk: u.atk, def: u.def };
@@ -279,6 +333,9 @@ function createBattleScene(state, enemyPool) {
     let action;
     if (actor.id === 'yuito') {
       action = playerAction;
+    } else if (state.settings && state.settings.autoAllies === false) {
+      // おまかせOFFのときは仲間は守りに入る
+      action = { type: 'defend' };
     } else if (S && S.chooseAllyAction) {
       action = S.chooseAllyAction(actor, state.party, enemies, rng);
     } else {
@@ -352,8 +409,13 @@ function createBattleScene(state, enemyPool) {
     while (aqIndex < actionQueue.length) {
       const actor = actionQueue[aqIndex++];
       if (_isDead(actor)) continue;
-      const pages = _performAction(actor);
-      if (!pages || !pages.length) continue; // 無音スキップ
+      const pages = _performAction(actor) || [];
+      // この行動の結果、ボスが第2フェーズに突入したら告知する
+      _aliveEnemies().forEach((e) => {
+        const m = _applyPhaseIfNeeded(e);
+        if (m) pages.push(m);
+      });
+      if (!pages.length) continue; // 無音スキップ
       if (_enemiesCleared()) { phase = 'over'; _showMessages(pages, _onVictory); return; }
       if (_partyWiped())     { phase = 'over'; _showMessages(pages, _onDefeat);  return; }
       _showMessages(pages, _resolveStep);
@@ -377,7 +439,17 @@ function createBattleScene(state, enemyPool) {
         if (sk) pages.push(m.name + 'は 「' + sk.name + '」を おぼえた！');
       });
     });
+    // ボス撃破ならフラグを立ててから保存（フィールド再構築/エンディング判定に使う）
+    if (opts.winFlag || opts.vanishFlag) {
+      state.flags = state.flags || {};
+      if (opts.winFlag)    state.flags[opts.winFlag] = true;
+      if (opts.vanishFlag) state.flags[opts.vanishFlag] = true;
+    }
     if (S && S.saveGame) S.saveGame(state);
+
+    // 勝利後のルーティング
+    if (opts.ending) { _showMessages(pages, _goEnding); return; }
+    if (opts.winFlag || opts.vanishFlag) { _showMessages(pages, _returnToFieldRebuild); return; }
     _showMessages(pages, _popToField);
   }
 
@@ -396,6 +468,24 @@ function createBattleScene(state, enemyPool) {
     if (S && S.popScene) S.popScene();
   }
 
+  // ボス撃破後：バトルを抜けてフィールドを作り直す（倒したボスNPCを消すため）。
+  function _returnToFieldRebuild() {
+    if (S && S.popScene) S.popScene();
+    if (S && S.replaceScene && S.createFieldScene) S.replaceScene(S.createFieldScene(state));
+  }
+
+  // ラスボス撃破後：エンディングを流してタイトルへ戻る。
+  function _goEnding() {
+    state.flags = state.flags || {};
+    state.flags.game_cleared = true;
+    if (S && S.saveGame) S.saveGame(state);
+    const ending = (S && S.getEnding) ? S.getEnding(state) : ['― おわり ―'];
+    _showMessages(ending, function () {
+      if (S && S.popScene) S.popScene();
+      if (S && S.replaceScene && S.createTitleScene) S.replaceScene(S.createTitleScene());
+    });
+  }
+
   // ── コマンドメニュー ──
   function _buildRootMenu() {
     menuList = [
@@ -403,8 +493,11 @@ function createBattleScene(state, enemyPool) {
       { label: 'とくぎ',   v: 'skill' },
       { label: 'どうぐ',   v: 'item' },
       { label: 'ぼうぎょ', v: 'defend' },
-      { label: 'にげる',   v: 'flee' },
     ];
+    // ボス戦（強制出現）からは逃げられない
+    if (!(opts.forced && opts.forced.length)) {
+      menuList.push({ label: 'にげる', v: 'flee' });
+    }
     cmdMode = 'root';
     cursor = 0;
   }
@@ -552,6 +645,13 @@ function createBattleScene(state, enemyPool) {
     };
     const c = COL[e.baseId] || { b: '#a0506e', d: '#6e2f48', eye: '#ffffff' };
     if (S && S.drawShadow) S.drawShadow(ctx, cx, cy + size * 0.55, size * 0.5, size * 0.16);
+    // AI生成アート（あれば優先）。全身立ち絵なので足元を影に乗せる。
+    const ART = (S && S.ENEMY_ART) ? S.ENEMY_ART : null;
+    if (ART && ART[e.baseId] && S && S.drawImageSprite) {
+      if (S.drawImageSprite(ctx, e.baseId, ART[e.baseId], cx, cy - size * 0.18, size * 2.55)) {
+        return;
+      }
+    }
     ctx.save();
     if (e.baseId === 'offside_ghost') ctx.globalAlpha = 0.85;
     ctx.fillStyle = c.d; _blob(ctx, cx, cy, size * 0.52);

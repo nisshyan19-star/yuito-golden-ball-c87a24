@@ -124,6 +124,59 @@ var SPRITES = (function () {
     'G': '#f2f2f7',
   }, '1', true);
 
+  // ── コーチ／案内人（グレーのジャージ・背番号なし）──
+  var coach = buildChar({
+    'O': '#15171c',
+    'H': '#8a8f99', 'h': '#6e7480', 'g': '#54596a',
+    'S': '#f0d2b0', 's': '#e0b78e', 'k': '#c89568',
+    'E': '#3a241a', 'm': '#a85040',
+    'U': '#8a909a', 'u': '#6a707a', 'v': '#4a505a', 'N': '#8a909a',
+    'P': '#2a2f4a', 'p': '#1a1e34',
+    'L': '#e0b78e', 'l': '#c89568',
+    'K': '#ffffff', 'c': '#b8b8c0',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '', false);
+
+  // ── みせの ひと／店主（茶色のエプロン風・背番号なし）──
+  var shopkeep = buildChar({
+    'O': '#1c1208',
+    'H': '#7a5a30', 'h': '#5e4424', 'g': '#46321a',
+    'S': '#f7d2a8', 's': '#e6b487', 'k': '#cc8f5e',
+    'E': '#3a241a', 'm': '#a85040',
+    'U': '#b5824a', 'u': '#9a6a37', 'v': '#7a5228', 'N': '#b5824a',
+    'P': '#3a2f24', 'p': '#241c14',
+    'L': '#e6b487', 'l': '#cc8f5e',
+    'K': '#8a6a4a', 'c': '#6a4e34',
+    'W': '#ffffff', 'b': '#1a1a1a',
+  }, '', false);
+
+  // ── 鉄壁キーパー（中ボス・鋼色＋青いグローブ・険しい）──
+  var keeper = buildChar({
+    'O': '#0a0e16',
+    'H': '#b8c0cc', 'h': '#98a0ac', 'g': '#78808c',
+    'S': '#e6e0da', 's': '#c8c2bc', 'k': '#a8a29c',
+    'E': '#1a3a5a', 'm': '#6a7280',
+    'U': '#6a7280', 'u': '#4a5260', 'v': '#2e3540', 'N': '#6a7280',
+    'P': '#2a2f3a', 'p': '#1a1e26',
+    'L': '#c8c2bc', 'l': '#a8a29c',
+    'K': '#3a3f4a', 'c': '#24282e',
+    'W': '#ffffff', 'b': '#1a1a1a',
+    'G': '#5ec8ff',
+  }, '', true);
+
+  // ── ダーク・カイザー（ラスボス・紫黒・赤い目）──
+  var kaiser = buildChar({
+    'O': '#050208',
+    'H': '#6a4bce', 'h': '#4a2f9e', 'g': '#2e1a6e',
+    'S': '#d8c0e0', 's': '#b89cc8', 'k': '#9678ac',
+    'E': '#ff5a7a', 'm': '#7a3050',
+    'U': '#3a2a5e', 'u': '#271a44', 'v': '#160e2a', 'N': '#3a2a5e',
+    'P': '#160e2a', 'p': '#0a0614',
+    'L': '#b89cc8', 'l': '#9678ac',
+    'K': '#2a2a3a', 'c': '#16161e',
+    'W': '#ffd76e', 'b': '#1a1a1a',
+  }, '', false);
+
   // ────────────────────────────────────────────────────────────
   // タイル5種（各16×16）— なめらかな陰影・規則的で上品なテクスチャ
   //   タイル境界が極端に目立たないよう端を揃える。
@@ -276,11 +329,15 @@ var SPRITES = (function () {
   };
 
   return {
-    yuito:   yuito,
-    ikuma:   ikuma,
-    aoshi:   aoshi,
-    tomoki:  tomoki,
-    itsuki:  itsuki,
+    yuito:    yuito,
+    ikuma:    ikuma,
+    aoshi:    aoshi,
+    tomoki:   tomoki,
+    itsuki:   itsuki,
+    coach:    coach,
+    shopkeep: shopkeep,
+    keeper:   keeper,
+    kaiser:   kaiser,
     t_grass: t_grass,
     t_road:  t_road,
     t_wall:  t_wall,
