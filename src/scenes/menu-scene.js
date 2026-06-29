@@ -13,13 +13,31 @@ function createMenuScene(state) {
   var VH = (S && S.VH) || 512;
 
   // ── データ遅延参照（同名 const を作らない） ──
-  function ITEMS()  { return (S && S.ITEMS)  || {}; }
-  function SKILLS() { return (S && S.SKILLS) || {}; }
+  function ITEMS()   { return (S && S.ITEMS)   || {}; }
+  function SKILLS()  { return (S && S.SKILLS)  || {}; }
+  function ENEMIES() { return (S && S.ENEMIES) || {}; }
+  function ACHIEVEMENTS() { return (S && S.ACHIEVEMENTS) || []; }
+  function TITLES()       { return (S && S.TITLES)       || []; }
+  function unlockedTitles() { return (S && S.unlockedTitles) ? S.unlockedTitles(state) : []; }
+  // なかま入替 API（monster.js）の遅延参照。require / window.SRPG どちらでも引ける。
+  function _monster() {
+    if (typeof require !== 'undefined') { try { return require('../logic/monster.js'); } catch (e) {} }
+    return (typeof window !== 'undefined' && window.SRPG) || {};
+  }
+  function maxPartyN() { var M = _monster(); return (M && M.maxParty) ? M.maxParty() : 5; }
+  function roster()    { return state.roster || (state.roster = []); }
+  function typeLabel(t) {
+    return t === 'power' ? 'パワー'
+         : t === 'speed' ? 'スピード'
+         : t === 'technique' ? 'テクニック' : '—';
+  }
 
   // ── 状態 ──
-  var mode      = 'main';   // main/status/items/item_target/equip_char/equip_slot/equip_pick/tactics/message
+  var mode      = 'main';   // main/status/dex/items/item_target/equip_char/equip_slot/equip_pick/tactics/message
   var cursor    = 0;
   var statusIdx = 0;        // つよさ表示中のキャラ index
+  var dexIdx    = 0;        // ずかん表示中の 敵 index
+  var achIdx    = 0;        // じっせき表示中のスクロール位置（先頭行 index）
   var pendingItem = null;   // どうぐ：使用予定アイテム id
   var pendingChar = null;   // そうび：対象キャラ
   var pendingSlot = null;   // そうび：'weapon' | 'armor'
@@ -47,8 +65,12 @@ function createMenuScene(state) {
   function buildMain() {
     listCache = [
       { label: 'つよさ',   v: 'status'  },
+      { label: 'なかま',   v: 'party'   },
       { label: 'どうぐ',   v: 'items'   },
       { label: 'そうび',   v: 'equip'   },
+      { label: 'ずかん',   v: 'dex'     },
+      { label: 'じっせき', v: 'ach'     },
+      { label: 'しょうごう', v: 'title' },
       { label: 'さくせん', v: 'tactics' },
       { label: 'セーブ',   v: 'save'    },
       { label: 'とじる',   v: 'close'   },
@@ -116,6 +138,60 @@ function createMenuScene(state) {
       { label: 'もどる', v: '__back' },
     ];
   }
+  // しょうごう：手に入れた称号を 1つだけ そうびできる（drawTitlePanel が描画）。
+  function buildTitle() {
+    var list = [];
+    unlockedTitles().forEach(function (t) {
+      list.push({ label: t.name, v: t.id, bonus: t.bonus, desc: t.desc, equipped: state.title === t.id });
+    });
+    list.push({ label: 'しょうごうなし', v: '__unequip', none: true, equipped: !state.title });
+    list.push({ label: 'もどる', v: '__back', back: true });
+    listCache = list;
+  }
+  // なかま：パーティと控え(roster)を1つの選択リストに連結する。
+  //   kind:'party'  … 決定でひかえへ戻す（slot0=リーダーは不可）
+  //   kind:'roster' … 決定でパーティへ入れる（満員なら拒否）
+  function buildParty() {
+    var list = [];
+    var p = party();
+    var max = maxPartyN();
+    list.push({ header: 'パーティ（' + p.length + '/' + max + '）', v: '__hdr_party' });
+    for (var i = 0; i < p.length; i++) {
+      var m = p[i];
+      list.push({ kind: 'party', pIdx: i, leader: i === 0, label: m.name, char: m, v: 'p' + i });
+    }
+    list.push({ header: 'ひかえ', v: '__hdr_roster' });
+    var r = roster();
+    if (!r.length) {
+      list.push({ none: true, label: '（なし）', v: '__none' });
+    } else {
+      for (var k = 0; k < r.length; k++) {
+        var rm = r[k];
+        list.push({ kind: 'roster', rIdx: k, label: rm.name, char: rm, v: 'r' + k });
+      }
+    }
+    list.push({ label: 'もどる', v: '__back', back: true });
+    listCache = list;
+  }
+  // ヘッダー/区切り行はカーソルで止まらないよう、選択可能な行か判定する。
+  function isSelectable(it) {
+    return !!it && it.header == null && it.v !== '__none';
+  }
+  // 指定方向(dir=+1/-1)に選択可能な次の行へカーソルを進める。
+  function moveCursorSelectable(dir) {
+    var n = listCache.length; if (!n) return;
+    for (var step = 0; step < n; step++) {
+      cursor = (cursor + dir + n) % n;
+      if (isSelectable(listCache[cursor])) return;
+    }
+  }
+  // buildParty 後などにカーソルを最初の選択可能行へ補正する。
+  function clampPartyCursor() {
+    var n = listCache.length;
+    if (cursor < 0) cursor = 0;
+    if (cursor >= n) cursor = n - 1;
+    if (!isSelectable(listCache[cursor])) moveCursorSelectable(1);
+  }
 
   // ── 操作（装備・道具使用） ──
   function equipItem(id) {
@@ -159,6 +235,8 @@ function createMenuScene(state) {
     else if (m === 'equip_slot')  buildEquipSlot();
     else if (m === 'equip_pick')  buildEquipPick();
     else if (m === 'tactics')     buildTactics();
+    else if (m === 'title')       buildTitle();
+    else if (m === 'party')       { buildParty(); clampPartyCursor(); }
     else if (m === 'status')      { /* statusIdx は呼び出し側で設定 */ }
   }
 
@@ -166,6 +244,10 @@ function createMenuScene(state) {
     switch (mode) {
       case 'main':        if (S && S.popScene) S.popScene(); break;
       case 'status':      enter('main');        break;
+      case 'dex':         enter('main');        break;
+      case 'ach':         enter('main');        break;
+      case 'title':       enter('main');        break;
+      case 'party':       enter('main');        break;
       case 'items':       enter('main');        break;
       case 'item_target': enter('items');       break;
       case 'equip_char':  enter('main');        break;
@@ -180,6 +262,10 @@ function createMenuScene(state) {
     if (mode === 'main') {
       switch (item.v) {
         case 'status':  statusIdx = 0; mode = 'status'; cursor = 0; break;
+        case 'party':   enter('party'); break;
+        case 'dex':     dexIdx = 0; mode = 'dex'; cursor = 0; break;
+        case 'ach':     achIdx = 0; mode = 'ach'; cursor = 0; break;
+        case 'title':   enter('title');   break;
         case 'items':   enter('items');   break;
         case 'equip':   enter('equip_char'); break;
         case 'tactics': enter('tactics'); break;
@@ -216,6 +302,45 @@ function createMenuScene(state) {
       state.settings.autoAllies = (item.v === 'auto');
       if (S && S.saveGame) S.saveGame(state);
       buildTactics(); return; // ▸ マーカーを更新して留まる
+    }
+    if (mode === 'title') {
+      if (item.v === '__back') { enter('main'); return; }
+      if (item.v === '__unequip') { if (S && S.equipTitle) S.equipTitle(state, null); }
+      else                        { if (S && S.equipTitle) S.equipTitle(state, item.v); }
+      if (S && S.saveGame) S.saveGame(state);
+      buildTitle(); return; // ★ そうび表示を更新して留まる
+    }
+    if (mode === 'party') {
+      if (item.v === '__back') { enter('main'); return; }
+      if (item.header != null || item.none) return; // ヘッダー/（なし）は無視
+      var M = _monster();
+      if (item.kind === 'roster') {
+        // ひかえ → パーティ：満員なら誰かが出てしまうので拒否する。
+        if (party().length >= maxPartyN()) {
+          showMsg(['パーティが いっぱいです。\nだれかを ひかえに もどしてね'], 'party');
+          return;
+        }
+        var okIn = M.swapInMonster ? M.swapInMonster(state, item.rIdx) : false;
+        if (okIn) {
+          if (S && S.saveGame) S.saveGame(state);
+          buildParty(); clampPartyCursor();
+        }
+        return;
+      }
+      if (item.kind === 'party') {
+        // パーティ → ひかえ：slot0(リーダー)は外せない。
+        if (item.leader || item.pIdx === 0) {
+          showMsg(['リーダーは はずせないよ！'], 'party');
+          return;
+        }
+        var okOut = M.sendToRoster ? M.sendToRoster(state, item.pIdx) : false;
+        if (okOut) {
+          if (S && S.saveGame) S.saveGame(state);
+          buildParty(); clampPartyCursor();
+        }
+        return;
+      }
+      return;
     }
   }
 
@@ -256,12 +381,23 @@ function createMenuScene(state) {
     var X = 20, Y = 28, W = VW - 40, H = 300;
     S.drawWindow(ctx, X, Y, W, H, { radius: 10, border: '#5ec8ff' });
     S.drawText(ctx, listTitle(), X + W / 2, Y + 10, { size: 14, color: '#ffd76e', align: 'center' });
+    // 下部はアイテム説明フッター用に空ける（どうぐ／そうびで効果が分かるように）。
     var top = Y + 38, rowH = 24;
     for (var i = 0; i < listCache.length; i++) {
       var y = top + i * rowH;
-      if (y > Y + H - 18) break;
+      if (y > Y + H - 52) break;
       if (i === cursor) S.drawText(ctx, '▶', X + 12, y, { size: 13, color: '#ffd76e' });
       S.drawText(ctx, listCache[i].label, X + 32, y, { size: 13, color: i === cursor ? '#ffffff' : '#cfe0ff' });
+    }
+    // 選択中アイテムの説明（v がアイテムidの時だけ＝どうぐ・そうび えらぶ）。
+    var cur = listCache[cursor];
+    var det = cur && cur.v ? ITEMS()[cur.v] : null;
+    if (det && det.desc) {
+      var dy = Y + H - 42;
+      var dl = (S.wrapText ? S.wrapText(det.desc, 20) : [det.desc]);
+      for (var d = 0; d < Math.min(2, dl.length); d++) {
+        S.drawText(ctx, dl[d], X + 16, dy + d * 16, { size: 11, color: '#bfe6c8' });
+      }
     }
   }
 
@@ -269,7 +405,14 @@ function createMenuScene(state) {
     var m = party()[statusIdx]; if (!m) return;
     var X = 16, Y = 24, W = VW - 32, H = 320;
     S.drawWindow(ctx, X, Y, W, H, { radius: 10, border: '#5ec8ff' });
-    if (S.SPRITES && S.SPRITES[m.id]) S.drawSprite(ctx, S.SPRITES[m.id], X + 16, Y + 14, 2);
+    // キャラ絵：AI立ち絵(ALLY_ART)を優先。未デコード/無しならドット絵(SPRITES)へフォールバック。
+    //   キャッシュキーは battle-scene の _drawAllies と同じ 'ally_'+id にしてデコード結果を共有する。
+    var portraitArt = (S.ALLY_ART && S.ALLY_ART[m.id]) || null;
+    var drewPortrait = false;
+    if (portraitArt && S.drawImageSprite) {
+      drewPortrait = !!S.drawImageSprite(ctx, 'ally_' + m.id, portraitArt, X + 46, Y + 56, 80, false);
+    }
+    if (!drewPortrait && S.SPRITES && S.SPRITES[m.id]) S.drawSprite(ctx, S.SPRITES[m.id], X + 16, Y + 14, 2);
     S.drawText(ctx, m.name, X + 92, Y + 20, { size: 18, color: '#ffffff' });
     S.drawText(ctx, m.position || '', X + 92, Y + 44, { size: 11, color: '#a8c0e0' });
     S.drawText(ctx, 'Lv ' + m.level, X + 92, Y + 60, { size: 14, color: '#ffd76e' });
@@ -298,6 +441,136 @@ function createMenuScene(state) {
     var skNames = (m.skills || []).map(function (id) { return Sk[id] ? Sk[id].name : id; }).join('・');
     S.drawText(ctx, 'とくぎ：' + (skNames || 'なし'), X + 20, wy + 40, { size: 11, color: '#cfe0ff' });
     S.drawText(ctx, '◀ ▶ きりかえ / ✕ もどる', X + W / 2, Y + H - 20, { size: 10, color: '#88a0c0', align: 'center' });
+  }
+
+  function drawDexPanel(ctx) {
+    var keys = Object.keys(ENEMIES());
+    var dex = state.dex || {};
+    var seenCount = keys.filter(function (k) { return (dex[k] || 0) > 0; }).length;
+    if (dexIdx >= keys.length) dexIdx = 0;
+    var key = keys[dexIdx];
+    var e = ENEMIES()[key] || {};
+    var count = dex[key] || 0;
+    var seen = count > 0;
+
+    var X = 16, Y = 24, W = VW - 32, H = 320;
+    S.drawWindow(ctx, X, Y, W, H, { radius: 10, border: '#5ec8ff' });
+    S.drawText(ctx, 'モンスターずかん', X + W / 2, Y + 12, { size: 14, color: '#ffd76e', align: 'center' });
+    S.drawText(ctx, 'No.' + (dexIdx + 1) + ' / ' + keys.length, X + 16, Y + 36, { size: 11, color: '#a8c0e0' });
+    S.drawText(ctx, 'はっけん ' + seenCount + ' / ' + keys.length, X + W - 16, Y + 36, { size: 11, color: '#a8c0e0', align: 'right' });
+
+    // 敵スプライト：発見済みで AI絵(ENEMY_ART)があれば描画。無ければ ？ プレースホルダ。
+    var art = (S.ENEMY_ART && S.ENEMY_ART[key]) || null;
+    var cx = X + W / 2, cy = Y + 96;
+    var drew = false;
+    if (seen && art && S.drawImageSprite) {
+      drew = !!S.drawImageSprite(ctx, key, art, cx, cy, 88);
+    }
+    if (!drew) {
+      // 未発見＝？／発見済みでも絵が無い敵（隠しボス等）は色つきの丸で代用。
+      if (seen) {
+        ctx.save();
+        ctx.fillStyle = '#6a4bce';
+        ctx.beginPath(); ctx.arc(cx, cy, 30, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ff5a7a';
+        ctx.beginPath();
+        ctx.arc(cx - 10, cy - 4, 5, 0, Math.PI * 2);
+        ctx.arc(cx + 10, cy - 4, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      } else {
+        S.drawText(ctx, '？', cx, cy - 18, { size: 48, color: '#3a5a8a', align: 'center' });
+      }
+    }
+
+    var by = Y + 150;
+    if (seen) {
+      S.drawText(ctx, e.name + (e.isBoss ? '（ボス）' : ''), X + W / 2, by, { size: 16, color: '#ffffff', align: 'center' });
+      S.drawText(ctx, 'タイプ：' + typeLabel(e.type), X + W / 2, by + 24, { size: 12, color: '#cfe0ff', align: 'center' });
+      var rows = [
+        ['HP', '' + (e.hp || 0)],
+        ['こうげき', '' + (e.atk || 0)],
+        ['まもり', '' + (e.def || 0)],
+        ['すばやさ', '' + (e.spd || 0)],
+        ['たおした かず', '' + count],
+      ];
+      var ry = by + 48;
+      for (var i = 0; i < rows.length; i++) {
+        var yy = ry + i * 22;
+        S.drawText(ctx, rows[i][0], X + 28, yy, { size: 12, color: '#a8c0e0' });
+        S.drawText(ctx, rows[i][1], X + W - 28, yy, { size: 13, color: '#ffffff', align: 'right' });
+      }
+    } else {
+      S.drawText(ctx, '？？？', X + W / 2, by, { size: 16, color: '#8090b0', align: 'center' });
+      S.drawText(ctx, 'まだ であって いない…', X + W / 2, by + 28, { size: 12, color: '#8090b0', align: 'center' });
+    }
+    S.drawText(ctx, '◀ ▶ きりかえ / ✕ もどる', X + W / 2, Y + H - 20, { size: 10, color: '#88a0c0', align: 'center' });
+  }
+
+  function drawAchPanel(ctx) {
+    var list = ACHIEVEMENTS();
+    var got = state.achievements || {};
+    var doneCount = list.filter(function (a) { return !!got[a.id]; }).length;
+
+    var X = 16, Y = 24, W = VW - 32, H = 320;
+    S.drawWindow(ctx, X, Y, W, H, { radius: 10, border: '#5ec8ff' });
+    S.drawText(ctx, 'じっせき', X + W / 2, Y + 12, { size: 14, color: '#ffd76e', align: 'center' });
+    S.drawText(ctx, 'かいじょ ' + doneCount + ' / ' + list.length, X + W / 2, Y + 34, { size: 11, color: '#a8c0e0', align: 'center' });
+
+    var perPage = 8, rowH = 30, top = Y + 54;
+    for (var i = 0; i < perPage; i++) {
+      var idx = achIdx + i;
+      if (idx >= list.length) break;
+      var a = list[idx];
+      var unlocked = !!got[a.id];
+      var y = top + i * rowH;
+      // 達成マーク（★＝かいじょ済／・＝みかいじょ）
+      S.drawText(ctx, unlocked ? '★' : '・', X + 14, y, { size: 14, color: unlocked ? '#ffd76e' : '#5a6a8a' });
+      S.drawText(ctx, unlocked ? a.name : '？？？', X + 34, y, { size: 13, color: unlocked ? '#ffffff' : '#8090b0' });
+      S.drawText(ctx, unlocked ? a.desc : 'みかいじょ', X + 34, y + 14, { size: 9, color: unlocked ? '#a8c0e0' : '#5a6a8a' });
+    }
+    // スクロール位置の目印（先頭/末尾でない時に上下三角）
+    if (achIdx > 0)                          S.drawText(ctx, '▲', X + W - 18, top - 2,        { size: 10, color: '#88a0c0', align: 'center' });
+    if (achIdx + perPage < list.length)      S.drawText(ctx, '▼', X + W - 18, Y + H - 38,    { size: 10, color: '#88a0c0', align: 'center' });
+    S.drawText(ctx, '▲ ▼ スクロール / ✕ もどる', X + W / 2, Y + H - 20, { size: 10, color: '#88a0c0', align: 'center' });
+  }
+
+  function drawTitlePanel(ctx) {
+    var total = TITLES().length;
+    var gotCount = unlockedTitles().length;
+
+    var X = 16, Y = 24, W = VW - 32, H = 320;
+    S.drawWindow(ctx, X, Y, W, H, { radius: 10, border: '#5ec8ff' });
+    S.drawText(ctx, 'しょうごう', X + W / 2, Y + 12, { size: 14, color: '#ffd76e', align: 'center' });
+    S.drawText(ctx, 'てにいれた ' + gotCount + ' / ' + total, X + W / 2, Y + 34, { size: 11, color: '#a8c0e0', align: 'center' });
+
+    // スクロール：カーソルを中央付近に保ちつつ範囲内に収める。
+    var maxRows = 7, rowH = 32, top = Y + 56;
+    var first = Math.min(Math.max(0, cursor - Math.floor(maxRows / 2)), Math.max(0, listCache.length - maxRows));
+    for (var i = 0; i < maxRows; i++) {
+      var idx = first + i;
+      if (idx >= listCache.length) break;
+      var it = listCache[idx];
+      var y = top + i * rowH;
+      var sel = idx === cursor;
+      if (sel) S.drawText(ctx, '▶', X + 10, y, { size: 13, color: '#ffd76e' });
+      // 装備中マーク（★）
+      if (it.equipped) S.drawText(ctx, '★', X + 28, y, { size: 13, color: '#ffd76e' });
+      var nameColor = it.back ? '#9fb4d8' : (sel ? '#ffffff' : '#cfe0ff');
+      S.drawText(ctx, it.label, X + 46, y, { size: 13, color: nameColor });
+      // ボーナス（右寄せ）：称号のみ表示。しょうごうなし／もどるは '—'。
+      if (it.bonus) {
+        var b = 'こう+' + (it.bonus.atk || 0) + ' まも+' + (it.bonus.def || 0);
+        S.drawText(ctx, b, X + W - 14, y, { size: 11, color: '#a8e0b0', align: 'right' });
+      } else if (it.none) {
+        S.drawText(ctx, '—', X + W - 14, y, { size: 11, color: '#5a6a8a', align: 'right' });
+      }
+      // 説明（称号のみ・1行小さく）
+      if (it.desc) S.drawText(ctx, it.desc, X + 46, y + 14, { size: 9, color: sel ? '#a8c0e0' : '#7f93b8' });
+    }
+    if (first > 0)                              S.drawText(ctx, '▲', X + W - 18, top - 4,     { size: 10, color: '#88a0c0', align: 'center' });
+    if (first + maxRows < listCache.length)     S.drawText(ctx, '▼', X + W - 18, Y + H - 38,  { size: 10, color: '#88a0c0', align: 'center' });
+    S.drawText(ctx, '▲ ▼ えらぶ / けってい そうび / ✕ もどる', X + W / 2, Y + H - 20, { size: 10, color: '#88a0c0', align: 'center' });
   }
 
   function drawMessage(ctx) {
@@ -335,6 +608,31 @@ function createMenuScene(state) {
         if (pressed.right) statusIdx = (statusIdx + 1) % pn;
         return;
       }
+      if (mode === 'dex') {
+        if (pressed.cancel) { onCancel(); return; }
+        var en = Object.keys(ENEMIES()).length || 1;
+        if (pressed.left)  dexIdx = (dexIdx - 1 + en) % en;
+        if (pressed.right) dexIdx = (dexIdx + 1) % en;
+        return;
+      }
+      if (mode === 'ach') {
+        if (pressed.cancel) { onCancel(); return; }
+        var an = ACHIEVEMENTS().length;
+        var perPage = 8; // 1画面に収まる行数（drawAchPanel と合わせる）
+        var maxTop = Math.max(0, an - perPage);
+        if (pressed.up)   achIdx = Math.max(0, achIdx - 1);
+        if (pressed.down) achIdx = Math.min(maxTop, achIdx + 1);
+        return;
+      }
+
+      if (mode === 'party') {
+        // ヘッダー/（なし）行は飛ばして選択可能行だけを上下移動する。
+        if (pressed.up)      moveCursorSelectable(-1);
+        if (pressed.down)    moveCursorSelectable(1);
+        if (pressed.cancel)  { onCancel(); return; }
+        if (pressed.confirm) { onConfirm(listCache[cursor]); return; }
+        return;
+      }
 
       // リスト系モード
       var n = listCache.length || 1;
@@ -350,6 +648,9 @@ function createMenuScene(state) {
       ctx.fillRect(0, 0, VW, VH);
       if      (mode === 'main')    drawMainPanel(ctx);
       else if (mode === 'status')  drawStatusPanel(ctx);
+      else if (mode === 'dex')     drawDexPanel(ctx);
+      else if (mode === 'ach')     drawAchPanel(ctx);
+      else if (mode === 'title')   drawTitlePanel(ctx);
       else if (mode === 'message') drawMessage(ctx);
       else                         drawListPanel(ctx);
     },

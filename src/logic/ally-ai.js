@@ -34,8 +34,34 @@ function chooseAllyAction(actor, party, enemies, rng) {
     return s && actor.mp >= s.mp;
   }
 
-  // 1. 回復役（heal技を所持）
-  const healSkills = mySkills.filter(s => s.type === 'heal');
+  // 0. 必殺技（キアイMAX時のみ）。戦闘ごとの切り札なので撃てるなら積極的に使う。
+  const kiaiReady = (actor.kiai || 0) >= (actor.maxKiai || 100);
+  if (kiaiReady) {
+    const ults = mySkills.filter(s => s.kiai && (s.type === 'attack' || s.type === 'heal'));
+    // 回復必殺：誰かが7割以下なら全体回復で撃つ
+    const healUlt = ults.find(s => s.type === 'heal');
+    if (healUlt && aliveAllies.some(a => ratio(a) <= 0.7)) {
+      return { type: 'skill', skillId: healUlt.id };
+    }
+    // 攻撃必殺：敵が2体以上なら全体必殺、それ以外は単体必殺を最も硬い敵（ボス想定）へ
+    const atkUlts = ults.filter(s => s.type === 'attack');
+    if (atkUlts.length > 0 && aliveEnemies.length > 0) {
+      const aoeUlt = atkUlts.find(s => s.target === 'all');
+      if (aoeUlt && aliveEnemies.length >= 2) {
+        return { type: 'skill', skillId: aoeUlt.id };
+      }
+      const oneUlt = atkUlts.find(s => s.target === 'one') || atkUlts[0];
+      if (oneUlt) {
+        if (oneUlt.target === 'all') return { type: 'skill', skillId: oneUlt.id };
+        const target = aliveEnemies.reduce((a, b) => (a.hp >= b.hp ? a : b));
+        return { type: 'skill', skillId: oneUlt.id, targetId: target.id };
+      }
+    }
+    // 撃ちどころが無ければキアイは温存して通常行動へフォールスルー
+  }
+
+  // 1. 回復役（heal技を所持・必殺は除外）
+  const healSkills = mySkills.filter(s => s.type === 'heal' && !s.kiai);
   if (healSkills.length > 0) {
     const dyingAllies = aliveAllies.filter(a => ratio(a) <= 0.35);
 
@@ -70,15 +96,15 @@ function chooseAllyAction(actor, party, enemies, rng) {
     }
   }
 
-  // 3. 全体攻撃 & 敵2体以上
-  const aoeAttack = mySkills.find(s => s.type === 'attack' && s.target === 'all' && canUse(s));
+  // 3. 全体攻撃 & 敵2体以上（必殺は除外）
+  const aoeAttack = mySkills.find(s => s.type === 'attack' && s.target === 'all' && !s.kiai && canUse(s));
   if (aoeAttack && aliveEnemies.length >= 2) {
     return { type: 'skill', skillId: aoeAttack.id };
   }
 
-  // 4. 単体必殺技（power高い順） & MP足りる
+  // 4. 単体とくぎ（power高い順）& MP足りる（必殺は除外）
   const oneAttacks = mySkills
-    .filter(s => s.type === 'attack' && s.target === 'one' && canUse(s))
+    .filter(s => s.type === 'attack' && s.target === 'one' && !s.kiai && canUse(s))
     .sort((a, b) => (b.power || 0) - (a.power || 0));
   if (oneAttacks.length > 0 && aliveEnemies.length > 0) {
     const best = oneAttacks[0];

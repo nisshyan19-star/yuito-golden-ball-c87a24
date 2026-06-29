@@ -3,7 +3,7 @@
 const test   = require('node:test');
 const assert = require('node:assert');
 const {
-  spawnEnemies, buildTurnOrder, chooseEnemyAction, calcReward,
+  spawnEnemies, buildTurnOrder, chooseEnemyAction, calcReward, difficultyScale,
 } = require('../src/scenes/battle-scene.js');
 
 // ── 制御可能なスタブ乱数（決定的にする） ────────────────────────────
@@ -112,4 +112,26 @@ test('calcReward: 敵全員の exp と gold を合算する', () => {
 
 test('calcReward: 空配列は 0', () => {
   assert.deepStrictEqual(calcReward([]), { exp: 0, gold: 0 });
+});
+
+// ── difficultyScale ──────────────────────────────────────────────────
+
+test('difficultyScale: easy は敵が弱く報酬多め・全回復復活', () => {
+  const s = difficultyScale('easy');
+  assert.ok(s.enemyHp < 1 && s.enemyAtk < 1);
+  assert.ok(s.reward > 1);
+  assert.strictEqual(s.reviveHalf, false);
+});
+
+test('difficultyScale: hard は敵が強く報酬多め・半分復活', () => {
+  const s = difficultyScale('hard');
+  assert.ok(s.enemyHp > 1 && s.enemyAtk > 1);
+  assert.ok(s.reward > 1);
+  assert.strictEqual(s.reviveHalf, true);
+});
+
+test('difficultyScale: normal/未知は等倍', () => {
+  const n = difficultyScale('normal');
+  assert.deepStrictEqual(n, { enemyHp: 1.0, enemyAtk: 1.0, reward: 1.0, reviveHalf: false });
+  assert.deepStrictEqual(difficultyScale(undefined), n);
 });

@@ -4,3 +4,10 @@ scratchpad/
 
 # OS
 .DS_Store
+
+# バックアップ・エディタ一時ファイル（コミット不要）
+*.bak
+*.bak[0-9]*
+*.swp
+*.tmp
+scratchpad-notes.tmp

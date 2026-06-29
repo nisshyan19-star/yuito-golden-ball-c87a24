@@ -1,5 +1,5 @@
 const test=require('node:test'); const assert=require('node:assert');
-const { calcDamage, applyDamage, isDefeated } = require('../src/logic/battle.js');
+const { calcDamage, applyDamage, isDefeated, typeMultiplier } = require('../src/logic/battle.js');
 const { makeRng } = require('../src/core/rng.js');
 
 test('こうげき>しゅび で1以上のダメージ', () => {
@@ -33,4 +33,27 @@ test('applyDamage は hp を減らし0未満にならず、0で dead', () => {
 test('isDefeated は hp0/dead で true、生存で false', () => {
   assert.strictEqual(isDefeated({hp:0,dead:true}), true);
   assert.strictEqual(isDefeated({hp:5,dead:false}), false);
+});
+
+// ── タイプ相性（3すくみ）─────────────────────────────────────────────
+test('typeMultiplier: 有利は1.5倍（パワー→テクニック）', () => {
+  assert.strictEqual(typeMultiplier('power', 'technique'), 1.5);
+  assert.strictEqual(typeMultiplier('technique', 'speed'), 1.5);
+  assert.strictEqual(typeMultiplier('speed', 'power'), 1.5);
+});
+test('typeMultiplier: 不利は0.75倍（逆向き）', () => {
+  assert.strictEqual(typeMultiplier('power', 'speed'), 0.75);
+  assert.strictEqual(typeMultiplier('technique', 'power'), 0.75);
+  assert.strictEqual(typeMultiplier('speed', 'technique'), 0.75);
+});
+test('typeMultiplier: 同タイプ・不明タイプは等倍', () => {
+  assert.strictEqual(typeMultiplier('power', 'power'), 1);
+  assert.strictEqual(typeMultiplier('power', null), 1);
+  assert.strictEqual(typeMultiplier(undefined, 'power'), 1);
+  assert.strictEqual(typeMultiplier('mystery', 'power'), 1);
+});
+test('calcDamage: typeMul=1.5 は等倍より大きい（同seed）', () => {
+  const base = calcDamage({atk:30},{def:6},{power:1, rng:makeRng(3), typeMul:1.0});
+  const adv  = calcDamage({atk:30},{def:6},{power:1, rng:makeRng(3), typeMul:1.5});
+  assert.ok(adv > base);
 });

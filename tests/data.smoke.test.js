@@ -15,6 +15,13 @@ test('5キャラそろっている', () => {
 test('全 item に id/name/kind/price', () => {
   for (const k in ITEMS) { const i = ITEMS[k]; assert.strictEqual(i.id, k); assert.ok(i.name && i.kind && i.price >= 0, k); }
 });
+test('全 item に desc（説明文）がある', () => {
+  // 名前だけで効果が分からない問題の再発防止：どのアイテムも空でない説明を持つ。
+  for (const k in ITEMS) {
+    const d = ITEMS[k].desc;
+    assert.ok(typeof d === 'string' && d.trim().length > 0, k + ' に desc がない');
+  }
+});
 test('敵にザコとボスがいる', () => {
   assert.ok(ENEMIES.foul_goblin && !ENEMIES.foul_goblin.isBoss);
   assert.ok(ENEMIES.dark_kaiser && ENEMIES.dark_kaiser.isBoss);

@@ -55,6 +55,24 @@ function useItem(target, item) {
 }
 
 /**
+ * healParty(party)
+ * 宿屋用：パーティ全員の HP/MP を全回復し、戦闘不能も復活させる（破壊的）。
+ * @param {Array} party state.party
+ * @returns {number} 回復した（生存させた）人数
+ */
+function healParty(party) {
+  var n = 0;
+  (party || []).forEach(function (c) {
+    if (!c) return;
+    c.dead = false;
+    if (typeof c.maxHp === 'number') c.hp = c.maxHp;
+    if (typeof c.maxMp === 'number') c.mp = c.maxMp;
+    n++;
+  });
+  return n;
+}
+
+/**
  * applyEquip(character)
  * 装備の atk/def を反映した実効値を返す（非破壊）。
  * @returns {{ atk: number, def: number }}
@@ -76,4 +94,4 @@ function applyEquip(character) {
 (function (root, api) {
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
-})(typeof window !== 'undefined' ? window : globalThis, { useItem, applyEquip });
+})(typeof window !== 'undefined' ? window : globalThis, { useItem, applyEquip, healParty });

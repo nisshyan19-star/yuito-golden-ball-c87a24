@@ -1,6 +1,6 @@
 const test   = require('node:test');
 const assert = require('node:assert');
-const { frontTile, isWalkable, clampCamera } = require('../src/scenes/field-scene.js');
+const { frontTile, isWalkable, clampCamera, _withActiveNpcs } = require('../src/scenes/field-scene.js');
 const { MAPS } = require('../src/data/maps.js');
 
 const field1 = MAPS.field1;
@@ -69,6 +69,40 @@ test('isWalkable: 開封済みの宝箱タイルは歩ける', () => {
 
 test('isWalkable: opened 省略でも宝箱は塞がる（デフォルト未開封扱い）', () => {
   assert.strictEqual(isWalkable(field1, 12, 13), false);
+});
+
+// ── ボス撃破→通路開放（回帰：倒したボスが残って通れないバグの再発防止）─────
+//   field5 のゴーレムキーパー(7,9)は壁の帯 r9 の唯一の隙間を塞ぐ中ボス。
+//   倒す前は通れず、倒す（vanishFlag=boss_guardian を立てる）と
+//   _withActiveNpcs がそのNPCを除いた表示マップを作り、隙間が歩けるようになる。
+const field5 = MAPS.field5;
+
+test('回帰: field5 ゴーレムキーパー(7,9)は撃破前は通路を塞ぐ', () => {
+  // 素のタイルは '.'（r9 = '#######.########' の唯一の隙間）だが NPC が塞ぐ。
+  assert.strictEqual(isWalkable(field5, 7, 9, {}), false);
+});
+
+test('回帰: ボスを撃破(vanishFlag)すると キーパーNPCが消えて通路(7,9)が歩ける', () => {
+  // 撃破でボスの vanishFlag(=boss_guardian) が立つ → 戦闘後にフィールド再構築で
+  // _withActiveNpcs が呼ばれ、その NPC を除いた表示マップになる。
+  const cleared = _withActiveNpcs(field5, { boss_guardian: true });
+  // (7,9) に居たキーパーが除外されている。
+  assert.ok(
+    !(cleared.npcs || []).some((n) => n.x === 7 && n.y === 9),
+    'キーパーNPCが除去されていない（撃破後も残っている）',
+  );
+  // 通路が開く＝隙間(7,9)が歩けるようになる。
+  assert.strictEqual(isWalkable(cleared, 7, 9, {}), true);
+});
+
+test('回帰: vanishFlag が未設定なら キーパーは残り通路は塞がれたまま', () => {
+  // flags が空（未撃破）なら除外されず、通路は塞がれたまま。
+  const notCleared = _withActiveNpcs(field5, {});
+  assert.ok(
+    (notCleared.npcs || []).some((n) => n.x === 7 && n.y === 9),
+    'キーパーNPCが消えてしまっている（未撃破なのに通れる）',
+  );
+  assert.strictEqual(isWalkable(notCleared, 7, 9, {}), false);
 });
 
 // ── clampCamera ──────────────────────────────────────────────────────

@@ -44,21 +44,98 @@ function joinAlly(state, id) {
   return ch.name;
 }
 
-// エンディングのメッセージページ（仲間の名前を織り込んで作る）。
+// === サブクエスト進行 ===
+// 町の「おつかいクエスト」は3段フラグで進む：
+//   acceptFlag … 依頼を受けた   itemFlag … 届け物を受け取った   doneFlag … 報酬を受領した
+// 受注→別NPCから品物→依頼主へ戻して報酬、という一本道（町内で完結）。
+//
+// questStage: 今どの段階かを純粋関数で返す。
+//   'done'(受領済み) | 'clear'(報酬を渡せる) | 'wait'(受注済み・品物まだ) | 'ask'(未受注)
+function questStage(quest, flags) {
+  flags = flags || {};
+  if (!quest) return 'ask';
+  if (quest.doneFlag && flags[quest.doneFlag]) return 'done';
+  if (quest.itemFlag && flags[quest.itemFlag]) return 'clear';
+  if (quest.acceptFlag && flags[quest.acceptFlag]) return 'wait';
+  return 'ask';
+}
+
+// grantReward: 報酬(gold/item)を state に加算し、もらった物の説明文を返す。
+//   reward = { gold?:number, item?:itemId, amount?:number, label?:'表示名' }
+function grantReward(state, reward) {
+  if (!state || !reward) return '';
+  var parts = [];
+  if (reward.gold) {
+    state.gold = (state.gold || 0) + reward.gold;
+    parts.push(reward.gold + 'ゴールド');
+  }
+  if (reward.item) {
+    if (!state.inventory) state.inventory = {};
+    var amt = reward.amount || 1;
+    state.inventory[reward.item] = (state.inventory[reward.item] || 0) + amt;
+    parts.push((reward.label || reward.item) + (amt > 1 ? (' x' + amt) : ''));
+  }
+  return parts.join('と');
+}
+
+// エンディングのメッセージページ（弾4で強化＝スタッフロール＋仲間ごとの別れ）。
+//   実際にパーティに いる仲間だけ farewell を差し込むので、加入状況に矛盾しない。
 function getEnding(state) {
   var party = (state && state.party) || [];
   var names = party.map(function (p) { return p.name; });
   var mates = names.length > 1 ? names.slice(1).join('・') : 'なかま';
 
-  return [
-    'ダーク・カイザーは ひかりのなかへ きえていった……',
-    'ユイトは とりもどした\n「おうごんの サッカーボール」を\n たかく かかげた！',
-    'まちに へいわが もどり\nみんなの えがおが かえってきた。',
-    mates + ' は ユイトに いった。\n「きみと たたかえて よかった！」',
-    'ユイトは わらって うなずいた。\n「つぎは ほんものの しあいで しょうぶだ！」',
-    'こうして ユイトの ぼうけんは\n しあわせな まくを とじた。',
-    '― おわり ―\n\nあそんでくれて ありがとう！',
+  // 第2章（追加弾5-A/E）：ネオ・カイザーを倒していれば「よみがえりし やみ」END。
+  //   倒していなければ（フラグ無し）従来どおり 第1章END を返す。
+  if (state && state.flags && state.flags.boss_neo_kaiser) {
+    var p2 = [
+      'ネオ・カイザーは\nやみの かなたへ きえていった……',
+      'よみがえった やみが\nついに ほろびたのだ。',
+      'ユイト「もう だれも\nおびえなくて いい。」',
+      'そらの くろい うずが きえ、\nまちに ひかりが さしこんだ。',
+    ];
+    // 仲間ごとの 別れの ひとこと（第2章版・加入している子だけ）。
+    var fw2 = {
+      ikuma:  'イクマ「やみが もどっても\nおれたちなら へいきだ！」',
+      aoshi:  'アオシ「きみと たたかえて\nほんとうに よかった。」',
+      tomoki: 'トモキ「ぼくの まもりは\nもう やみにも まけないよ。」',
+      itsuki: 'イツキ「この きせきを\nずっと わすれない！」',
+    };
+    party.forEach(function (p) { if (fw2[p.id]) p2.push(fw2[p.id]); });
+    p2.push('ユイト「さあ、つぎこそ\nほんものの サッカーの しあいだ！」');
+    p2.push('＊　＊　＊');
+    p2.push('スタッフロール\n\nゆうしゃ … ユイト');
+    p2.push('なかま … ' + mates);
+    p2.push('だい2しょう\n「よみがえりし やみ」\nクリア！');
+    p2.push('― かんぜん クリア！ ―\n\nほんとうに ありがとう！');
+    return p2;
+  }
+
+  var pages = [
+    'ダーク・カイザーは\nひかりの なかへ きえていった……',
+    'ユイトは とりもどした\n「おうごんの サッカーボール」を\nたかく かかげた！',
+    'スタジアムに かんせいが ひびく。\nまちに へいわが もどったのだ。',
   ];
+
+  // 仲間ごとの 別れの ひとこと（加入している子だけ）。
+  var farewell = {
+    ikuma:  'イクマ「ユイトと たたかえて\nさいこうに たのしかったぜ！」',
+    aoshi:  'アオシ「つぎは スタジアムで\nほんとうの しあいを しよう。」',
+    tomoki: 'トモキ「ぼくの まもりは\nきみたちが いたから だよ。」',
+    itsuki: 'イツキ「この ゴールは\nぜったいに わすれない！」',
+  };
+  party.forEach(function (p) { if (farewell[p.id]) pages.push(farewell[p.id]); });
+
+  pages.push('ユイトは わらって うなずいた。\n「みんな、ありがとう！」');
+  pages.push('「つぎは ほんものの しあいで\nしょうぶだ！」');
+  pages.push('こうして ユイトたちの ぼうけんは\nしあわせな まくを とじた。');
+  pages.push('＊　＊　＊');
+  pages.push('スタッフロール\n\nゆうしゃ … ユイト');
+  pages.push('なかま … ' + mates);
+  pages.push('そして…\nあそんでくれた きみ！');
+  pages.push('「ユイトと おうごんの\nサッカーボール」');
+  pages.push('― おわり ―\n\nあそんでくれて ありがとう！');
+  return pages;
 }
 
 (function (root, api) {
@@ -67,4 +144,6 @@ function getEnding(state) {
 })(typeof window !== 'undefined' ? window : globalThis, {
   joinAlly: joinAlly,
   getEnding: getEnding,
+  questStage: questStage,
+  grantReward: grantReward,
 });

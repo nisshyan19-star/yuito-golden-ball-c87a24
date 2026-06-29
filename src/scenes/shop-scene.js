@@ -10,6 +10,10 @@ function createShopScene(state, shopDef) {
   var VH = (S && S.VH) || 512;
   shopDef = shopDef || {};
 
+  // 宿屋モード：かう/うる の代わりに「とまる」で全回復する。
+  var isInn   = shopDef.type === 'inn';
+  var innCost = (typeof shopDef.cost === 'number') ? shopDef.cost : 20;
+
   function ITEMS() { return (S && S.ITEMS) || {}; }
   function inv()   { return state.inventory || (state.inventory = {}); }
 
@@ -30,6 +34,13 @@ function createShopScene(state, shopDef) {
   }
 
   function buildMenu() {
+    if (isInn) {
+      listCache = [
+        { label: 'とまる  ' + innCost + 'G', v: 'stay' },
+        { label: 'でる',                    v: 'exit' },
+      ];
+      return;
+    }
     listCache = [
       { label: 'かう', v: 'buy'  },
       { label: 'うる', v: 'sell' },
@@ -76,6 +87,17 @@ function createShopScene(state, shopDef) {
     if (mode === 'menu') {
       if (item.v === 'buy')  enter('buy');
       else if (item.v === 'sell') enter('sell');
+      else if (item.v === 'stay') {
+        // 宿屋：ゴールドを払って全員 HP/MP 全回復＋復活。
+        if ((state.gold || 0) >= innCost) {
+          state.gold = (state.gold || 0) - innCost;
+          if (S && typeof S.healParty === 'function') S.healParty(state.party);
+          if (S && S.saveGame) S.saveGame(state);
+          showMsg(['ぐっすり ねむった……', 'みんな げんきに なった！'], 'menu');
+        } else {
+          showMsg(['ゴールドが たりないよ！'], 'menu');
+        }
+      }
       else if (item.v === 'exit') { if (S && S.popScene) S.popScene(); }
       return;
     }
@@ -118,9 +140,19 @@ function createShopScene(state, shopDef) {
     var top = f.Y + 50, rowH = 24;
     for (var i = 0; i < listCache.length; i++) {
       var y = top + i * rowH;
-      if (y > f.Y + f.H - 16) break;
+      if (y > f.Y + f.H - 50) break;  // 下部はアイテム説明フッター用に空ける。
       if (i === cursor) S.drawText(ctx, '▶', f.X + 14, y, { size: 13, color: '#ffd76e' });
       S.drawText(ctx, listCache[i].label, f.X + 34, y, { size: 13, color: i === cursor ? '#ffffff' : '#cfe0ff' });
+    }
+    // 選択中アイテムの説明（v がアイテムidの時だけ＝かう・うる）。
+    var cur = listCache[cursor];
+    var det = cur && cur.v ? ITEMS()[cur.v] : null;
+    if (det && det.desc) {
+      var dy = f.Y + f.H - 42;
+      var dl = (S.wrapText ? S.wrapText(det.desc, 20) : [det.desc]);
+      for (var d = 0; d < Math.min(2, dl.length); d++) {
+        S.drawText(ctx, dl[d], f.X + 16, dy + d * 16, { size: 11, color: '#bfe6c8' });
+      }
     }
   }
   function drawMessage(ctx) {

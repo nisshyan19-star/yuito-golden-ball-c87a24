@@ -52,15 +52,72 @@ function _startGame(state) {
  * @returns シーンオブジェクト { update, draw }
  */
 function createTitleScene() {
-  // 選択項目: 0=はじめから, 1=つづきから
+  // 選択項目: 0=はじめから, 1=つづきから, 2=つよくてニューゲーム（クリア済みのみ）
   var _cursor = 0; // 現在のカーソル位置
   var _time   = 0; // アニメーション用タイマー
+  var _mode   = 'main'; // 'main' | 'difficulty'（はじめから→難易度選択）
+  var _diffCursor = 1;  // 0=やさしい 1=ふつう 2=むずかしい（既定ふつう）
 
-  // 選択可能な項目インデックスの配列を動的に返す（セーブ無しは「はじめから」のみ）
+  // クリア済みセーブかの判定は loadGame が要るので、一度だけ調べてキャッシュする
+  //   （毎フレームのデシリアライズを避ける。タイトル滞在中はセーブが変わらない前提）。
+  var _clearedCache = null;
+  function _hasClearedSave() {
+    if (_clearedCache !== null) return _clearedCache;
+    var S = (typeof window !== 'undefined') ? window.SRPG : null;
+    var hasSave = S && typeof S.hasSave === 'function' && S.hasSave();
+    var saved = (hasSave && typeof S.loadGame === 'function') ? S.loadGame() : null;
+    _clearedCache = !!(saved && saved.flags && saved.flags.game_cleared);
+    return _clearedCache;
+  }
+
+  // 難易度の選択肢（v は settings.difficulty に入れる値）
+  var DIFFS = [
+    { v: 'easy',   label: 'やさしい',   desc: 'てきが よわい・たおれても ぜんかいふく' },
+    { v: 'normal', label: 'ふつう',     desc: 'ちょうど いい てごたえ' },
+    { v: 'hard',   label: 'むずかしい', desc: 'てきが つよい・ほうしゅう おおい' },
+  ];
+
+  // 難易度を決めて冒険を始める
+  function _beginNewGame(S, diff) {
+    var newState = S.createNewGame();
+    newState.settings = newState.settings || {};
+    newState.settings.difficulty = diff;
+    S.saveGame(newState);
+    S.pushScene(S.createDialog(
+      [
+        'ユイトは サッカーが だいすきな 9さいの しょうねん。',
+        'ある日、町の たからもの「黄金のサッカーボール」が ぬすまれた！',
+        'ユイトの ぼうけんが はじまる！',
+      ],
+      { onComplete: function () { _startGame(newState); } }
+    ));
+  }
+
+  // つよくてニューゲーム（追加弾4-C）：クリア済みセーブを ひきついで 2しゅうめへ。
+  function _beginNewGamePlus(S) {
+    if (typeof S.createNewGamePlus !== 'function') return;
+    var prev = S.loadGame();
+    if (!prev) return;
+    var ng = S.createNewGamePlus(prev);
+    S.saveGame(ng);
+    S.pushScene(S.createDialog(
+      [
+        'つよくて ニューゲーム！',
+        'レベルや そうび、なかまは そのまま。つよくなった てきに もういちど ちょうせんだ！',
+        'これで ' + (ng.clearCount + 1) + 'しゅうめ！ がんばれ ユイト！',
+      ],
+      { onComplete: function () { _startGame(ng); } }
+    ));
+  }
+
+  // 選択可能な項目インデックスの配列を動的に返す。
+  //   セーブ無し＝「はじめから」のみ／セーブ有り＝＋「つづきから」／
+  //   クリア済みセーブ＝さらに「つよくてニューゲーム」。
   function _selectableItems() {
     var S = (typeof window !== 'undefined') ? window.SRPG : null;
     var hasSave = S && typeof S.hasSave === 'function' && S.hasSave();
-    return hasSave ? [0, 1] : [0];
+    if (!hasSave) return [0];
+    return _hasClearedSave() ? [0, 1, 2] : [0, 1];
   }
 
   return {
@@ -68,6 +125,17 @@ function createTitleScene() {
       _time += dt;
       if (!input || !input.pressed) return;
       var pr = input.pressed;
+      var S = (typeof window !== 'undefined') ? window.SRPG : null;
+
+      // ── 難易度選択モード ──
+      if (_mode === 'difficulty') {
+        if (pr.up)   _diffCursor = (_diffCursor - 1 + DIFFS.length) % DIFFS.length;
+        if (pr.down) _diffCursor = (_diffCursor + 1) % DIFFS.length;
+        if (pr.cancel) { _mode = 'main'; return; }
+        if (pr.confirm && S) { _beginNewGame(S, DIFFS[_diffCursor].v); }
+        return;
+      }
+
       var selectable = _selectableItems();
 
       // 上下でカーソル移動（選択可能項目だけを巡回）
@@ -80,24 +148,12 @@ function createTitleScene() {
 
       // 決定
       if (pr.confirm) {
-        var S = (typeof window !== 'undefined') ? window.SRPG : null;
         if (!S) return;
 
         if (_cursor === 0) {
-          // はじめから
-          var newState = S.createNewGame();
-          S.saveGame(newState);
-          // 導入ダイアログを push（onComplete でゲーム開始）
-          S.pushScene(S.createDialog(
-            [
-              'ユイトは サッカーが だいすきな 9さいの しょうねん。',
-              'ある日、町の たからもの「黄金のサッカーボール」が ぬすまれた！',
-              'ユイトの ぼうけんが はじまる！',
-            ],
-            {
-              onComplete: function () { _startGame(newState); },
-            }
-          ));
+          // はじめから → 難易度選択へ
+          _mode = 'difficulty';
+          _diffCursor = 1;
 
         } else if (_cursor === 1) {
           // つづきから
@@ -105,6 +161,10 @@ function createTitleScene() {
           if (saved) {
             _startGame(saved);
           }
+
+        } else if (_cursor === 2) {
+          // つよくてニューゲーム（クリア済みセーブのみ選べる）
+          _beginNewGamePlus(S);
         }
       }
     },
@@ -238,41 +298,83 @@ function createTitleScene() {
       });
 
       // ── 8. メニュー ───────────────────────────────────────────────
-      //   画面下の操作ボタン（y357〜）より上に収める＝窓は y268〜348。
-      var menuStartY = 280;
-      var menuItems  = [
-        { label: 'はじめから', idx: 0 },
-        { label: 'つづきから', idx: 1 },
-      ];
-      var hasSave = typeof S.hasSave === 'function' && S.hasSave();
-
-      // メニュー背景ウィンドウ（金枠）
-      S.drawWindow(ctx, VW / 2 - 80, menuStartY - 12, 160, 80, {
-        radius: 10,
-        border: '#c89a4a',
-      });
-
-      for (var mi = 0; mi < menuItems.length; mi++) {
-        var item  = menuItems[mi];
-        var itemY = menuStartY + mi * 36;
-        var isSelected = _cursor === item.idx;
-        var isEnabled  = (item.idx === 0) || hasSave;
-
-        var color = isEnabled ? '#dff4ff' : '#556677';
-        if (isSelected && isEnabled) color = '#ffffff';
-
-        if (isSelected && isEnabled) {
-          var blink = Math.floor(_time / 0.5) % 2 === 0;
-          if (blink) {
-            S.drawText(ctx, '▶', VW / 2 - 56, itemY + 2, {
-              size: 16, color: '#ffd76e', align: 'left',
-            });
-          }
-        }
-
-        S.drawText(ctx, item.label, VW / 2, itemY, {
-          size: 18, color: color, align: 'center', shadow: isSelected && isEnabled,
+      //   画面下の操作ボタン（y357〜）より上に収める。
+      if (_mode === 'difficulty') {
+        // ── 難易度選択サブメニュー ──
+        S.drawWindow(ctx, VW / 2 - 116, 232, 232, 120, {
+          radius: 10,
+          border: '#c89a4a',
         });
+        S.drawText(ctx, 'なんいど を えらぶ', VW / 2, 248, {
+          size: 13, color: '#ffd76e', align: 'center', weight: 'bold',
+        });
+        for (var di = 0; di < DIFFS.length; di++) {
+          var dItemY  = 272 + di * 22;
+          var dSelected = _diffCursor === di;
+          var dColor  = dSelected ? '#ffffff' : '#dff4ff';
+          if (dSelected) {
+            var dBlink = Math.floor(_time / 0.5) % 2 === 0;
+            if (dBlink) {
+              S.drawText(ctx, '▶', VW / 2 - 78, dItemY + 2, {
+                size: 14, color: '#ffd76e', align: 'left',
+              });
+            }
+          }
+          S.drawText(ctx, DIFFS[di].label, VW / 2, dItemY, {
+            size: 16, color: dColor, align: 'center', shadow: dSelected,
+          });
+        }
+        // フォーカス中の難易度の説明
+        S.drawText(ctx, DIFFS[_diffCursor].desc, VW / 2, 340, {
+          size: 9, color: '#cfe0ff', align: 'center',
+        });
+      } else {
+        // ── メインメニュー（はじめから／つづきから／つよくてニューゲーム） ──
+        var hasSave = typeof S.hasSave === 'function' && S.hasSave();
+        var cleared = hasSave && _hasClearedSave();
+        var menuItems  = [
+          { label: 'はじめから', idx: 0 },
+          { label: 'つづきから', idx: 1 },
+        ];
+        if (cleared) menuItems.push({ label: 'つよくてニューゲーム', idx: 2 });
+
+        // 3項目（クリア後）は長いラベルが出るので、すこし小さく・窓を広く・上に詰める。
+        // バーチャルパッド（y357〜）に被らないよう、窓の下端は 357 より上に収める。
+        var menuStartY = cleared ? 262 : 280;
+        var gap        = cleared ? 28  : 36;
+        var winW       = cleared ? 224 : 160;
+        var winH       = cleared ? (menuItems.length * gap + 16) : 80;
+        var fontSize   = cleared ? 15  : 18;
+        var arrowX     = cleared ? (VW / 2 - winW / 2 + 8) : (VW / 2 - 56);
+
+        // メニュー背景ウィンドウ（金枠）
+        S.drawWindow(ctx, VW / 2 - winW / 2, menuStartY - 12, winW, winH, {
+          radius: 10,
+          border: '#c89a4a',
+        });
+
+        for (var mi = 0; mi < menuItems.length; mi++) {
+          var item  = menuItems[mi];
+          var itemY = menuStartY + mi * gap;
+          var isSelected = _cursor === item.idx;
+          var isEnabled  = (item.idx === 0) || hasSave; // つづき/つよくてNG+ はセーブが要る
+
+          var color = isEnabled ? '#dff4ff' : '#556677';
+          if (isSelected && isEnabled) color = '#ffffff';
+
+          if (isSelected && isEnabled) {
+            var blink = Math.floor(_time / 0.5) % 2 === 0;
+            if (blink) {
+              S.drawText(ctx, '▶', arrowX, itemY + 2, {
+                size: fontSize - 2, color: '#ffd76e', align: 'left',
+              });
+            }
+          }
+
+          S.drawText(ctx, item.label, VW / 2, itemY, {
+            size: fontSize, color: color, align: 'center', shadow: isSelected && isEnabled,
+          });
+        }
       }
 
       // ── 9. バージョン表示 ─────────────────────────────────────────
