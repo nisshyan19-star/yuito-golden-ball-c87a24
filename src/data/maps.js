@@ -22,6 +22,26 @@ var TILE_LEGEND = {
   'F': { sprite: 't_floor', walkable: true  }, // 室内の床
   // 隠し通路（弾3）：見た目は壁(t_wall)と同じだが歩ける。当たって初めて気づく。
   'H': { sprite: 't_wall',  walkable: true, secret: true }, // かくし通路（壁にまぎれた抜け道）
+  // 弾6：DQ風の地形タイル（field-scene.js が手描き＝procedural で描く）。
+  //   森/川/岩は通行不可、橋/花畑は歩ける。下地は森/岩/花=草、川/橋=水。
+  'T': { sprite: 't_tree',   walkable: false }, // 森の木（しげみ）
+  'r': { sprite: 't_river',  walkable: false }, // 川（ながれる水）
+  'b': { sprite: 't_bridge', walkable: true  }, // 木の橋（川をわたる）
+  'R': { sprite: 't_rock',   walkable: false }, // 岩（おおきな石）
+  'f': { sprite: 't_flower', walkable: true  }, // 花畑（とおれる）
+  // Phase7-①「土台」：基本タイルも全部コード手描き化＋地形タイルを大量追加。
+  //   field-scene.js の _drawBaseTile が下地ごとコードで描く（AI絵は卒業）。
+  's': { sprite: 't_sand',      walkable: true  }, // 砂地・砂浜
+  'w': { sprite: 't_snow',      walkable: true  }, // 雪原
+  'W': { sprite: 't_deepwater', walkable: false }, // 深い水（濃い青・通れない）
+  '=': { sprite: 't_cobble',    walkable: true  }, // 石だたみ（村の道）
+  'P': { sprite: 't_wood',      walkable: true  }, // 木の床（家の中・桟橋）
+  'c': { sprite: 't_cavefloor', walkable: true  }, // 洞窟の床
+  'C': { sprite: 't_cavewall',  walkable: false }, // 洞窟の岩壁
+  'L': { sprite: 't_lava',      walkable: false }, // 溶岩（ながれる・通れない）
+  // Phase7-④「こおりの とう」：氷のダンジョン用タイル（field-scene.js がコードで描く）。
+  'I': { sprite: 't_ice',     walkable: true  }, // 氷のゆか（つるつる光る・歩ける）
+  'X': { sprite: 't_icewall', walkable: false }, // 氷のかべ（あつい氷・通れない）
 };
 
 // ── マップ集 ─────────────────────────────────────────────────────────
@@ -115,22 +135,26 @@ var MAPS = {
   field2: {
     id: 'field2',
     name: 'ナイタースタジアム',
+    ambient: 'night',   // 夜：星のまたたき＋ほたるのひかり
+    // 弾6：森(T)・川(r)・橋(b)・岩(R)・花畑(f)で DQ 風に。
+    //   川が横にながれ、まんなかの橋(7,5)でしか わたれない＝自然な関所ギミック。
+    //   col7 は到着(7,2)→橋→出口(7,16)まで歩ける道。NPC/宝箱/動く床の座標は踏めるまま。
     grid: [
       '################', // r0
-      '#......,.......#', // r1
-      '#......,.......#', // r2  ← 到着(7,2)
-      '#......,.......#', // r3
-      '#.##...,..##...#', // r4  ← 観客席（装飾）
-      '#.##...,..##...#', // r5
-      '#......,.......#', // r6
+      '#TT....,.....TT#', // r1  ← ゴール装飾(3,1)(11,1)・四すみは森
+      '#TT....,.....TT#', // r2  ← 到着(7,2)
+      '#T.....,......T#', // r3
+      '#..R...,....R..#', // r4  ← 岩(3,4)(12,4)
+      '#rrrrrrbrrrrrrr#', // r5  ← 川＋橋(7,5)だけ わたれる
+      '#......,.......#', // r6  ← ボール(5,6)(9,6)
       '#......,.......#', // r7
       '#......,.......#', // r8  ← アオシ(4,8)／装備屋(11,8)
-      '#......,.......#', // r9
-      '#......,.......#', // r10
-      '#......,.......#', // r11 ← 宝箱(12,11)
-      '#......,.......#', // r12
-      '#......,.......#', // r13
-      '#......,.......#', // r14
+      '#.ff...,.......#', // r9  ← 花畑
+      '#.f....,.......#', // r10
+      '#......,.......#', // r11 ← コーチ(9,11)／宝箱(12,11)
+      '#......,.......#', // r12 ← 動く床(7,12)
+      '#......,.......#', // r13 ← 動く床(7,13)
+      '#.ff...,....ff.#', // r14 ← 動く床(7,14)・花畑
       '#......,.......#', // r15
       '#......,.......#', // r16 ← 出口(7,16)
       '################', // r17
@@ -192,6 +216,7 @@ var MAPS = {
   field3: {
     id: 'field3',
     name: 'サンドコート',
+    ambient: 'sand',   // 砂：砂ぼこりがよこに流れる
     grid: [
       '################', // r0
       '#......,.......#', // r1
@@ -263,6 +288,7 @@ var MAPS = {
   field4: {
     id: 'field4',
     name: 'レイニーピッチ',
+    ambient: 'rain',   // 雨：あめが降る＋雲かげ
     grid: [
       '################', // r0
       '#......,.......#', // r1
@@ -342,6 +368,7 @@ var MAPS = {
   field5: {
     id: 'field5',
     name: 'スカイスタジアム',
+    ambient: 'sky',   // 空：雲が流れる＋きらめき
     grid: [
       '################', // r0
       '#......,.......#', // r1
@@ -413,6 +440,7 @@ var MAPS = {
   field6: {
     id: 'field6',
     name: 'ダークアリーナ',
+    ambient: 'embers',   // 火の粉：オレンジの粒が昇る
     // 決戦まえ・カットシーン（弾4）：ダークアリーナ入場で一度だけ流れる。
     //   仲間の演出は序盤で必ず加入する イクマ・アオシ に限定（未加入でも矛盾しない）。
     cutscene: {
@@ -560,6 +588,10 @@ var MAPS = {
     ],
     npcs: [
       {
+        x: 6, y: 2, sprite: 'coach', guide: true,
+        pages: ['こまったら いつでも\nコーチに きいてね！'],
+      },
+      {
         x: 3, y: 4, sprite: 'shopkeep', shop: {
           type: 'item', name: 'どうぐ屋',
           greeting: 'みなとまちへ ようこそ！ かいものかい？',
@@ -608,6 +640,7 @@ var MAPS = {
         pages: [
           'ここは ハーバータウン。',
           'やどやで やすめば\nHPも スタミナも ぜんかいするよ！',
+          'にしの はずれの みちを ゆくと\n「みのりの村」が あるんだって。',
         ],
       },
       // 隠しエリアの案内人（弾2）：ひかる ゆかのウワサ。
@@ -638,15 +671,327 @@ var MAPS = {
       { x: 13, y: 8, to: 'secret_field', tx: 7, ty: 3, msg: 'ひかる ゆかに のった！\nまばゆい ひかりに つつまれる…' },
     ],
     exits: [
-      { x: 7, y: 16, to: 'field2', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'field2', tx: 7, ty: 2,
+        requireFlag: 'boss_magma',
+        lockedMsg: 'スタジアムへの みちは\nまだ とおれない。\nまずは みのりの村の おくの\nほのおの どうくつで\nマグマ・ゴーレムを たおそう！' },
+      { x: 1, y: 2, to: 'village1', tx: 10, ty: 1 },
     ],
     encounter: { rate: 0, enemies: [] },
+  },
+
+  // ── village1：みのりの村（town1 の西にある のどかな農村・お店と宿屋あり） ──
+  village1: {
+    id: 'village1',
+    name: 'みのりの村',
+    ambient: 'leaves',   // 落ち葉：木の葉がひらひら舞う のどかな村
+    isTown: true,
+    grid: [
+      '####################', // r0
+      '#.T......==......T.#', // r1  ← 到着(10,1)
+      '#.#####.f==.f#####.#', // r2  看板(9,2)
+      '#.#PPP#..==..#PPP#.#', // r3  家A(道具屋)左／家C(村人)右
+      '#.#PPP#======#PPP#.#', // r4
+      '#.##=##..==..##=##.#', // r5  家Aドア(4,5)／家Cドア(15,5)
+      '#........==........#', // r6  子供(10,6)
+      '#......fT==...f.T..#', // r7
+      '#........==........#', // r8
+      '#......======......#', // r9  ベンチ(12,9)
+      '#.================.#', // r10 井戸(10,10)・村人(6,10)・宝箱(16,10)
+      '#.================.#', // r11
+      '#......======......#', // r12
+      '#.#####f.==..Tf....#', // r13 家B(宿屋)
+      '#.#PPP#..==........#', // r14
+      '#.#PPP#..==........#', // r15
+      '#.##=##==========..#', // r16 家Bドア(4,16)・宿屋NPC(4,16)
+      '#..,,,,,.==..ffff..#', // r17 畑(左)／花畑(右)
+      '#..,,,,,T==..ffff..#', // r18
+      '#..,,,,,.==..ffff..#', // r19
+      '#.T......==......T.#', // r20 出口(10,20)
+      '####################', // r21
+    ],
+    npcs: [
+      {
+        x: 4, y: 5, sprite: 'shopkeep', shop: {
+          type: 'item', name: 'よろずや',
+          greeting: 'みのりの村へ ようこそ！\nおてごろな しなものが あるよ。',
+          items: ['drink', 'jelly', 'firstaid'],
+        },
+      },
+      {
+        x: 4, y: 16, sprite: 'shopkeep', shop: {
+          type: 'inn', name: 'むらの やどや', cost: 15,
+          greeting: 'のんびり やすんで いってね。',
+        },
+      },
+      {
+        x: 15, y: 5, sprite: 'coach',
+        pages: [
+          'この村は おいしい やさいと\nおはなで ゆうめいなんだ。',
+          'まんなかの いどの みずは\nとっても つめたくて うまいぞ！',
+        ],
+      },
+      {
+        x: 10, y: 6, sprite: 'coach',
+        pages: [
+          'おにいちゃん つよそう！',
+          'はたけで とれた やさいを\nたべると げんきが でるんだって！',
+        ],
+      },
+      {
+        x: 6, y: 10, sprite: 'shopkeep',
+        pages: [
+          'にしの みちは まだ あぶないよ。',
+          'やどやで やすんでから\nぼうけんに でかけると いいよ。',
+        ],
+      },
+    ],
+    chests: [
+      { x: 16, y: 10, id: 'chest_village1', flag: 'chest_village1', item: 'firstaid', amount: 1, label: 'きゅうきゅうセット' },
+    ],
+    objects: [
+      { x: 10, y: 10, type: 'well',  solid: true },
+      { x: 12, y: 9,  type: 'bench', solid: true },
+      { x: 9,  y: 2,  type: 'sign',  solid: true },
+      { x: 2,  y: 17, type: 'fence', solid: true },
+      { x: 2,  y: 18, type: 'fence', solid: true },
+      { x: 2,  y: 19, type: 'fence', solid: true },
+      { x: 3,  y: 17, type: 'crop' },
+      { x: 5,  y: 17, type: 'crop' },
+      { x: 7,  y: 17, type: 'crop' },
+      { x: 4,  y: 18, type: 'crop' },
+      { x: 6,  y: 18, type: 'crop' },
+      { x: 3,  y: 19, type: 'crop' },
+      { x: 5,  y: 19, type: 'crop' },
+      { x: 7,  y: 19, type: 'crop' },
+      { x: 13, y: 17, type: 'flower' },
+      { x: 15, y: 17, type: 'flower' },
+      { x: 14, y: 19, type: 'flower' },
+    ],
+    exits: [
+      { x: 10, y: 20, to: 'town1', tx: 2, ty: 2 },
+      { x: 18, y: 10, to: 'cave1', tx: 8, ty: 16 },   // 村の東はずれ → ほのおの どうくつ
+    ],
+    encounter: { rate: 0, enemies: [] },
+  },
+
+  // ── cave1：ほのおの どうくつ（みのりの村の東・溶岩のどうくつ・たいまつ暗闇） ──
+  //   Phase7-③ ダンジョン。洞窟タイル c/C・ようがん L・橋 b の ひろい探索マップ
+  //   (20行×18列・スクロール)。dark:true で たいまつ視界。おくの ボス magma_golem を
+  //   たおすと ボス部屋の宝箱(ミスリルアーマー)が ひらく。かくし通路 H の先に ひみつ宝。
+  cave1: {
+    id: 'cave1',
+    name: 'ほのおの どうくつ',
+    dark: true,
+    grid: [
+      'CCCCCCCCCCCCCCCCCC', // y0
+      'CCCccccccccccccCCC', // y1  ボス部屋・おく宝箱(4,1)
+      'CCCccccccccccccCCC', // y2
+      'CCCccccccccccccCCC', // y3  ボス magma_golem(9,3)
+      'CCCCCCCCCcCCCCCCCC', // y4  くびれ(col9)
+      'CCCCCCCCCcCCCCCCCC', // y5
+      'CCCccccccccccccCCC', // y6  大広間
+      'CcHccccccccccccCCC', // y7  かくし通路 H(2,7)→ひみつ宝(1,7)
+      'CCCCCCCCccCCCCCCCC', // y8  開口(col8-9)
+      'CccccccccccccccccC', // y9  溶岩洞 うえゆか
+      'CLLLLLLLbbLLLLLLLC', // y10 ようがん＋橋(col8-9)
+      'CLLLLLLLbbLLLLLLLC', // y11
+      'CccccccccccccccccC', // y12 溶岩洞 したゆか
+      'CCCCCCCCccCCCCCCCC', // y13 開口(col8-9)
+      'CCCCCcccccccCCCCCC', // y14 入口部屋
+      'CCCCCcccccccCCCCCC', // y15 道中宝(5,15)
+      'CCCCCcccccccCCCCCC', // y16 むらからの到着(8,16)
+      'CCCCCcccccccCCCCCC', // y17 むらへもどる(8,17)
+      'CCCCCCCCCCCCCCCCCC', // y18
+      'CCCCCCCCCCCCCCCCCC', // y19
+    ],
+    npcs: [
+      {
+        x: 9, y: 3, sprite: 'kaiser',
+        boss: {
+          enemies: ['magma_golem'],
+          winFlag: 'boss_magma', vanishFlag: 'boss_magma',
+          reward: { item: 'spike2', amount: 1, label: 'スピードスパイク' },
+        },
+        pages: [
+          'いわの おくが あかく もえている…',
+          'マグマ・ゴーレム\n「ようがんの ねむりを\nさました やつは だれだ！」',
+          '「もえつきて しまえ！」',
+        ],
+        afterPages: ['マグマ・ゴーレムは くずれおち\nしずかな いわに もどった。'],
+      },
+    ],
+    chests: [
+      { id: 'cave1_chest1', x: 5, y: 15, item: 'firstaid', amount: 2, label: 'きゅうきゅうセット' },
+      { id: 'cave1_chest_hidden', x: 1, y: 7, item: 'mat_gold', amount: 2, label: 'こがねの かけら' },
+      {
+        id: 'cave1_chest_boss', x: 4, y: 1, item: 'forged_guard', amount: 1, label: 'こうてつガード',
+        requireFlag: 'boss_magma',
+        lockedMsg: 'あつい いわで ふさがれている。\nゴーレムを たおせば あきそうだ…',
+      },
+    ],
+    objects: [
+      { x: 8,  y: 5,  type: 'torch', solid: true },
+      { x: 10, y: 5,  type: 'torch', solid: true },
+      { x: 7,  y: 13, type: 'torch', solid: true },
+      { x: 10, y: 13, type: 'torch', solid: true },
+    ],
+    exits: [
+      { x: 8, y: 17, to: 'village1', tx: 18, ty: 10 },
+    ],
+    encounter: {
+      rate: 0.08,
+      enemies: ['foul_goblin', 'mud_slime', 'offside_ghost', 'corner_crow'],
+      rare: { rate: 0.04, enemies: ['golden_ball'] },
+    },
+  },
+
+  // ── Phase7-④「こおりの とう」3フロアの 氷ダンジョン（ch2_town 東口から） ──
+  //   各フロア 18行×16列（標準サイズ）。階段は exits で接続し、到着マスと
+  //   帰還マスを別にしてループ防止。隠し宝は左下ポケットで H 経由のみ到達可。
+  //   I=氷ゆか(walk) X=氷かべ(solid) H=隠し通路。ambient:'snow' で雪が舞う。
+  tower_ice_1f: {
+    id: 'tower_ice_1f',
+    name: 'こおりの とう 1かい',
+    ambient: 'snow',
+    grid: [
+      'XXXXXXXXXXXXXXXX', // r0
+      'XIIIIIIIIIIIIIIX', // r1  上り階段(8,1)→2F
+      'XIIIIIIIIIIIIIIX', // r2  (8,2)=2Fから降りた到着
+      'XIIXXIIIIIIXXIIX', // r3
+      'XIIXIIIIIIIIXIIX', // r4
+      'XIIIIIIIIIIIIIIX', // r5
+      'XIIIIIXXXXIIIIIX', // r6
+      'XIIIIIIIIIIIIIIX', // r7
+      'XIIXXIIIIIIXXIIX', // r8
+      'XIIXIIIIIIIIXIIX', // r9
+      'XIIIIIIIIIIIIIIX', // r10
+      'XIIIIIIIIIIIIIIX', // r11
+      'XIIIIIIIIIIIIIIX', // r12
+      'XIIIIIIIIIIIIIIX', // r13
+      'XHXIIIIIIIIIIIIX', // r14  かくし通路 H(1,14)→隠し宝
+      'XIXIIIIIIIIIIIIX', // r15  隠し宝(1,15)／道中宝(14,15)
+      'XXIIIIIIIIIIIIIX', // r16  町からの到着(8,15)／帰還(8,16)→町
+      'XXXXXXXXXXXXXXXX', // r17
+    ],
+    npcs: [],
+    chests: [
+      { id: 'tower1f_chest1', x: 14, y: 15, item: 'firstaid', amount: 2, label: 'きゅうきゅうセット' },
+      { id: 'tower1f_chest_hidden', x: 1, y: 15, item: 'mat_gold', amount: 2, label: 'こがねの かけら' },
+    ],
+    exits: [
+      { x: 8, y: 1,  to: 'tower_ice_2f', tx: 8, ty: 15 },
+      { x: 8, y: 16, to: 'ch2_town',     tx: 14, ty: 9 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['snow_yeti', 'blizzard_bat', 'frost_wisp'],
+      rare: { rate: 0.05, enemies: ['silver_fox'] },
+    },
+  },
+
+  tower_ice_2f: {
+    id: 'tower_ice_2f',
+    name: 'こおりの とう 2かい',
+    ambient: 'snow',
+    grid: [
+      'XXXXXXXXXXXXXXXX', // r0
+      'XIIIIIIIIIIIIIIX', // r1  上り階段(8,1)→3F
+      'XIIIIIIIIIIIIIIX', // r2  (8,2)=3Fから降りた到着
+      'XXXXXXIIIIXXXXXX', // r3
+      'XIIIIIIIIIIIIIIX', // r4
+      'XIIXXXIIIIXXXIIX', // r5
+      'XIIXIIIIIIIIXIIX', // r6
+      'XIIXIIIIIIIIXIIX', // r7
+      'XIIXIIIIIIIIXIIX', // r8  中央宝(8,8)
+      'XIIXXXIIIIXXXIIX', // r9
+      'XIIIIIIIIIIIIIIX', // r10
+      'XIIIIIIIIIIIIIIX', // r11
+      'XIIIIIIIIIIIIIIX', // r12
+      'XIIIIIIIIIIIIIIX', // r13
+      'XHXIIIIIIIIIIIIX', // r14  かくし通路 H(1,14)
+      'XIXIIIIIIIIIIIIX', // r15  隠し宝(1,15)／(8,15)=1Fからの到着
+      'XXIIIIIIIIIIIIIX', // r16  帰還(8,16)→1F
+      'XXXXXXXXXXXXXXXX', // r17
+    ],
+    npcs: [],
+    chests: [
+      { id: 'tower2f_chest1', x: 8, y: 8, item: 'restart_whistle', amount: 1, label: 'リスタートの笛' },
+      { id: 'tower2f_chest_hidden', x: 1, y: 15, item: 'mat_crystal', amount: 2, label: 'ちからの クリスタル' },
+    ],
+    exits: [
+      { x: 8, y: 1,  to: 'tower_ice_3f', tx: 8, ty: 15 },
+      { x: 8, y: 16, to: 'tower_ice_1f', tx: 8, ty: 2 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['snow_yeti', 'blizzard_bat', 'frost_wisp'],
+      rare: { rate: 0.05, enemies: ['silver_fox'] },
+    },
+  },
+
+  tower_ice_3f: {
+    id: 'tower_ice_3f',
+    name: 'こおりの とう さいじょうかい',
+    ambient: 'snow',
+    grid: [
+      'XXXXXXXXXXXXXXXX', // r0
+      'XIIIIIIIIIIIIIIX', // r1  ロック宝(6,1)＝ボス撃破で解除
+      'XIIIIIIIIIIIIIIX', // r2
+      'XIIIIIIIIIIIIIIX', // r3  ボスNPC(8,3)
+      'XIIIIIIIIIIIIIIX', // r4
+      'XIIIXXXIIXXXIIIX', // r5
+      'XIIIIIIIIIIIIIIX', // r6
+      'XIIIIIIIIIIIIIIX', // r7
+      'XXIIIIIIIIIIIIXX', // r8
+      'XIIIIIIIIIIIIIIX', // r9
+      'XIIIIIIIIIIIIIIX', // r10
+      'XIIIXXXIIXXXIIIX', // r11
+      'XIIIIIIIIIIIIIIX', // r12
+      'XIIIIIIIIIIIIIIX', // r13
+      'XHXIIIIIIIIIIIIX', // r14  かくし通路 H(1,14)
+      'XIXIIIIIIIIIIIIX', // r15  隠し宝(1,15)／(8,15)=2Fからの到着
+      'XXIIIIIIIIIIIIIX', // r16  帰還(8,16)→2F
+      'XXXXXXXXXXXXXXXX', // r17
+    ],
+    npcs: [
+      {
+        x: 8, y: 3, sprite: 'kaiser',
+        boss: {
+          enemies: ['ice_golem'],
+          winFlag: 'boss_ice', vanishFlag: 'boss_ice',
+          reward: { item: 'frost_spike', amount: 1, label: 'フロストスパイク' },
+        },
+        pages: [
+          'こおりの かがやきが\nゆくてを てらしている…',
+          'アイス・ゴーレム\n「こおりの とうに\nたちいる ものは だれだ！」',
+          '「こおりづけに してやる！」',
+        ],
+        afterPages: ['アイス・ゴーレムは くずれおち\nしずかな こおりに もどった。'],
+      },
+    ],
+    chests: [
+      {
+        id: 'tower3f_chest_boss', x: 6, y: 1, item: 'frost_mail', amount: 1, label: 'フロストメイル',
+        requireFlag: 'boss_ice',
+        lockedMsg: 'こおりで かたく とざされている。\nゴーレムを たおせば とけそうだ…',
+      },
+      { id: 'tower3f_chest_hidden', x: 1, y: 15, item: 'mat_star', amount: 1, label: 'でんせつの ほし' },
+    ],
+    exits: [
+      { x: 8, y: 16, to: 'tower_ice_2f', tx: 8, ty: 2 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['snow_yeti', 'blizzard_bat', 'frost_wisp'],
+      rare: { rate: 0.05, enemies: ['silver_fox'] },
+    },
   },
 
   // ── town2：フォレストタウン（field3 と field4 のあいだ・森の町） ────────
   town2: {
     id: 'town2',
     name: 'フォレストタウン',
+    ambient: 'leaves',   // 落ち葉：木の葉がひらひら舞う
     isTown: true,
     grid: [
       '################', // r0
@@ -778,6 +1123,7 @@ var MAPS = {
   town3: {
     id: 'town3',
     name: 'クラウドタウン',
+    ambient: 'sky',   // 空：雲の上の町＋きらめき
     isTown: true,
     // 最後の町・カットシーン（弾4）：決戦まえの しずかな ひとときを 一度だけ。
     cutscene: {
@@ -1031,6 +1377,7 @@ var MAPS = {
   legend_arena: {
     id: 'legend_arena',
     name: 'でんせつのアリーナ',
+    ambient: 'night',   // 夜：星＋ほたるで荘厳に
     grid: [
       '################', // r0
       '#FFFFFFFFFFFFFF#', // r1
@@ -1184,6 +1531,7 @@ var MAPS = {
   ch2_gate: {
     id: 'ch2_gate',
     name: 'やみの もん',
+    ambient: 'embers',   // 火の粉：やみの気配
     // 第2章 導入カットシーン：たおしたはずの やみが ふたたび――。
     cutscene: {
       flag: 'cs_ch2_gate',
@@ -1254,6 +1602,7 @@ var MAPS = {
   ch2_town: {
     id: 'ch2_town',
     name: 'ノルドタウン',
+    ambient: 'snow',   // 雪：ゆきがちらつく北の町
     isTown: true,
     cutscene: {
       flag: 'cs_ch2_town',
@@ -1283,6 +1632,10 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      {
+        x: 6, y: 15, sprite: 'coach', guide: true,
+        pages: ['だい2しょうも\nコーチが ついてるぞ！'],
+      },
       {
         x: 3, y: 4, sprite: 'shopkeep', shop: {
           type: 'item', name: 'どうぐ屋',
@@ -1319,6 +1672,14 @@ var MAPS = {
           'きを つけて いっておいで。',
         ],
       },
+      {
+        x: 13, y: 9, sprite: 'coach',
+        pages: [
+          'ひがしの はずれに\n「こおりの とう」が あるんだ。',
+          'てっぺんには つよい\nアイス・ゴーレムが いるらしい。',
+          'たおせば すごい たからが\nてに はいるって うわさだよ！',
+        ],
+      },
     ],
     chests: [
       { id: 'ch2_town_chest1', x: 11, y: 12, item: 'restart_whistle', amount: 1, label: 'さいかいの ホイッスル' },
@@ -1336,6 +1697,9 @@ var MAPS = {
     exits: [
       { x: 7, y: 16, to: 'ch2_gate', tx: 7, ty: 2  },
       { x: 7, y: 1,  to: 'ch2_pass', tx: 7, ty: 15 },
+      { x: 14, y: 8, to: 'tower_ice_1f', tx: 8, ty: 15,
+        requireFlag: 'boss_dark_general',
+        lockedMsg: 'こおりの とうの とびらは\nこおりついて ひらかない。\nまずは こおりの とうげで\nやみの しょうぐん ヴォルクを\nたおそう！' }, // 東：こおりの とう 入口
     ],
     encounter: { rate: 0, enemies: [] },
   },
@@ -1345,6 +1709,7 @@ var MAPS = {
   ch2_pass: {
     id: 'ch2_pass',
     name: 'こおりの とうげ',
+    ambient: 'snow',   // 雪：ふぶく氷の峠
     grid: [
       '################', // r0
       '#......,.......#', // r1  ← 北出口(7,1)→ ch2_castle（要 boss_dark_general）
@@ -1404,8 +1769,8 @@ var MAPS = {
       { x: 7, y: 16, to: 'ch2_town', tx: 7, ty: 2 },
       {
         x: 7, y: 1, to: 'ch2_castle', tx: 7, ty: 15,
-        requireFlag: 'boss_dark_general',
-        lockedMsg: 'やみの しょうぐん ヴォルクを\nたおさないと さきへは すすめない…',
+        requireFlag: 'boss_ice',
+        lockedMsg: 'やみのしろの もんは かたい。\nこおりの とうの ぬし\nアイス・ゴーレムを たおせば\nひらく かもしれない…',
       },
     ],
     encounter: {
@@ -1419,6 +1784,7 @@ var MAPS = {
   ch2_castle: {
     id: 'ch2_castle',
     name: 'やみのしろ',
+    ambient: 'embers',   // 火の粉：ラスダンの緊張感
     cutscene: {
       flag: 'cs_ch2_castle',
       pages: [

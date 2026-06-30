@@ -33,6 +33,11 @@ const ITEMS = {
   mithril_armor:   { id:'mithril_armor',   name:'ミスリルアーマー',       kind:'armor',  def:18,  price:600,  desc:'ぎんで あんだ かるくて つよい よろい。' },
   star_boots:      { id:'star_boots',      name:'せいなるブーツ',         kind:'weapon', atk:40,  price:1500, desc:'ほしの ちからを やどした さいきょうの ブーツ。' },
   star_mail:       { id:'star_mail',       name:'せいなるよろい',         kind:'armor',  def:28,  price:1500, desc:'ほしの ちからを やどした さいきょうの よろい。' },
+
+  // ── 氷の塔のたから（Phase7-④）：tower_ice_3f ボス（アイス・ゴーレム）の ごほうび。 ──
+  //   ミスリル(atk26/def18)と せいなる(atk40/def28)の あいだの つよさ。
+  frost_spike:     { id:'frost_spike',     name:'フロストスパイク',       kind:'weapon', atk:30,  price:900,  desc:'こうげき+30。こおりの ちからを やどした つめたい スパイク。' },
+  frost_mail:      { id:'frost_mail',      name:'フロストメイル',         kind:'armor',  def:22,  price:900,  desc:'まもり+22。つめたさが みを まもる こおりの よろい。' },
 };
 
 (function (root, api) {

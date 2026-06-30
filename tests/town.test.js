@@ -126,7 +126,7 @@ test('各町に お店・宿屋・クエスト主・受け渡し相手 がそろ
 test('出口の連結が町を挟んだ順路になっている', () => {
   const to = (id) => MAPS[id].exits.map((e) => e.to);
   assert.deepStrictEqual(to('field1'), ['town1']);
-  assert.deepStrictEqual(to('town1'),  ['field2']);
+  assert.deepStrictEqual(to('town1'),  ['field2', 'village1']);
   assert.deepStrictEqual(to('field2'), ['field3']);
   assert.deepStrictEqual(to('field3'), ['town2']);
   assert.deepStrictEqual(to('town2'),  ['field4']);

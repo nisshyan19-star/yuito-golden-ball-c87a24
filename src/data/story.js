@@ -138,6 +138,45 @@ function getEnding(state) {
   return pages;
 }
 
+// === 進行ナビ（ストーリー進行ゲートの作り直し） ===
+// objectiveFor: 撃破フラグの並びを1か所に集約し、「未達の最初の目標」を返す純粋関数。
+//   返り値 { bar:HUD用の短文, npc:コーチ会話用のフル案内文, done:全クリアか }。
+//   本線の順序は magma → guardian → kaiser → dark_general → ice → neo_kaiser。
+//   この順序が、出口の requireFlag（maps.js）と完全に一致している必要がある。
+function objectiveFor(flags) {
+  flags = flags || {};
+  var spine = [
+    { flag: 'boss_magma',
+      bar: 'ほのおの どうくつへ！',
+      npc: 'みのりの村の おくに ある\nほのおの どうくつで\nマグマ・ゴーレムを たおそう！' },
+    { flag: 'boss_guardian',
+      bar: 'スカイスタジアムへ！',
+      npc: 'つぎは スカイスタジアムで\nガーディアンを たおそう！' },
+    { flag: 'boss_kaiser',
+      bar: 'ダークアリーナへ！',
+      npc: 'ダークアリーナの ボス\nダーク・カイザーを たおして\nだい1しょうを クリアしよう！' },
+    { flag: 'boss_dark_general',
+      bar: 'こおりの とうげへ！',
+      npc: 'だい2しょう スタート！\nノルドタウンの きたの\nこおりの とうげで\nやみの しょうぐん ヴォルクを たおそう！' },
+    { flag: 'boss_ice',
+      bar: 'こおりの とうへ！',
+      npc: 'ノルドタウンの ひがしの\nこおりの とうの てっぺんで\nアイス・ゴーレムを たおそう！' },
+    { flag: 'boss_neo_kaiser',
+      bar: 'やみのしろへ！',
+      npc: 'やみのしろの ネオ・カイザーを\nたおして せかいを すくおう！' },
+  ];
+  for (var i = 0; i < spine.length; i++) {
+    if (!flags[spine[i].flag]) {
+      return { bar: spine[i].bar, npc: spine[i].npc, done: false };
+    }
+  }
+  return {
+    bar: 'すべて クリア！',
+    npc: 'おめでとう！\nきみは ほんものの ゆうしゃだ！',
+    done: true,
+  };
+}
+
 (function (root, api) {
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
@@ -146,4 +185,5 @@ function getEnding(state) {
   getEnding: getEnding,
   questStage: questStage,
   grantReward: grantReward,
+  objectiveFor: objectiveFor,
 });

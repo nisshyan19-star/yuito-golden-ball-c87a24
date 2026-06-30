@@ -151,6 +151,65 @@ const ENEMIES = {
     },
   },
 
+  // ── ダンジョンボス（Phase7-③：ほのおの どうくつ cave1 の ぬし） ───────
+  //   art は throwin_golem（ゴーレム体型の絵）を流用＝新規アートは増やさない。
+  //   倒すと flags.boss_magma → cave1 ボス部屋おくの宝箱(マグマよろい)が ひらく。
+  magma_golem: {
+    id:'magma_golem', name:'マグマ・ゴーレム', type:'power', art:'throwin_golem',
+    isBoss: true,
+    hp:80, atk:10, def:7, spd:5, exp:40, gold:35,
+    drops: [{ id:'mat_gold', chance:1.0 }, { id:'mat_crystal', chance:0.7 }],
+    quotes: {
+      intro: ['「ようがんの ねむりを\nさました やつは だれだ！」'],
+      phase: '「ぐおおお…\nもえあがれ マグマ！」',
+      defeat: '「しずまる… また\nねむりに つくとしよう…」',
+    },
+  },
+
+  // ── ダンジョン（Phase7-④：こおりの とう tower_ice_1f〜3f）の てきたち ────
+  //   art は既存 ENEMY_ART のキーを流用＝新規アートは増やさない。
+  //   ザコ3体（power/speed/technique を散らす）＋レア（silver_fox）＋ボス（ice_golem・2形態）。
+  //   frost_keeper(こおりのキーパー)が すでに throwin_golem を使うので、氷の敵は別アートにする。
+  snow_yeti: {
+    id:'snow_yeti', name:'ゆきの イエティ', type:'power', art:'stamina_zombie',
+    hp:78, atk:25, def:14, spd:7, exp:66, gold:48,
+    drops: [{ id:'mat_silver', chance:0.42 }, { id:'mat_crystal', chance:0.22 }],
+  },
+  blizzard_bat: {
+    id:'blizzard_bat', name:'ふぶきコウモリ', type:'speed', art:'yellowcard_bat',
+    hp:52, atk:24, def:9, spd:19, exp:52, gold:38,
+    drops: [{ id:'mat_leather', chance:0.4 }, { id:'mat_silver', chance:0.28 }],
+  },
+  frost_wisp: {
+    id:'frost_wisp', name:'こおりの ひとだま', type:'technique', art:'offside_ghost',
+    hp:56, atk:23, def:10, spd:14, exp:54, gold:40,
+    drops: [{ id:'mat_silver', chance:0.4 }, { id:'mat_crystal', chance:0.18 }],
+  },
+  // レアモンスター（氷の塔）：超高報酬・高防御・高速。低確率で1体だけ出現。
+  silver_fox: {
+    id:'silver_fox', name:'ぎんいろギツネ', type:'speed', art:'trick_fox',
+    isRare: true,
+    hp:26, atk:10, def:26, spd:23, exp:300, gold:240,
+    drops: [{ id:'mat_crystal', chance:0.7 }, { id:'mat_gold', chance:0.35 }, { id:'mat_star', chance:0.12 }],
+  },
+  // ダンジョンボス（氷の塔さいじょうかい）：アイス・ゴーレム。2形態。
+  //   倒すと flags.boss_ice → 最上階おくの宝箱（フロストメイル）が ひらく。
+  ice_golem: {
+    id:'ice_golem', name:'アイス・ゴーレム', type:'power', art:'metal_keeper',
+    isBoss: true,
+    hp:260, atk:25, def:22, spd:8, exp:360, gold:300,
+    drops: [{ id:'mat_gold', chance:1.0 }, { id:'mat_crystal', chance:0.8 }, { id:'mat_star', chance:0.5 }],
+    phases: [
+      { atk:25, def:22, spd:8 },
+      { hpRatio:0.5, atk:33, def:25, spd:11 },
+    ],
+    quotes: {
+      intro: ['「こおりの とうに\nたちいる ものは だれだ！」'],
+      phase: '「こおりづけに\nしてやる！」',
+      defeat: '「とけて いく…\nこおりに もどる ときが きた…」',
+    },
+  },
+
   // ══════════════════════════════════════════════════════════════════════
   //  第2章「よみがえりし やみ」（追加弾5-A/E）の てきたち。
   //   art は既存 ENEMY_ART のキーを流用（新規アートは増やさない）。

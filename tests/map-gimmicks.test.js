@@ -151,14 +151,27 @@ test('押しパズルがあるマップは block 数と goal 数が一致する'
   });
 });
 
-// ── 実マップ整合：全グリッドは 18行×16列（描画前提の固定サイズ） ──────────
-test('全マップのグリッドは 18行×16列', () => {
+// ── 実マップ整合：グリッドは矩形。標準マップは 18行×16列、
+//    広いマップ(村/ダンジョン等)はスクロール描画で 18×16 を超えてよい ──────────
+//    （Phase7：エンジンは可変サイズ対応済み。広いマップは LARGE_MAPS に列挙して許可）
+const LARGE_MAPS = new Set(['village1', 'cave1']);
+test('全マップのグリッドは矩形（標準18×16・広いマップは可変サイズ）', () => {
   Object.keys(MAPS).forEach((id) => {
     const grid = MAPS[id].grid;
-    assert.strictEqual(grid.length, 18, id + ' の行数が18でない: ' + grid.length);
+    const w = grid[0].length;
+    // どのマップも矩形（全行が同じ列数）であること
     grid.forEach((row, r) => {
-      assert.strictEqual(row.length, 16, id + ' の ' + r + '行目が16文字でない: ' + row.length);
+      assert.strictEqual(row.length, w, id + ' の ' + r + '行目が他行と列数不一致: ' + row.length);
     });
+    if (LARGE_MAPS.has(id)) {
+      // 広いマップ：標準サイズ以上であること（広くなっている＝要望どおり）
+      assert.ok(grid.length >= 18, id + ' の行数が18未満: ' + grid.length);
+      assert.ok(w >= 16, id + ' の列数が16未満: ' + w);
+    } else {
+      // 標準マップ：従来どおり 18行×16列に固定
+      assert.strictEqual(grid.length, 18, id + ' の行数が18でない: ' + grid.length);
+      assert.strictEqual(w, 16, id + ' の列数が16でない: ' + w);
+    }
   });
 });
 

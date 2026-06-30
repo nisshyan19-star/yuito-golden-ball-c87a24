@@ -223,12 +223,22 @@ function _withActiveNpcs(srcMap, flags) {
 //   優先描画し、無ければベクター（fillRect/arc）で描く。obj-art.js を後から
 //   足すだけでコード変更ゼロで AI 絵に切り替わる（WALK_ART と同じ思想）。
 //   sx,sy = そのマスの左上スクリーン座標、TS = タイルpx。
-function _drawFieldObject(ctx, S, type, sx, sy, TS, objArt) {
+function _drawFieldObject(ctx, S, type, sx, sy, TS, objArt, phase) {
+  phase = phase || 0;
+  // 風のゆれ（Phase2）：草木/花/看板は横にそよぎ、ボールはわずかに上下する。
+  var swayT = (type === 'tree' || type === 'bush' || type === 'flower' || type === 'sign' || type === 'crop');
+  var dx = swayT ? Math.sin(phase + (sx + sy) * 0.03) * (type === 'tree' ? 1.8 : 1.1) : 0;
+  var dy = (type === 'ball') ? Math.sin(phase * 2 + sx * 0.05) * 1.1 : 0;
+  ctx.save();
+  if (dx || dy) ctx.translate(dx, dy);
+
   // ① AI差し替え（在れば優先）
+  var drewAI = false;
   if (objArt && objArt[type] && S && typeof S.drawImageSprite === 'function') {
     var aBoxH = (type === 'tree' || type === 'goal') ? TS * 1.6 : TS * 1.1;
-    if (S.drawImageSprite(ctx, 'obj_' + type, objArt[type], sx + TS / 2, sy + TS - aBoxH / 2, aBoxH, false)) return;
+    drewAI = S.drawImageSprite(ctx, 'obj_' + type, objArt[type], sx + TS / 2, sy + TS - aBoxH / 2, aBoxH, false);
   }
+  if (drewAI) { ctx.restore(); return; }
 
   // ② プロシージャル（ドット/ベクター）
   var cx = sx + TS / 2;       // マス中央X
@@ -264,6 +274,12 @@ function _drawFieldObject(ctx, S, type, sx, sy, TS, objArt) {
       for (var ny = gy + 4; ny <= gy + gh; ny += 4) { ctx.moveTo(gx + 2, ny); ctx.lineTo(gx + gw - 2, ny); }
       ctx.stroke();
       ctx.strokeStyle = '#f4f7ff'; ctx.lineWidth = 2.5; ctx.strokeRect(gx, gy, gw, gh); // 枠（白ポスト）
+      // ネットのきらめき（Phase2）：白いハイライトが左右にゆっくり流れる。
+      var gsh = (Math.sin(phase * 1.6) * 0.5 + 0.5);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.16 + 0.24 * gsh).toFixed(3) + ')';
+      ctx.lineWidth = 1.5;
+      var ghx = gx + 3 + gsh * (gw - 6);
+      ctx.beginPath(); ctx.moveTo(ghx, gy + 2); ctx.lineTo(ghx, gy + gh); ctx.stroke();
       ctx.restore();
       break;
     }
@@ -313,8 +329,82 @@ function _drawFieldObject(ctx, S, type, sx, sy, TS, objArt) {
       ctx.restore();
       break;
     }
+    case 'well': {
+      // 井戸（村の中央）：石の円筒＋三角屋根＋ゆれるつるべ。背が高いソリッド飾り。
+      ctx.save();
+      ctx.fillStyle = '#9aa3ad'; ctx.fillRect(cx - 9, by - 12, 18, 12);           // 石の筒
+      ctx.fillStyle = '#7d868f'; ctx.fillRect(cx - 9, by - 12, 18, 3);            // 上縁の陰
+      ctx.strokeStyle = '#6b747d'; ctx.lineWidth = 1; ctx.beginPath();
+      ctx.moveTo(cx - 9, by - 7); ctx.lineTo(cx + 9, by - 7);
+      ctx.moveTo(cx - 3, by - 12); ctx.lineTo(cx - 3, by - 7);
+      ctx.moveTo(cx + 3, by - 7); ctx.lineTo(cx + 3, by); ctx.stroke();           // 石の目地
+      ctx.fillStyle = '#22323f'; ctx.beginPath(); ctx.ellipse(cx, by - 12, 8, 3, 0, 0, Math.PI * 2); ctx.fill(); // 井戸の口
+      ctx.fillStyle = '#3b6b8a'; ctx.beginPath(); ctx.ellipse(cx, by - 12, 5, 1.8, 0, 0, Math.PI * 2); ctx.fill(); // 水面
+      ctx.fillStyle = '#6e4422'; ctx.fillRect(cx - 9, by - 28, 2.5, 16); ctx.fillRect(cx + 6.5, by - 28, 2.5, 16); // 支柱
+      ctx.fillStyle = '#9c5b2c'; ctx.beginPath();
+      ctx.moveTo(cx - 12, by - 26); ctx.lineTo(cx, by - 34); ctx.lineTo(cx + 12, by - 26); ctx.closePath(); ctx.fill(); // 三角屋根
+      ctx.fillStyle = '#7d4622'; ctx.fillRect(cx - 12, by - 26, 24, 2);           // 屋根のふち
+      var wob = Math.sin(phase * 1.3) * 1.5;                                      // つるべのゆれ
+      ctx.strokeStyle = '#cfd6dd'; ctx.lineWidth = 1; ctx.beginPath();
+      ctx.moveTo(cx, by - 26); ctx.lineTo(cx + wob, by - 18); ctx.stroke();       // なわ
+      ctx.fillStyle = '#8a5a2e'; ctx.fillRect(cx + wob - 3, by - 18, 6, 5);       // バケツ
+      ctx.fillStyle = '#6e4422'; ctx.fillRect(cx + wob - 3, by - 18, 6, 1.5);
+      ctx.restore();
+      break;
+    }
+    case 'fence': {
+      // 木の柵：杭2本＋横木2本。畑や家のまわりを囲うソリッド飾り。
+      ctx.save();
+      ctx.fillStyle = '#9c6b3a'; ctx.fillRect(cx - 9, by - 14, 3, 14); ctx.fillRect(cx + 6, by - 14, 3, 14); // 杭
+      ctx.fillStyle = '#7d5126'; ctx.fillRect(cx - 9, by - 14, 3, 2); ctx.fillRect(cx + 6, by - 14, 3, 2);   // 杭の頭
+      ctx.fillStyle = '#b07c45'; ctx.fillRect(cx - 10, by - 12, 20, 3); ctx.fillRect(cx - 10, by - 6, 20, 3); // 横木
+      ctx.fillStyle = '#7d5126'; ctx.fillRect(cx - 10, by - 10, 20, 1); ctx.fillRect(cx - 10, by - 4, 20, 1); // 横木の陰
+      ctx.restore();
+      break;
+    }
+    case 'crop': {
+      // 畑の作物：土のうね＋そよぐ葉＋小さな実。踏める地面デカール。
+      ctx.save();
+      ctx.fillStyle = '#6b4a2a'; ctx.fillRect(cx - 9, by - 5, 18, 5);             // 土のうね
+      ctx.fillStyle = '#5a3c22'; ctx.fillRect(cx - 9, by - 5, 18, 1.5);
+      function leaf(lx, h, col) {
+        ctx.strokeStyle = col; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(lx, by - 4); ctx.quadraticCurveTo(lx - 3, by - 4 - h * 0.6, lx - 2, by - 4 - h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(lx, by - 4); ctx.quadraticCurveTo(lx + 3, by - 4 - h * 0.6, lx + 2, by - 4 - h); ctx.stroke();
+      }
+      leaf(cx - 5, 8, '#4caf50'); leaf(cx, 10, '#5cc85a'); leaf(cx + 5, 8, '#4caf50');
+      blob(cx, by - 11, 2.2, '#ff6b5e'); blob(cx - 5, by - 9, 1.6, '#ffb347');    // 実
+      ctx.restore();
+      break;
+    }
+    case 'torch': {
+      // 壁かけの たいまつ（暗闇ダンジョンの あかり）。phase でほのおが ゆらめく。
+      ctx.save();
+      var tflk = Math.sin(phase * 6 + sx * 0.7) * 0.5 + 0.5;   // 0..1 ゆらぎ
+      ctx.fillStyle = '#6e4422'; ctx.fillRect(cx - 1.5, by - 16, 3, 12);          // 木の柄
+      ctx.fillStyle = '#3a3a3a'; ctx.fillRect(cx - 3, by - 16, 6, 2);            // 受け金具
+      var ty = by - 18 - tflk * 2;
+      ctx.fillStyle = 'rgba(255,120,20,0.95)';                                   // 外炎
+      ctx.beginPath();
+      ctx.moveTo(cx, ty - 9 - tflk * 3);
+      ctx.quadraticCurveTo(cx - 5, ty - 2, cx - 3, ty + 3);
+      ctx.quadraticCurveTo(cx, ty + 5, cx + 3, ty + 3);
+      ctx.quadraticCurveTo(cx + 5, ty - 2, cx, ty - 9 - tflk * 3);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,210,60,0.95)';                                   // 内炎
+      ctx.beginPath();
+      ctx.moveTo(cx, ty - 6 - tflk * 2);
+      ctx.quadraticCurveTo(cx - 2.5, ty - 1, cx - 1.5, ty + 2);
+      ctx.quadraticCurveTo(cx, ty + 3, cx + 1.5, ty + 2);
+      ctx.quadraticCurveTo(cx + 2.5, ty - 1, cx, ty - 6 - tflk * 2);
+      ctx.fill();
+      blob(cx, ty - 1, 1.4, '#fff3b0');                                          // 芯のきらめき
+      ctx.restore();
+      break;
+    }
     default: break;
   }
+  ctx.restore();
 }
 
 // ── ギミックの地面マーカー描画（弾2・view 層） ───────────────────────────
@@ -402,6 +492,837 @@ function _drawPushBall(ctx, sx, sy, TS) {
   for (var m = 0; m < 5; m++) {
     var a2 = -Math.PI / 2 + m * (Math.PI * 2 / 5) + Math.PI / 5;
     ctx.fillRect(cx + Math.cos(a2) * r * 0.78 - 1, cy + Math.sin(a2) * r * 0.78 - 1, 2.4, 2.4);
+  }
+  ctx.restore();
+}
+
+// ── 動き・演出レイヤー（マップに彩り＆生命感を足す。すべて描画専用＝ロジック不変）──
+//   位相 phase（_gfx）だけで決まる決定論的アニメ。毎フレーム Math.random を呼ばない
+//   ので チラつかない。タイルや当たり判定には一切触れず「上に重ねる」だけ。
+
+// 整数 n から決まる擬似乱数 [0,1)。粒子の初期位置/速度の種に使う（毎フレーム同じ値）。
+function _hash01(n) {
+  var x = Math.sin(n * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// マップの「ふんいき」テーマを決める。map.ambient があれば最優先、
+// 無ければ dark マップは 'embers'、それ以外は 'petals'（花びら）を既定にする。
+function _ambientFor(map) {
+  if (map && map.ambient) return map.ambient;
+  if (map && map.dark) return 'embers';
+  return 'petals';
+}
+
+// やわらかい雲のかたまり（円を3つ重ねる）。
+function _puff(ctx, x, y, rx, ry, col) {
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.arc(x, y, ry, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x - rx * 0.6, y + ry * 0.25, ry * 0.8, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + rx * 0.6, y + ry * 0.2, ry * 0.85, 0, Math.PI * 2); ctx.fill();
+}
+
+// 背景レイヤー（地面の上・キャラの下）：流れ雲・雲かげ・星。奥行きを薄く足す。
+function _drawSkyLayer(ctx, theme, VW, VH, phase) {
+  ctx.save();
+  var i;
+  if (theme === 'night') {
+    // 星：位置は hash で固定し、明るさだけ sin でまたたかせる。
+    for (i = 0; i < 34; i++) {
+      var stx = _hash01(i) * VW;
+      var sty = _hash01(i * 2.1) * VH * 0.7;
+      var tw = 0.35 + 0.65 * Math.abs(Math.sin(phase * 1.6 + i));
+      ctx.fillStyle = 'rgba(255,255,255,' + (tw * 0.9).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(stx, sty, i % 7 === 0 ? 1.8 : 1.1, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme === 'sky') {
+    for (i = 0; i < 5; i++) {
+      var w = VW + 220;
+      var cx = (_hash01(i) * w + phase * 7) % w - 110;
+      var cy = 18 + _hash01(i * 3.3) * VH * 0.4;
+      _puff(ctx, cx, cy, 26, 13, 'rgba(255,255,255,0.20)');
+    }
+  } else if (theme === 'snow' || theme === 'rain') {
+    var col = theme === 'rain' ? 'rgba(40,52,74,0.16)' : 'rgba(205,214,230,0.12)';
+    var spd = theme === 'rain' ? 14 : 6;
+    for (i = 0; i < 4; i++) {
+      var w2 = VW + 240;
+      var dx = (_hash01(i * 1.7) * w2 + phase * spd) % w2 - 120;
+      var dy = 16 + _hash01(i * 4.1) * VH * 0.35;
+      _puff(ctx, dx, dy, 34, 16, col);
+    }
+  } else if (theme === 'petals' || theme === 'leaves' || theme === 'sand') {
+    // 雲かげ：うっすら暗い楕円がゆっくり流れる＝晴れた屋外の奥行き。
+    for (i = 0; i < 3; i++) {
+      var w3 = VW + 260;
+      var ex = (_hash01(i * 2.7) * w3 + phase * 4) % w3 - 130;
+      var ey = 30 + _hash01(i * 5.5) * VH * 0.5;
+      _puff(ctx, ex, ey, 40, 18, 'rgba(0,0,0,0.05)');
+    }
+  }
+  ctx.restore();
+}
+
+// 前景レイヤー（キャラの上）：花びら・落ち葉・雨・雪・砂ぼこり・きらめき・ほたる・火の粉。
+function _drawWeatherLayer(ctx, theme, VW, VH, phase) {
+  ctx.save();
+  var i, px, py, a, base;
+  if (theme === 'rain') {
+    ctx.strokeStyle = 'rgba(180,214,255,0.55)'; ctx.lineWidth = 1.5;
+    for (i = 0; i < 30; i++) {
+      px = (_hash01(i) * VW + phase * 12) % (VW + 30) - 15;
+      py = (_hash01(i * 1.7) * VH + phase * 160) % (VH + 24) - 12;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px - 4, py + 13); ctx.stroke();
+    }
+  } else if (theme === 'snow') {
+    for (i = 0; i < 24; i++) {
+      base = _hash01(i) * VW;
+      px = base + Math.sin(phase * 1.1 + i) * 14;
+      py = (_hash01(i * 1.9) * VH + phase * 9) % (VH + 16) - 8;
+      a = 0.7 + 0.3 * Math.sin(phase * 2 + i);
+      ctx.fillStyle = 'rgba(255,255,255,' + (a < 0.4 ? 0.4 : a).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(px, py, i % 4 === 0 ? 2.6 : 1.7, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme === 'leaves') {
+    var lcol = ['#e0913a', '#c75b39', '#d8b13a', '#b8772e'];
+    for (i = 0; i < 16; i++) {
+      base = _hash01(i) * VW;
+      px = base + Math.sin(phase * 1.4 + i * 0.7) * 16;
+      py = (_hash01(i * 1.6) * VH + phase * 24) % (VH + 18) - 9;
+      ctx.save(); ctx.translate(px, py); ctx.rotate(phase * 0.8 + i);
+      ctx.fillStyle = lcol[i % lcol.length];
+      ctx.beginPath();
+      if (ctx.ellipse) ctx.ellipse(0, 0, 4, 2.2, 0, 0, Math.PI * 2);
+      else ctx.arc(0, 0, 3, 0, Math.PI * 2);
+      ctx.fill(); ctx.restore();
+    }
+  } else if (theme === 'sand') {
+    for (i = 0; i < 20; i++) {
+      px = (_hash01(i) * (VW + 40) + phase * 34) % (VW + 40) - 20;
+      py = _hash01(i * 2.3) * VH + Math.sin(phase * 1.5 + i) * 6;
+      ctx.fillStyle = 'rgba(228,206,150,' + (0.25 + 0.25 * _hash01(i * 3)).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(px, py, 1.6, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme === 'sky') {
+    for (i = 0; i < 16; i++) {
+      px = (_hash01(i) * (VW + 30) + phase * 8) % (VW + 30) - 15;
+      py = _hash01(i * 2.7) * VH;
+      a = 0.3 + 0.7 * Math.abs(Math.sin(phase * 2.2 + i * 1.3));
+      ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(px, py, 1.6, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme === 'night') {
+    // ほたる：黄緑のひかりがふわふわ漂う（グローつき）。
+    for (i = 0; i < 16; i++) {
+      base = _hash01(i) * VW;
+      px = base + Math.sin(phase * 0.9 + i) * 24;
+      py = _hash01(i * 1.4) * VH * 0.9 + Math.cos(phase * 0.7 + i * 1.3) * 14;
+      a = 0.35 + 0.55 * Math.abs(Math.sin(phase * 2.4 + i));
+      var g = ctx.createRadialGradient(px, py, 0, px, py, 6);
+      g.addColorStop(0, 'rgba(206,255,140,' + a.toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(206,255,140,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme === 'embers') {
+    // 火の粉：オレンジの粒がゆらゆら昇る（くらいマップの探索感）。大きめは光をまとう。
+    for (i = 0; i < 24; i++) {
+      base = _hash01(i) * VW;
+      px = base + Math.sin(phase * 1.3 + i) * 14;
+      py = VH - ((_hash01(i * 1.8) * VH + phase * 18) % (VH + 24)) + 10;
+      a = 0.4 + 0.6 * Math.abs(Math.sin(phase * 3 + i));
+      var big = _hash01(i * 5) > 0.66;
+      if (big) {
+        var eg = ctx.createRadialGradient(px, py, 0, px, py, 5);
+        eg.addColorStop(0, 'rgba(255,196,96,' + a.toFixed(3) + ')');
+        eg.addColorStop(1, 'rgba(255,120,40,0)');
+        ctx.fillStyle = eg; ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.fillStyle = 'rgba(255,' + (big ? 190 : 168) + ',' + (big ? 110 : 72) + ',' + a.toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(px, py, big ? 2.4 : 1.4, 0, Math.PI * 2); ctx.fill();
+    }
+  } else { // 'petals'（既定）：さくらの花びらがひらひら舞う。
+    var pcol = ['rgba(255,200,228,', 'rgba(255,232,242,', 'rgba(255,182,214,'];
+    for (i = 0; i < 16; i++) {
+      base = _hash01(i) * VW;
+      px = base + Math.sin(phase * 1.2 + i * 0.8) * 18;
+      py = (_hash01(i * 1.5) * VH + phase * 14) % (VH + 16) - 8;
+      a = 0.6 + 0.3 * Math.sin(phase + i);
+      ctx.fillStyle = pcol[i % pcol.length] + (a < 0.35 ? 0.35 : a).toFixed(3) + ')';
+      ctx.save(); ctx.translate(px, py); ctx.rotate(phase * 0.6 + i);
+      ctx.beginPath();
+      if (ctx.ellipse) ctx.ellipse(0, 0, 3.4, 2, 0, 0, Math.PI * 2);
+      else ctx.arc(0, 0, 2.6, 0, Math.PI * 2);
+      ctx.fill(); ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+// 水面のきらめき：水タイルの上を、ひかりの帯が上下にゆれる（マスごとに位相をずらす）。
+function _drawWaterShimmer(ctx, sx, sy, TS, phase) {
+  ctx.save();
+  var a = 0.18 + 0.16 * Math.sin(phase * 1.4);
+  ctx.strokeStyle = 'rgba(220,245,255,' + (a < 0.05 ? 0.05 : a).toFixed(3) + ')';
+  ctx.lineWidth = 1.4;
+  var yo = (Math.sin(phase) * 0.5 + 0.5) * (TS - 10) + 4;
+  ctx.beginPath();
+  ctx.moveTo(sx + 4, sy + yo);
+  ctx.lineTo(sx + TS * 0.45, sy + yo - 2);
+  ctx.lineTo(sx + TS - 4, sy + yo + 1);
+  ctx.stroke();
+  if (Math.sin(phase * 2.3) > 0.6) {
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath(); ctx.arc(sx + TS * 0.7, sy + yo - 4, 1.2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// 宝箱の上で ✦ がチカチカ：未開封の宝をプレイヤーに気づかせる点滅。
+function _drawChestGlow(ctx, sx, sy, TS, phase) {
+  var cx = sx + TS / 2, cy = sy + 2;
+  var tw = Math.abs(Math.sin(phase * 2.2));
+  if (tw < 0.25) return; // ときどき消える＝点滅
+  ctx.save();
+  var r = 2 + tw * 2.4;
+  ctx.fillStyle = 'rgba(255,240,170,' + (0.5 + 0.5 * tw).toFixed(3) + ')';
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - r); ctx.lineTo(cx + r * 0.4, cy); ctx.lineTo(cx, cy + r); ctx.lineTo(cx - r * 0.4, cy);
+  ctx.closePath(); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(cx - r, cy); ctx.lineTo(cx, cy - r * 0.4); ctx.lineTo(cx + r, cy); ctx.lineTo(cx, cy + r * 0.4);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// つぎの もくひょう バー（進行ナビ）：画面上部のネームプレート下に常設表示。
+// text が空なら何も描かない。color は あたたかい金色で「いま向かう場所」を強調。
+function _drawObjectiveBar(ctx, S, text) {
+  if (!text) return;
+  var VW = S.VW;
+  var w = 188, h = 20;
+  var x = VW / 2 - w / 2, y = 34;
+  S.drawWindow(ctx, x, y, w, h, { radius: 7, border: '#ffcf4a' });
+  S.drawText(ctx, '▶ ' + text, VW / 2, y + 4, { size: 11, color: '#ffe9a0', align: 'center' });
+}
+
+// ── 弾6：DQ風の地形タイル（コードで手描き＝procedural）＋ふちどり（autotile） ──
+//   新タイル（森/川/橋/岩/花畑）は AI テクスチャを持たないので canvas に直接描く。
+//   下地（草 or 水）はタイルループ側で先に敷き、ここでは上に「もの」を重ねる。
+
+// procedural で描くタイルか。true なら下地の上に _drawProcTile で装飾を重ねる。
+var _PROC_TILES_T = { t_tree: 1, t_river: 1, t_bridge: 1, t_rock: 1, t_flower: 1 };
+function _isProcTile(sprite) { return !!_PROC_TILES_T[sprite]; }
+
+// proc タイルの下地スプライト名（川/橋は水の上、森/岩/花は草の上に乗る）。
+function _procBaseSprite(sprite) {
+  return (sprite === 't_river' || sprite === 't_bridge') ? 't_water' : 't_grass';
+}
+
+// ふちどり（autotile）汎用：上下左右のとなりが pred を満たすマスかをビットで返す。
+//   bit1=上, bit2=右, bit4=下, bit8=左。範囲外は「満たさない」扱い（純粋関数＝テスト対象）。
+//   pred は文字（'.'や'~'）を受け取り true/false を返す判定関数。
+function _neighborMask(grid, r, c, pred) {
+  function hit(rr, cc) {
+    if (rr < 0 || cc < 0 || rr >= grid.length || cc >= grid[rr].length) return false;
+    return !!pred(grid[rr].charAt(cc));
+  }
+  var m = 0;
+  if (hit(r - 1, c)) m |= 1;
+  if (hit(r, c + 1)) m |= 2;
+  if (hit(r + 1, c)) m |= 4;
+  if (hit(r, c - 1)) m |= 8;
+  return m;
+}
+
+// 「水」とみなす文字（水たまり/川/深い水）。ふちどりの下地判定に使う。
+function _isWaterChar(ch) { return ch === '~' || ch === 'r' || ch === 'W'; }
+
+// ふちどり（autotile）用：上下左右のとなりが水かをビットで返す（後方互換ラッパー）。
+function _waterEdgeMask(grid, r, c) { return _neighborMask(grid, r, c, _isWaterChar); }
+
+// 陸タイルが水/川にせっする辺へ「砂のなぎさ」をしく＝DQ感の本体（水ぎわのなじみ）。
+function _drawShoreEdges(ctx, x, y, s, mask) {
+  ctx.save();
+  var w2 = Math.round(s * 0.34), w1 = Math.round(s * 0.20);
+  ctx.fillStyle = 'rgba(232,214,150,0.34)'; // 外側のやわらかい砂
+  if (mask & 1) ctx.fillRect(x, y, s, w2);
+  if (mask & 2) ctx.fillRect(x + s - w2, y, w2, s);
+  if (mask & 4) ctx.fillRect(x, y + s - w2, s, w2);
+  if (mask & 8) ctx.fillRect(x, y, w2, s);
+  ctx.fillStyle = 'rgba(228,206,138,0.72)'; // きわのこい砂（水ぎわほどはっきり）
+  if (mask & 1) ctx.fillRect(x, y, s, w1);
+  if (mask & 2) ctx.fillRect(x + s - w1, y, w1, s);
+  if (mask & 4) ctx.fillRect(x, y + s - w1, s, w1);
+  if (mask & 8) ctx.fillRect(x, y, w1, s);
+  ctx.restore();
+}
+
+// ── Phase7-①「土台」：基本タイルも全部コードで手描き（AI絵タイルは卒業）─────────
+//   下地（草/道/壁/水/床＋砂/雪/深い水/石だたみ/木/洞窟床/洞窟壁/溶岩）を canvas に直接描く。
+//   マスごとに _hash01(r,c) で少しだけ模様をずらし、タイルの繰り返し感を消す（チラつき無し＝決定論）。
+
+// この sprite を _drawBaseTile が描けるか（描けないものは AI絵/ドット絵にフォールバック）。
+var _BASE_TILES_T = {
+  t_grass: 1, t_road: 1, t_wall: 1, t_water: 1, t_floor: 1,
+  t_sand: 1, t_snow: 1, t_deepwater: 1, t_cobble: 1, t_wood: 1,
+  t_cavefloor: 1, t_cavewall: 1, t_lava: 1,
+  t_ice: 1, t_icewall: 1,
+};
+function _isBaseTile(sprite) { return !!_BASE_TILES_T[sprite]; }
+// 水面のきらめき/ふちどりの対象になる下地か（浅い水・深い水）。
+function _isWaterSprite(sprite) { return sprite === 't_water' || sprite === 't_deepwater'; }
+
+// マスごとの安定乱数（0..1）。同じ r,c なら毎フレーム同じ＝チラつかない。
+function _tileRnd(r, c, k) { return _hash01(r * 73.13 + c * 19.71 + k * 3.97 + 0.5); }
+
+// 基本タイルを 1 マス描く。dispatcher。
+function _drawBaseTile(ctx, sprite, x, y, s, ph, r, c) {
+  switch (sprite) {
+    case 't_grass':     _drawGrassTile(ctx, x, y, s, r, c); return;
+    case 't_road':      _drawDirtTile(ctx, x, y, s, r, c); return;
+    case 't_wall':      _drawBrickWallTile(ctx, x, y, s, r, c); return;
+    case 't_water':     _drawWaterBase(ctx, x, y, s, false); return;
+    case 't_deepwater': _drawWaterBase(ctx, x, y, s, true); return;
+    case 't_floor':     _drawPlankTile(ctx, x, y, s, r, c, '#b58a46', '#a4793a'); return;
+    case 't_wood':      _drawPlankTile(ctx, x, y, s, r, c, '#c39150', '#ad7c3e'); return;
+    case 't_sand':      _drawSandTile(ctx, x, y, s, r, c); return;
+    case 't_snow':      _drawSnowTile(ctx, x, y, s, r, c); return;
+    case 't_cobble':    _drawCobbleTile(ctx, x, y, s, r, c); return;
+    case 't_cavefloor': _drawCaveFloorTile(ctx, x, y, s, r, c); return;
+    case 't_cavewall':  _drawCaveWallTile(ctx, x, y, s, r, c); return;
+    case 't_lava':      _drawLavaTile(ctx, x, y, s, ph, r, c); return;
+    case 't_ice':       _drawIceTile(ctx, x, y, s, r, c); return;
+    case 't_icewall':   _drawIceWallTile(ctx, x, y, s, r, c); return;
+  }
+}
+
+// 草原：二色のまだら＋小さな芝のかたまり。やわらかい緑。
+function _drawGrassTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#57a14d';
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(45,128,62,0.45)'; // 濃い緑のまだら
+  for (var i = 0; i < 3; i++) {
+    var bx = x + _tileRnd(r, c, i) * s * 0.8;
+    var by = y + _tileRnd(r, c, i + 5) * s * 0.8;
+    ctx.fillRect(bx, by, s * 0.16, s * 0.10);
+  }
+  ctx.fillStyle = 'rgba(150,212,118,0.40)'; // 明るい緑のハイライト
+  for (var j = 0; j < 2; j++) {
+    var lx = x + _tileRnd(r, c, j + 9) * s * 0.85;
+    var ly = y + _tileRnd(r, c, j + 12) * s * 0.85;
+    ctx.fillRect(lx, ly, s * 0.12, s * 0.08);
+  }
+}
+
+// 土の道：あたたかい茶のまだら＋小石のつぶ。
+function _drawDirtTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#caa367';
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(150,112,62,0.45)'; // こい土
+  for (var i = 0; i < 3; i++) {
+    var bx = x + _tileRnd(r, c, i + 2) * s * 0.82;
+    var by = y + _tileRnd(r, c, i + 6) * s * 0.82;
+    ctx.fillRect(bx, by, s * 0.18, s * 0.12);
+  }
+  ctx.fillStyle = 'rgba(228,206,150,0.5)'; // 明るい砂つぶ
+  for (var j = 0; j < 3; j++) {
+    var px = x + _tileRnd(r, c, j + 10) * s * 0.9;
+    var py = y + _tileRnd(r, c, j + 14) * s * 0.9;
+    ctx.fillRect(px, py, s * 0.07, s * 0.07);
+  }
+}
+
+// 石レンガの壁：上に明るいフチ・下に影＋目地（モルタル）。城壁/小屋の壁に使う。
+function _drawBrickWallTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#6f6a72';
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = '#5a5560'; // 目地（横2段・縦は段ごとにずらす）
+  ctx.fillRect(x, y + s * 0.5 - 1, s, 2);
+  var off = ((r % 2) === 0) ? 0 : s * 0.5;
+  ctx.fillRect(x + ((off) % s), y, 2, s * 0.5);
+  ctx.fillRect(x + ((off + s * 0.5) % s), y + s * 0.5, 2, s * 0.5);
+  ctx.fillStyle = 'rgba(255,255,255,0.16)'; // 上フチのハイライト
+  ctx.fillRect(x, y, s, 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';       // 下フチの影
+  ctx.fillRect(x, y + s - 2, s, 2);
+}
+
+// 水（浅い/深い）：たてグラデの青。きらめき/ふちどりは呼び出し側で上に重ねる。
+function _drawWaterBase(ctx, x, y, s, deep) {
+  var g = ctx.createLinearGradient(x, y, x, y + s);
+  if (deep) { g.addColorStop(0, '#1d3f6c'); g.addColorStop(1, '#102a4a'); }
+  else      { g.addColorStop(0, '#3b80c4'); g.addColorStop(1, '#27598f'); }
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, s, s);
+}
+
+// 板の床（室内・木のデッキ）：よこ板＋うすい目地。col1/col2 でトーンを変える。
+function _drawPlankTile(ctx, x, y, s, r, c, col1, col2) {
+  var planks = 4, pw = s / planks;
+  for (var i = 0; i < planks; i++) {
+    ctx.fillStyle = ((i + r) % 2 === 0) ? col1 : col2;
+    ctx.fillRect(x, y + i * pw, s, pw);
+    ctx.fillStyle = 'rgba(0,0,0,0.12)'; // 板の継ぎ目
+    ctx.fillRect(x, y + i * pw, s, 1);
+  }
+}
+
+// 砂地・砂浜：明るい砂＋つぶ。
+function _drawSandTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#e6cd8e';
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(208,180,118,0.5)';
+  for (var i = 0; i < 3; i++) {
+    var bx = x + _tileRnd(r, c, i + 1) * s * 0.85;
+    var by = y + _tileRnd(r, c, i + 4) * s * 0.85;
+    ctx.fillRect(bx, by, s * 0.14, s * 0.06);
+  }
+  ctx.fillStyle = 'rgba(255,244,210,0.5)';
+  for (var j = 0; j < 2; j++) {
+    ctx.fillRect(x + _tileRnd(r, c, j + 8) * s * 0.9, y + _tileRnd(r, c, j + 11) * s * 0.9, s * 0.06, s * 0.06);
+  }
+}
+
+// 雪原：白に少し青みのある雪＋へこみの影。
+function _drawSnowTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#eef4ff';
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(170,196,232,0.40)'; // へこみの青い影
+  for (var i = 0; i < 2; i++) {
+    var bx = x + _tileRnd(r, c, i + 3) * s * 0.7;
+    var by = y + _tileRnd(r, c, i + 7) * s * 0.7;
+    if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(bx + s * 0.15, by + s * 0.15, s * 0.18, s * 0.08, 0, 0, Math.PI * 2); ctx.fill(); }
+    else ctx.fillRect(bx, by, s * 0.3, s * 0.12);
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; // きらめき
+  ctx.fillRect(x + _tileRnd(r, c, 13) * s * 0.9, y + _tileRnd(r, c, 15) * s * 0.9, 2, 2);
+}
+
+// 石だたみ（村の道）：丸い石をならべ、すき間にモルタル。
+function _drawCobbleTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#8c857c'; // 目地（下地）
+  ctx.fillRect(x, y, s, s);
+  var cols = ['#b6ab9b', '#a89c8b', '#c0b6a6', '#9e9384'];
+  var h = s * 0.5;
+  for (var gy = 0; gy < 2; gy++) {
+    for (var gx = 0; gx < 2; gx++) {
+      var cx = x + gx * h + h / 2 + (_tileRnd(r, c, gy * 2 + gx) - 0.5) * 2;
+      var cy = y + gy * h + h / 2 + (_tileRnd(r, c, gy * 2 + gx + 5) - 0.5) * 2;
+      ctx.fillStyle = cols[(gy * 2 + gx + r + c) % cols.length];
+      if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(cx, cy, h * 0.42, h * 0.36, 0, 0, Math.PI * 2); ctx.fill(); }
+      else ctx.fillRect(cx - h * 0.4, cy - h * 0.34, h * 0.8, h * 0.68);
+      ctx.fillStyle = 'rgba(255,255,255,0.18)'; // 上のつや
+      if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(cx - 1, cy - 2, h * 0.22, h * 0.14, 0, 0, Math.PI * 2); ctx.fill(); }
+    }
+  }
+}
+
+// 洞窟の床：暗い岩肌＋ひび＋小石のハイライト。
+function _drawCaveFloorTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#4a443e';
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(30,26,22,0.6)'; // 暗いまだら/ひび
+  for (var i = 0; i < 3; i++) {
+    var bx = x + _tileRnd(r, c, i + 2) * s * 0.8;
+    var by = y + _tileRnd(r, c, i + 6) * s * 0.8;
+    ctx.fillRect(bx, by, s * 0.2, s * 0.07);
+  }
+  ctx.fillStyle = 'rgba(120,112,100,0.5)'; // 小石のハイライト
+  ctx.fillRect(x + _tileRnd(r, c, 12) * s * 0.85, y + _tileRnd(r, c, 14) * s * 0.85, s * 0.08, s * 0.08);
+}
+
+// 洞窟の岩壁：ごつごつした暗い岩。明暗の面で立体に。
+function _drawCaveWallTile(ctx, x, y, s, r, c) {
+  ctx.fillStyle = '#2f2b27';
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = '#43403a'; // 明るい岩の面
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + s * (0.5 + _tileRnd(r, c, 1) * 0.2), y);
+  ctx.lineTo(x + s * (0.3 + _tileRnd(r, c, 2) * 0.2), y + s);
+  ctx.lineTo(x, y + s);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.08)'; // 上の弱いつや
+  ctx.fillRect(x, y, s, 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';        // 下の影
+  ctx.fillRect(x, y + s - 3, s, 3);
+}
+
+// 溶岩：暗い地に、脈うつ光のひび。ph でグロウが明滅・流れる（決定論ハッシュで位置固定）。
+function _drawLavaTile(ctx, x, y, s, ph, r, c) {
+  ctx.fillStyle = '#5a1606';
+  ctx.fillRect(x, y, s, s);
+  var pulse = 0.45 + 0.45 * Math.sin(ph + (r * 7 + c * 3));
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+  ctx.fillStyle = 'rgba(255,96,20,' + (0.5 + 0.4 * pulse).toFixed(3) + ')'; // 明るい溶岩のながれ
+  for (var i = 0; i < 2; i++) {
+    var ly = y + s * (0.3 + i * 0.4) + Math.sin(ph * 0.7 + i + r) * 2;
+    ctx.fillRect(x, ly, s, s * 0.16);
+  }
+  ctx.fillStyle = 'rgba(255,224,90,' + (0.4 + 0.5 * pulse).toFixed(3) + ')'; // 中心の白熱したひび
+  var gx = x + s * (0.2 + _tileRnd(r, c, 1) * 0.5);
+  var gy = y + s * (0.25 + _tileRnd(r, c, 2) * 0.4);
+  if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(gx, gy, s * 0.14, s * 0.06, 0, 0, Math.PI * 2); ctx.fill(); }
+  else ctx.fillRect(gx - s * 0.12, gy - s * 0.05, s * 0.24, s * 0.1);
+  ctx.restore();
+}
+
+// 氷のゆか（こおりの とう）：青みの白に つるつるの つや＋ひびのライン＋きらめき。
+//   雪原より青く・つやのハイライトを大きめに入れて「つるっとした氷」に見せる。
+function _drawIceTile(ctx, x, y, s, r, c) {
+  var g = ctx.createLinearGradient(x, y, x, y + s);
+  g.addColorStop(0, '#dfeefb'); g.addColorStop(1, '#bcd8f0');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, s, s);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+  ctx.strokeStyle = 'rgba(150,184,220,0.55)'; ctx.lineWidth = 1; // 氷のひび（ななめの線）
+  for (var i = 0; i < 2; i++) {
+    var hx = x + _tileRnd(r, c, i + 2) * s;
+    var hy = y + _tileRnd(r, c, i + 6) * s * 0.6;
+    ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx + s * 0.4, hy + s * 0.5); ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.55)'; // 大きめのつや（ななめの帯）
+  ctx.beginPath();
+  ctx.moveTo(x + s * 0.10, y + s * 0.18);
+  ctx.lineTo(x + s * 0.34, y + s * 0.18);
+  ctx.lineTo(x + s * 0.16, y + s * 0.46);
+  ctx.lineTo(x - s * 0.02, y + s * 0.46);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)'; // きらめき
+  ctx.fillRect(x + _tileRnd(r, c, 13) * s * 0.85, y + _tileRnd(r, c, 15) * s * 0.85, 2, 2);
+  ctx.restore();
+}
+
+// 氷のかべ（こおりの とう）：あつい氷のブロック。たて面のグラデ＋角のハイライトと影で立体に。
+function _drawIceWallTile(ctx, x, y, s, r, c) {
+  var g = ctx.createLinearGradient(x, y, x, y + s);
+  g.addColorStop(0, '#8fbfe6'); g.addColorStop(1, '#5f93c4');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(255,255,255,0.30)'; // 明るい氷の面（左上の三角）
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + s * (0.5 + _tileRnd(r, c, 1) * 0.2), y);
+  ctx.lineTo(x + s * (0.3 + _tileRnd(r, c, 2) * 0.2), y + s);
+  ctx.lineTo(x, y + s);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';  // 上フチのつや
+  ctx.fillRect(x, y, s, 2);
+  ctx.fillStyle = 'rgba(40,84,130,0.4)';    // 下フチの影
+  ctx.fillRect(x, y + s - 3, s, 3);
+}
+
+// proc タイルの装飾を下地の上に重ねる（時間 ph でゆれ・ながれ）。
+function _drawProcTile(ctx, sprite, x, y, s, ph, r, c) {
+  if (sprite === 't_tree')   { _drawTreeTile(ctx, x, y, s, ph); return; }
+  if (sprite === 't_rock')   { _drawRockTile(ctx, x, y, s); return; }
+  if (sprite === 't_flower') { _drawFlowerTile(ctx, x, y, s, r, c, ph); return; }
+  if (sprite === 't_river')  { _drawRiverFlow(ctx, x, y, s, ph); return; }
+  if (sprite === 't_bridge') { _drawBridgeTile(ctx, x, y, s); return; }
+}
+
+// 森の木：草の上に、丸い樹冠＋幹＋影。風で樹冠がそよぐ。
+function _drawTreeTile(ctx, x, y, s, ph) {
+  var cx = x + s / 2;
+  var sway = Math.sin(ph) * (s * 0.025);
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.16)';
+  ctx.beginPath(); ctx.ellipse(cx, y + s * 0.88, s * 0.30, s * 0.10, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#6b4a2b'; // 幹
+  ctx.fillRect(cx - s * 0.06, y + s * 0.52, s * 0.12, s * 0.34);
+  function blob(dx, dy, rr, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx + dx + sway, y + dy, rr, 0, Math.PI * 2); ctx.fill(); }
+  blob(-s * 0.17, s * 0.40, s * 0.19, '#2f7d3a');
+  blob( s * 0.17, s * 0.40, s * 0.19, '#2f7d3a');
+  blob(0,         s * 0.30, s * 0.25, '#379447');
+  blob(-s * 0.07, s * 0.24, s * 0.11, '#5fc468'); // ハイライト
+  ctx.restore();
+}
+
+// 岩：草の上に、明るい面と影の面のある立体的な石。
+function _drawRockTile(ctx, x, y, s) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.16)';
+  ctx.beginPath(); ctx.ellipse(x + s * 0.5, y + s * 0.82, s * 0.30, s * 0.10, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#7d7f86';
+  ctx.beginPath();
+  ctx.moveTo(x + s * 0.22, y + s * 0.78);
+  ctx.lineTo(x + s * 0.30, y + s * 0.34);
+  ctx.lineTo(x + s * 0.56, y + s * 0.26);
+  ctx.lineTo(x + s * 0.80, y + s * 0.46);
+  ctx.lineTo(x + s * 0.80, y + s * 0.78);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#9a9ca3'; // 明るい面
+  ctx.beginPath();
+  ctx.moveTo(x + s * 0.30, y + s * 0.34);
+  ctx.lineTo(x + s * 0.56, y + s * 0.26);
+  ctx.lineTo(x + s * 0.52, y + s * 0.52);
+  ctx.lineTo(x + s * 0.34, y + s * 0.54);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#5f6166'; // 影の面
+  ctx.beginPath();
+  ctx.moveTo(x + s * 0.56, y + s * 0.26);
+  ctx.lineTo(x + s * 0.80, y + s * 0.46);
+  ctx.lineTo(x + s * 0.80, y + s * 0.78);
+  ctx.lineTo(x + s * 0.54, y + s * 0.66);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+// 花畑：草の上に、色とりどりの小花を決定論ハッシュで散らす（そよ風でゆれる）。
+function _drawFlowerTile(ctx, x, y, s, r, c, ph) {
+  var cols = ['#ff6b9d', '#ffd23f', '#ff9f43', '#a55eea', '#ffffff'];
+  ctx.save();
+  for (var i = 0; i < 5; i++) {
+    var h1 = _hash01(r * 97 + c * 31 + i * 7 + 1);
+    var h2 = _hash01(r * 53 + c * 17 + i * 13 + 2);
+    var fx = x + s * (0.18 + h1 * 0.64);
+    var fy = y + s * (0.34 + h2 * 0.50);
+    var bob = Math.sin(ph + i) * (s * 0.02);
+    var col = cols[i % cols.length];
+    ctx.strokeStyle = '#3f8f43';
+    ctx.lineWidth = Math.max(1, s * 0.03);
+    ctx.beginPath(); ctx.moveTo(fx, fy + s * 0.10); ctx.lineTo(fx, fy + bob); ctx.stroke();
+    var pr = s * 0.052;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(fx - pr, fy + bob, pr, 0, Math.PI * 2);
+    ctx.arc(fx + pr, fy + bob, pr, 0, Math.PI * 2);
+    ctx.arc(fx, fy - pr + bob, pr, 0, Math.PI * 2);
+    ctx.arc(fx, fy + pr + bob, pr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffe066';
+    ctx.beginPath(); ctx.arc(fx, fy + bob, pr * 0.7, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// 川のながれ：水の下地の上に、横へ流れる白いさざ波の帯を重ねる。
+function _drawRiverFlow(ctx, x, y, s, ph) {
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+  ctx.fillStyle = 'rgba(52,124,196,0.34)'; // 流れる川は水たまりより明るい青
+  ctx.fillRect(x, y, s, s);
+  ctx.fillStyle = 'rgba(208,238,255,0.5)';
+  for (var i = 0; i < 3; i++) {
+    var yy = y + s * (0.22 + i * 0.3);
+    var off = (((ph * 0.6 + i * 0.5) % 1) + 1) % 1;
+    var bx = x + off * s - s * 0.2;
+    ctx.beginPath(); ctx.ellipse(bx, yy, s * 0.18, s * 0.05, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(bx + s * 0.5, yy + s * 0.12, s * 0.13, s * 0.04, 0, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// 木の橋：水の下地の上に、よこ板を渡して左右に手すり。すきまから川がのぞく。
+function _drawBridgeTile(ctx, x, y, s) {
+  ctx.save();
+  var planks = 5, pw = s / planks;
+  for (var i = 0; i < planks; i++) {
+    ctx.fillStyle = (i % 2 === 0) ? '#b5803f' : '#9c6a36';
+    ctx.fillRect(x, y + i * pw + 1, s, pw - 2);
+  }
+  ctx.fillStyle = '#7a4f28'; // 手すり（左右の縁）
+  ctx.fillRect(x, y, s * 0.12, s);
+  ctx.fillRect(x + s - s * 0.12, y, s * 0.12, s);
+  ctx.restore();
+}
+
+// ── 彩りレイヤー（弾2の続き・Phase2）：色トーン＋ビネット＋いきもの ─────────────
+//   タイルや当たり判定には触れず、画面全体にうっすら色を重ねて「時間帯/天気」を出す。
+
+// テーマ別の色トーン。マップ全体に重ねる色を返す（純粋関数＝テスト対象）。
+//   夜=深い青／雨=くもりの青灰／雪=ひんやり青白／火の粉=暗い赤／空=明るい水色…。
+//   '' は色を足さない（未知テーマ）。petals はごく薄い桜色。
+function _toneFor(theme) {
+  switch (theme) {
+    case 'night':  return 'rgba(26,38,86,0.38)';
+    case 'rain':   return 'rgba(58,78,108,0.30)';
+    case 'snow':   return 'rgba(206,224,255,0.32)';
+    case 'embers': return 'rgba(122,36,18,0.30)';
+    case 'sky':    return 'rgba(150,210,255,0.16)';
+    case 'sand':   return 'rgba(224,184,96,0.24)';
+    case 'leaves': return 'rgba(196,132,52,0.22)';
+    case 'petals': return 'rgba(255,214,236,0.10)';
+    default:       return '';
+  }
+}
+
+// 色トーン＋周辺減光（ビネット）を画面全体に重ねる＝奥行きと空気感。
+//   dark マップは別途たいまつ演出があるのでビネットは省く（二重に暗くしない）。
+//   夜/空はゆっくり流れる光の帯（投光器/朝の光）を一本そえて動きを足す。
+function _drawToneOverlay(ctx, theme, VW, VH, phase, isDark) {
+  ctx.save();
+  var wash = _toneFor(theme);
+  if (wash) { ctx.fillStyle = wash; ctx.fillRect(0, 0, VW, VH); }
+  if (theme === 'night' || theme === 'sky') {
+    var span = VW + 320;
+    var bx = ((phase * 9) % span) - 160;
+    var lc = (theme === 'night') ? '255,244,200' : '255,255,255';
+    var lg = ctx.createLinearGradient(bx - 100, 0, bx + 100, VH);
+    lg.addColorStop(0,   'rgba(' + lc + ',0)');
+    lg.addColorStop(0.5, 'rgba(' + lc + ',0.07)');
+    lg.addColorStop(1,   'rgba(' + lc + ',0)');
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, VW, VH);
+  }
+  if (!isDark) {
+    var rad = Math.max(VW, VH) * 0.78;
+    var vg = ctx.createRadialGradient(VW / 2, VH * 0.46, rad * 0.42, VW / 2, VH / 2, rad);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.24)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
+  }
+  ctx.restore();
+}
+
+// いきもの（ちょうちょ/小鳥）がときどき横切る＝マップに生命感。前景にうっすら。
+//   位置/速度は _hash01 で固定、はばたきだけ sin で動かす（決定論＝チラつかない）。
+function _drawAmbientLife(ctx, theme, VW, VH, phase) {
+  ctx.save();
+  var i;
+  if (theme === 'petals' || theme === 'leaves') {
+    var bcols = (theme === 'leaves') ? ['#ffd23f', '#ff9a3c'] : ['#ff9ecb', '#fff0a0', '#a6e3ff'];
+    var n = (theme === 'leaves') ? 2 : 3;
+    for (i = 0; i < n; i++) {
+      var bw = VW + 80;
+      var bx = (_hash01(i * 3.7) * bw + phase * (15 + i * 5)) % bw - 40;
+      var by = 26 + _hash01(i * 6.1) * VH * 0.55 + Math.sin(phase * 1.7 + i) * 13;
+      var flap = Math.abs(Math.sin(phase * 7 + i));   // はねの開閉
+      var wWid = 2.2 + flap * 4;
+      ctx.save(); ctx.translate(bx, by);
+      ctx.fillStyle = bcols[i % bcols.length];
+      ctx.beginPath();
+      if (ctx.ellipse) { ctx.ellipse(-2.4, 0, wWid, 4, 0, 0, Math.PI * 2); } else { ctx.arc(-2, 0, 3, 0, Math.PI * 2); }
+      ctx.fill();
+      ctx.beginPath();
+      if (ctx.ellipse) { ctx.ellipse(2.4, 0, wWid, 4, 0, 0, Math.PI * 2); } else { ctx.arc(2, 0, 3, 0, Math.PI * 2); }
+      ctx.fill();
+      ctx.fillStyle = '#3a2a3a'; ctx.fillRect(-0.6, -3, 1.2, 6);   // どうたい
+      ctx.restore();
+    }
+  } else if (theme === 'sky' || theme === 'sand') {
+    var n2 = (theme === 'sky') ? 3 : 1;
+    for (i = 0; i < n2; i++) {
+      var bw2 = VW + 100;
+      var x = (_hash01(i * 2.3) * bw2 + phase * (20 + i * 6)) % bw2 - 50;
+      var y = 22 + _hash01(i * 4.7) * VH * 0.4;
+      var wing = 3 + Math.abs(Math.sin(phase * 6 + i)) * 4;   // はばたき
+      ctx.strokeStyle = (theme === 'sky') ? 'rgba(70,84,112,0.7)' : 'rgba(90,72,48,0.6)';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x - 7, y);   ctx.lineTo(x, y - wing);   ctx.lineTo(x + 7, y);   // 右どり「く」
+      ctx.moveTo(x + 6, y + 1); ctx.lineTo(x + 12, y - wing * 0.7); ctx.lineTo(x + 18, y + 1);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+// ── 地面装飾（Phase2 彩り）：芝マスに小さな飾りを散らして「空いたさみしい芝」を埋める ──
+//   grid/当たり判定には一切触れず、芝タイル('.'=t_grass)の上にだけ決定論ハッシュで
+//   草むら/小花/小石（テーマ別に雪のかたまり・砂の枯れ草・残り火など）を置く。
+//   キャラより下に描く地面デカール。草と花の先端はそよぐ。dark マップは省略。
+
+// テーマ別の小花カラーパレット（季節感）。
+function _decorPalette(theme) {
+  switch (theme) {
+    case 'leaves': return ['#e6a13a', '#d8743a', '#e8c24a', '#c98a3e'];   // 秋色
+    case 'snow':   return ['#bcd3ef', '#d9e8fb', '#a7c4e6'];               // 寒色
+    case 'sand':   return ['#e7c879', '#d9a85a', '#c79a52'];               // 砂漠
+    case 'sky':    return ['#bfe6ff', '#ffffff', '#ffe6a0'];               // 高原
+    case 'night':  return ['#9ec8ff', '#c8b0ff', '#fff0a0'];               // 夜に映える
+    case 'embers': return ['#ff9a5a', '#ffd06a', '#e06030'];               // 火の色
+    default:       return ['#ff8fc4', '#fff0a0', '#a6e3ff', '#ff6f9a', '#c08bff']; // 春の花畑
+  }
+}
+
+// 1マス分の飾りを 1 個描く。sel(0..1) で種類を、pal で花色を決める。ph で先端がそよぐ。
+function _decorSprite(ctx, theme, sel, x, y, ph, pal) {
+  var sway = Math.sin(ph) * 1.6;
+  // テーマ固有の飾り（先に判定）。
+  if (theme === 'snow' && sel < 0.4) {                 // 雪のかたまり
+    ctx.fillStyle = 'rgba(60,80,110,0.16)';
+    if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(x, y + 2, 6, 2.2, 0, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#f2f7ff';
+    ctx.beginPath();
+    ctx.arc(x - 2.6, y, 3.1, 0, Math.PI * 2);
+    ctx.arc(x + 2.6, y, 3.5, 0, Math.PI * 2);
+    ctx.arc(x, y - 2, 3.3, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  if (theme === 'sand' && sel < 0.5) {                 // 砂の枯れ草 / 小石
+    if (sel < 0.25) {
+      ctx.strokeStyle = '#b79152'; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
+      for (var b = -1; b <= 1; b++) {
+        ctx.beginPath(); ctx.moveTo(x + b * 2, y + 4);
+        ctx.quadraticCurveTo(x + b * 3 + sway, y - 2, x + b * 4 + sway, y - 6); ctx.stroke();
+      }
+    } else {
+      ctx.fillStyle = '#c9b48a';
+      if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(x, y, 4, 2.6, 0, 0, Math.PI * 2); ctx.fill(); }
+      else { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+      ctx.fillStyle = '#e3d4ad'; ctx.beginPath(); ctx.arc(x - 1, y - 1, 1.3, 0, Math.PI * 2); ctx.fill();
+    }
+    return;
+  }
+  if (theme === 'embers' && sel < 0.45) {              // こげた石＋残り火
+    ctx.fillStyle = '#3a2620';
+    if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(x, y, 4, 2.6, 0, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+    var eg = 0.35 + 0.55 * Math.abs(Math.sin(ph * 2.2));
+    ctx.fillStyle = 'rgba(255,140,50,' + eg.toFixed(2) + ')';
+    ctx.beginPath(); ctx.arc(x, y - 1, 1.3, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+  // 共通：草むら / 小花 / 小石。
+  if (sel < 0.42) {                                    // 草むら（数本のブレード）
+    var gcol = (theme === 'night') ? '#3f6b4a' : (theme === 'leaves') ? '#6f7d3a' : '#4f9a4a';
+    ctx.strokeStyle = gcol; ctx.lineWidth = 1.4; ctx.lineCap = 'round';
+    for (var k = -2; k <= 2; k++) {
+      var bx = x + k * 1.8;
+      ctx.beginPath(); ctx.moveTo(bx, y + 4);
+      ctx.quadraticCurveTo(bx + sway * 0.5, y - 2, bx + sway + k * 0.5, y - 7);
+      ctx.stroke();
+    }
+  } else if (sel < 0.8) {                              // 小花（茎＋花びら5枚＋しん）
+    var col = pal[Math.floor(_hash01(x * 1.7 + y * 2.3) * pal.length) % pal.length];
+    ctx.strokeStyle = '#3f7a44'; ctx.lineWidth = 1.3; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x, y + 5); ctx.quadraticCurveTo(x + sway * 0.4, y, x + sway, y - 3); ctx.stroke();
+    var hx = x + sway, hy = y - 4;
+    ctx.fillStyle = col;
+    for (var p = 0; p < 5; p++) {
+      var ang = p * (Math.PI * 2 / 5);
+      ctx.beginPath(); ctx.arc(hx + Math.cos(ang) * 2.4, hy + Math.sin(ang) * 2.4, 1.7, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = '#ffe98a'; ctx.beginPath(); ctx.arc(hx, hy, 1.5, 0, Math.PI * 2); ctx.fill();
+  } else {                                             // 小石
+    ctx.fillStyle = '#9aa0a6';
+    if (ctx.ellipse) { ctx.beginPath(); ctx.ellipse(x, y, 3.4, 2.2, 0, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#c2c7cc'; ctx.beginPath(); ctx.arc(x - 1, y - 0.8, 1.1, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// 可視範囲の芝マスだけを走査し、約 1/3 のマスに飾りを 1 個ずつ置く。
+function _drawGroundDecor(ctx, map, theme, c0, c1, r0, r1, offX, offY, TS, legend, phase) {
+  if (!map || map.dark) return;
+  var grid = map.grid; if (!grid) return;
+  var pal = _decorPalette(theme);
+  ctx.save();
+  for (var r = r0; r <= r1; r++) {
+    var rowStr = grid[r]; if (!rowStr) continue;
+    for (var c = c0; c <= c1; c++) {
+      var leg = legend[rowStr[c]];
+      if (!leg || leg.sprite !== 't_grass') continue;
+      if (_hash01(c * 12.31 + r * 7.93 + 3.7) > 0.34) continue;   // ~34% のマスに飾り
+      var ox = 5 + _hash01(c * 3.11 + r * 9.67) * (TS - 12);
+      var oy = 7 + _hash01(c * 8.41 + r * 2.63) * (TS - 14);
+      var sel = _hash01(c * 5.77 + r * 4.19 + 1.3);
+      _decorSprite(ctx, theme, sel, offX + c * TS + ox, offY + r * TS + oy,
+        phase + c * 0.7 + r * 0.5, pal);
+    }
   }
   ctx.restore();
 }
@@ -711,6 +1632,19 @@ function createFieldScene(state) {
           }
         } }));
       } }));
+      return;
+    }
+
+    // ⑦.9 案内コーチ（進行ナビ）：いま むかうべき もくひょうを フルで おしえる。
+    if (npc.guide) {
+      var gpages = [];
+      if (typeof S.objectiveFor === 'function') {
+        var ob = S.objectiveFor((state && state.flags) || {});
+        if (ob && ob.npc) gpages.push(ob.npc);
+      }
+      if (npc.pages && npc.pages.length) gpages = gpages.concat(npc.pages);
+      if (!gpages.length) gpages = ['げんきに がんばろう！'];
+      S.pushScene(S.createDialog(gpages));
       return;
     }
 
@@ -1048,6 +1982,11 @@ function createFieldScene(state) {
       var offX = clampCamera(Math.round(VW / 2 - (px * TS + TS / 2)), VW, mapW);
       var offY = clampCamera(Math.round(VH / 2 - (py * TS + TS / 2)), VH, mapH);
 
+      // 演出の時間軸。draw のはじめで 1 回だけ進め、雲/天候/水面/宝箱/ワープが
+      // 同じ位相を共有する（決定論的＝チラつかない）。
+      _gfx += 0.06;
+      var theme = _ambientFor(map);
+
       // 3. タイル描画（可視範囲だけカリング）
       var legend = _tileLegend();
       var c0 = Math.max(0, Math.floor(-offX / TS));
@@ -1061,28 +2000,57 @@ function createFieldScene(state) {
           var t = legend[rowStr[c]];
           if (!t) continue;
           var tx = offX + c * TS, ty = offY + r * TS;
-          // AIテクスチャがあればマスを埋める。無い／未ロードならドット絵にフォールバック。
-          var aurl = fieldArt && fieldArt[t.sprite];
-          if (aurl && S.drawImageTile(ctx, 'field_' + t.sprite, aurl, tx, ty, TS)) continue;
-          var sp = S.SPRITES[t.sprite];
-          if (!sp) continue;
-          S.drawSprite(ctx, sp, tx, ty, TS / 16);
+          // 弾6：森/川/橋/岩/花はコードで手描き＝まず下地（草 or 水）を敷く。
+          var proc = _isProcTile(t.sprite);
+          var baseSprite = proc ? _procBaseSprite(t.sprite) : t.sprite;
+          var wphase = _gfx + (r * 7 + c * 3) * 0.35;
+          // Phase7-①：下地はコードで手描き（AI絵タイルは卒業）。
+          //   未対応spriteのときだけ AI絵→ドット絵 の順でフォールバック。
+          if (_isBaseTile(baseSprite)) {
+            _drawBaseTile(ctx, baseSprite, tx, ty, TS, wphase, r, c);
+          } else {
+            var aurl = fieldArt && fieldArt[baseSprite];
+            var tdrew = aurl && S.drawImageTile(ctx, 'field_' + baseSprite, aurl, tx, ty, TS);
+            if (!tdrew) {
+              var sp = S.SPRITES[baseSprite];
+              if (sp) S.drawSprite(ctx, sp, tx, ty, TS / 16);
+            }
+          }
+          // 水/川の下地の上にひかりの帯をのせる（浅い水・深い水。位相をずらしてさざ波感）。
+          if (_isWaterSprite(baseSprite)) {
+            _drawWaterShimmer(ctx, tx, ty, TS, wphase);
+          }
+          // ふちどり（autotile）：地面が水/川にせっする辺へ砂のなぎさを足す＝DQ感。
+          if (baseSprite === 't_grass' || baseSprite === 't_sand' ||
+              baseSprite === 't_road' || baseSprite === 't_cobble') {
+            var em = _waterEdgeMask(map.grid, r, c);
+            if (em) _drawShoreEdges(ctx, tx, ty, TS, em);
+          }
+          // 森/川/橋/岩/花の装飾を下地の上に重ねる（時間で ゆれ/ながれ）。
+          if (proc) _drawProcTile(ctx, t.sprite, tx, ty, TS, _gfx + (r * 13 + c * 7) * 0.21, r, c);
         }
       }
+
+      // 3.2 空レイヤー（流れ雲・雲かげ・星）。地面の上・キャラの下にうっすら重ねて奥行きを出す。
+      _drawSkyLayer(ctx, theme, VW, VH, _gfx);
+
+      // 3.4 地面装飾（彩り）：芝マスに草むら/小花/小石を散らして空いた芝を埋める。
+      //      grid/当たり判定には触れず、決定論ハッシュで配置。キャラの下に描く地面デカール。
+      _drawGroundDecor(ctx, map, theme, c0, c1, r0, r1, offX, offY, TS, legend, _gfx);
 
       // 3.5 地面デカール（踏める飾り：ボール/花）。地面に貼るので全員の下に描く。
       var objArt = S.OBJ_ART || null;
       var groundObjs = map.objects || [];
       for (var gi = 0; gi < groundObjs.length; gi++) {
         var go = groundObjs[gi];
-        if (go.type !== 'ball' && go.type !== 'flower') continue;
+        if (go.type !== 'ball' && go.type !== 'flower' && go.type !== 'crop') continue;
         if (go.x < c0 - 1 || go.x > c1 + 1 || go.y < r0 - 1 || go.y > r1 + 1) continue;
-        _drawFieldObject(ctx, S, go.type, offX + go.x * TS, offY + go.y * TS, TS, objArt);
+        _drawFieldObject(ctx, S, go.type, offX + go.x * TS, offY + go.y * TS, TS, objArt, _gfx + go.x * 0.5 + go.y * 0.3);
       }
 
       // 3.6 ギミックの地面マーカー（弾2）：ワープパネル/動く床/パズルのゴール印。
       //      いずれも地面に貼るので全員の下（足元）に描く。可視範囲だけカリング。
-      _gfx += 0.06;
+      //      位相 _gfx は draw 先頭で進め済み（雲/天候/水面と共有）。
       function _visible(gx, gy) { return !(gx < c0 - 1 || gx > c1 + 1 || gy < r0 - 1 || gy > r1 + 1); }
       var warpsD = map.warps || [];
       for (var wi = 0; wi < warpsD.length; wi++) {
@@ -1115,6 +2083,8 @@ function createFieldScene(state) {
         ctx.fillRect(sx + 5, sy + 15, TS - 10, 3);
         ctx.strokeStyle = '#3a230f'; ctx.lineWidth = 1;
         ctx.strokeRect(sx + 5, sy + 9, TS - 10, TS - 13);
+        // 未開封の宝の上で ✦ がチカチカ＝「ここに何かあるよ」のサイン。
+        _drawChestGlow(ctx, sx, sy, TS, _gfx + ci * 1.7);
       }
 
       // 5. NPC
@@ -1148,7 +2118,7 @@ function createFieldScene(state) {
       var solidObjs = map.objects || [];
       for (var soi = 0; soi < solidObjs.length; soi++) {
         var sob = solidObjs[soi];
-        if (sob.type === 'ball' || sob.type === 'flower') continue; // 地面デカールは描画済み
+        if (sob.type === 'ball' || sob.type === 'flower' || sob.type === 'crop') continue; // 地面デカールは描画済み
         actors.push({ kind: 'object', objType: sob.type, x: sob.x, y: sob.y, isLeader: false });
       }
       // 押しブロック（サッカーボール）も Y ソートに混ぜる（弾2）。仲間と同列の
@@ -1174,7 +2144,7 @@ function createFieldScene(state) {
           var oRx = (act.objType === 'tree') ? 8
                   : (act.objType === 'goal' || act.objType === 'bench') ? 12 : 9;
           S.drawShadow(ctx, osx + TS / 2, osy + TS - 3, oRx, 4);
-          _drawFieldObject(ctx, S, act.objType, osx, osy, TS, objArt);
+          _drawFieldObject(ctx, S, act.objType, osx, osy, TS, objArt, _gfx + act.x * 0.5 + act.y * 0.3);
           continue;
         }
         // 押しブロック（サッカーボール）：影＋ボール本体（弾2）。
@@ -1215,23 +2185,62 @@ function createFieldScene(state) {
         }
       }
 
+      // 6.35 彩りトーン（Phase2）：テーマ色＋周辺減光を世界全体に重ねて時間帯/天気の空気感を出す。
+      //      キャラの上・天候の下に置くと、夜は青く沈み、火の粉や雨つぶが上で映える。
+      _drawToneOverlay(ctx, theme, VW, VH, _gfx, !!map.dark);
+
+      // 6.4 天候レイヤー（前景・キャラの上）：花びら/落ち葉/雨/雪/砂ぼこり/きらめき/
+      //     ほたる/火の粉。マップのテーマに合わせて舞わせ、生命感と彩りを足す。
+      _drawWeatherLayer(ctx, theme, VW, VH, _gfx);
+
+      // 6.45 いきもの（Phase2）：ちょうちょ/小鳥がときどき横切る＝マップに生命感。
+      _drawAmbientLife(ctx, theme, VW, VH, _gfx);
+
       // 6.5 暗闇オーバーレイ（弾2 dark マップ）：プレイヤー中心の「たいまつ視界」。
       //     ひみつの部屋など map.dark のときだけ、周囲をうっすら照らして探索感を出す。
       if (map.dark) {
         var tcx = offX + px * TS + TS / 2;
         var tcy = offY + py * TS + TS / 2;
-        var torchR = TS * 4;
+        // たいまつの炎は一定でなく、ゆらゆら明るさが揺れる（2つの sin を重ねて自然に）。
+        var flick = 1 + Math.sin(_gfx * 5) * 0.04 + Math.sin(_gfx * 11 + 1.3) * 0.025;
+        var torchR = TS * 4 * flick;
         var grad = ctx.createRadialGradient(tcx, tcy, TS * 0.6, tcx, tcy, torchR);
         grad.addColorStop(0,   'rgba(0,0,0,0)');
         grad.addColorStop(0.6, 'rgba(0,0,0,0.35)');
         grad.addColorStop(1,   'rgba(0,0,0,0.97)');
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, VW, VH);
+        // かべの たいまつ（type:'torch'）も まわりを ほんのり 照らす＝暗闇を焼き抜く。
+        var _torches = map.objects || [];
+        if (_torches.length) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          for (var ti = 0; ti < _torches.length; ti++) {
+            var _t = _torches[ti];
+            if (_t.type !== 'torch') continue;
+            var lx = offX + _t.x * TS + TS / 2;
+            var ly = offY + _t.y * TS + TS / 2;
+            var lr = TS * 2.2 * flick;
+            var lg = ctx.createRadialGradient(lx, ly, 2, lx, ly, lr);
+            lg.addColorStop(0,   'rgba(255,170,60,0.55)');
+            lg.addColorStop(0.5, 'rgba(255,120,30,0.22)');
+            lg.addColorStop(1,   'rgba(255,90,20,0)');
+            ctx.fillStyle = lg;
+            ctx.beginPath(); ctx.arc(lx, ly, lr, 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.restore();
+        }
       }
 
       // 7. ネームプレート（画面上部）
       S.drawWindow(ctx, VW / 2 - 60, 6, 120, 24, { radius: 8, border: '#5ec8ff' });
       S.drawText(ctx, map.name, VW / 2, 12, { size: 13, color: '#dff4ff', align: 'center' });
+
+      // 8. つぎの もくひょう バー（進行ナビ：いま どこへ いけば いいか 常設表示）
+      if (typeof S.objectiveFor === 'function') {
+        var _ob = S.objectiveFor((state && state.flags) || {});
+        if (_ob && _ob.bar) _drawObjectiveBar(ctx, S, _ob.bar);
+      }
     },
   };
 }
@@ -1423,4 +2432,12 @@ function createPkScene(state, opts) {
   puzzleSolved:     puzzleSolved,
   tryPushBlock:     tryPushBlock,
   _withActiveNpcs:  _withActiveNpcs,
+  _ambientFor:      _ambientFor,
+  _toneFor:         _toneFor,
+  _isProcTile:      _isProcTile,
+  _procBaseSprite:  _procBaseSprite,
+  _waterEdgeMask:   _waterEdgeMask,
+  _neighborMask:    _neighborMask,
+  _isBaseTile:      _isBaseTile,
+  _isWaterSprite:   _isWaterSprite,
 });
