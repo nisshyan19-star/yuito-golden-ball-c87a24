@@ -863,6 +863,18 @@ function _drawObjectiveBar(ctx, S, text) {
   S.drawText(ctx, '▶ ' + text, VW / 2, y + 4, { size: 11, color: '#ffe9a0', align: 'center' });
 }
 
+// ── 弾7-①：スムーズスクロール用の純粋関数（描画補間のみ・ゲームロジックは整数マスのまま） ──
+// lerp: 線形補間。a→b を t(0..1) で。
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+// stepEase: 歩行1マスぶんの easeOut。足元が気持ちよくなる程度の軽い減速。境界はクランプ。
+function stepEase(t) {
+  if (t <= 0) return 0;
+  if (t >= 1) return 1;
+  return t * (2 - t);
+}
+
 // ── 弾6：DQ風の地形タイル（コードで手描き＝procedural）＋ふちどり（autotile） ──
 //   新タイル（森/川/橋/岩/花畑）は AI テクスチャを持たないので canvas に直接描く。
 //   下地（草 or 水）はタイルループ側で先に敷き、ここでは上に「もの」を重ねる。
@@ -1618,6 +1630,10 @@ function createFieldScene(state) {
   var py = (pos.y !== undefined && pos.y !== null) ? pos.y : 5;
   var facing = 'down';
   var moveTimer = 0;
+  // 弾7-①：描画補間状態（px/py は整数マスのまま。表示だけ moveFromX→px を lerp する）
+  var moveFromX = px;
+  var moveFromY = py;
+  var moveProg = 1; // 1 = 補間完了（静止）
 
   // ── 隊列（DQ風キャラバン）─────────────────────────────────────────
   //   state.party[0]=リーダー(ユイト/操作キャラ)、[1..]=後続の仲間。
@@ -1629,6 +1645,7 @@ function createFieldScene(state) {
   for (var fi = 1; fi < party.length; fi++) {
     followers.push({
       id: party[fi].id, x: px, y: py, facing: 'down',
+      fromX: px, fromY: py, // 弾7-①：描画補間用の移動元マス
       isMonster: party[fi].isMonster, baseId: party[fi].baseId,
     });
   }
@@ -2090,6 +2107,11 @@ function createFieldScene(state) {
   // リーダーを (nx,ny) へ1マス進める（隊列を1マス分シフト）。通常移動・押し・
   // コンベア流れ で共通利用。dir は先頭の仲間の向きに使う。
   function _stepLeaderTo(nx, ny, dir) {
+    // 弾7-①：シフト前に各仲間の現在マスを移動元として退避（このマスから次マスへ lerp する）
+    for (var f = 0; f < followers.length; f++) {
+      followers[f].fromX = followers[f].x;
+      followers[f].fromY = followers[f].y;
+    }
     for (var k = followers.length - 1; k >= 1; k--) {
       followers[k].x = followers[k - 1].x;
       followers[k].y = followers[k - 1].y;
@@ -2100,6 +2122,8 @@ function createFieldScene(state) {
       followers[0].y = py;
       followers[0].facing = dir;
     }
+    // 弾7-①：リーダーの移動元＝旧px/py。ここから nx/ny へ補間する。
+    moveFromX = px; moveFromY = py; moveProg = 0;
     px = nx; py = ny;
     state.position.x = px;
     state.position.y = py;
@@ -2112,7 +2136,10 @@ function createFieldScene(state) {
     px = nx; py = ny;
     for (var k = 0; k < followers.length; k++) {
       followers[k].x = px; followers[k].y = py; followers[k].facing = facing;
+      followers[k].fromX = px; followers[k].fromY = py; // 弾7-①：ワープは補間なし
     }
+    // 弾7-①：ワープは即座に到達済み扱い（moveProg=1）＝切替演出と競合させない
+    moveFromX = px; moveFromY = py; moveProg = 1;
     state.position.x = px;
     state.position.y = py;
   }
@@ -2228,6 +2255,12 @@ function createFieldScene(state) {
       moveTimer -= dt;
       if (moveTimer < 0) moveTimer = 0;
 
+      // 弾7-①：移動補間を進める（STEP_TIME で 0→1）
+      if (moveProg < 1) {
+        moveProg += dt / STEP_TIME;
+        if (moveProg > 1) moveProg = 1;
+      }
+
       var dir = held.up ? 'up'
               : held.down ? 'down'
               : held.left ? 'left'
@@ -2300,8 +2333,12 @@ function createFieldScene(state) {
       // 2. カメラ（プレイヤー中央・端でクランプ）
       var cols = map.grid[0].length, rows = map.grid.length;
       var mapW = cols * TS, mapH = rows * TS;
-      var offX = clampCamera(Math.round(VW / 2 - (px * TS + TS / 2)), VW, mapW);
-      var offY = clampCamera(Math.round(VH / 2 - (py * TS + TS / 2)), VH, mapH);
+      // 弾7-①：表示座標＝移動元→現在マスの補間。カメラ・キャラ描画はこれを使う。
+      var _rt = stepEase(moveProg);
+      var renderX = lerp(moveFromX, px, _rt);
+      var renderY = lerp(moveFromY, py, _rt);
+      var offX = clampCamera(Math.round(VW / 2 - (renderX * TS + TS / 2)), VW, mapW);
+      var offY = clampCamera(Math.round(VH / 2 - (renderY * TS + TS / 2)), VH, mapH);
 
       // 演出の時間軸。draw のはじめで 1 回だけ進め、雲/天候/水面/宝箱/ワープが
       // 同じ位相を共有する（決定論的＝チラつかない）。
@@ -2435,12 +2472,14 @@ function createFieldScene(state) {
         var fo = followers[ai];
         actors.push({
           id: fo.id, x: fo.x, y: fo.y, facing: fo.facing, isLeader: false,
+          rx: lerp(fo.fromX, fo.x, _rt), ry: lerp(fo.fromY, fo.y, _rt), // 弾7-①：補間表示座標
           isMonster: fo.isMonster, baseId: fo.baseId,
         });
       }
       actors.push({
         id: (party[0] && party[0].id) || 'yuito',
         x: px, y: py, facing: facing, isLeader: true,
+        rx: renderX, ry: renderY, // 弾7-①：補間表示座標
         isMonster: party[0] && party[0].isMonster, baseId: party[0] && party[0].baseId,
       });
       // ソリッド/背の高い飾り（木/ゴール/ベンチ/看板/茂み）も同じ Y ソートに混ぜる。
@@ -2484,9 +2523,12 @@ function createFieldScene(state) {
           _drawPushBall(ctx, bsx, bsy, TS);
           continue;
         }
-        var footCX = offX + act.x * TS + TS / 2;       // マス中央
-        var footBottom = offY + act.y * TS + TS;       // マス下端＝接地点
-        S.drawShadow(ctx, footCX, offY + act.y * TS + TS - 3, act.isLeader ? 11 : 10, 4);
+        // 弾7-①：キャラは補間表示座標を使う（無い actor は整数マスにフォールバック）
+        var _ax = (act.rx !== undefined) ? act.rx : act.x;
+        var _ay = (act.ry !== undefined) ? act.ry : act.y;
+        var footCX = offX + _ax * TS + TS / 2;         // マス中央
+        var footBottom = offY + _ay * TS + TS;         // マス下端＝接地点
+        S.drawShadow(ctx, footCX, offY + _ay * TS + TS - 3, act.isLeader ? 11 : 10, 4);
         var drew = false;
         // なかまモンスター：歩行絵(WALK_ART)が無いので 戦闘立ち絵(ENEMY_ART[baseId])を
         //   向き反転/歩行コマ切替なしの 静止スプライトとして 隊列に置く。座標/サイズは
@@ -2512,7 +2554,7 @@ function createFieldScene(state) {
         }
         if (!drew) {
           var dotSp = S.SPRITES[act.id] || S.SPRITES.yuito;
-          S.drawSprite(ctx, dotSp, offX + act.x * TS, offY + act.y * TS, 1);
+          S.drawSprite(ctx, dotSp, offX + _ax * TS, offY + _ay * TS, 1);
         }
       }
 
@@ -2530,8 +2572,9 @@ function createFieldScene(state) {
       // 6.5 暗闇オーバーレイ（弾2 dark マップ）：プレイヤー中心の「たいまつ視界」。
       //     ひみつの部屋など map.dark のときだけ、周囲をうっすら照らして探索感を出す。
       if (map.dark) {
-        var tcx = offX + px * TS + TS / 2;
-        var tcy = offY + py * TS + TS / 2;
+        // 弾7-①：たいまつ視界はリーダーの補間表示座標に合わせる（歩行中も光がズレない）
+        var tcx = offX + renderX * TS + TS / 2;
+        var tcy = offY + renderY * TS + TS / 2;
         // たいまつの炎は一定でなく、ゆらゆら明るさが揺れる（2つの sin を重ねて自然に）。
         var flick = 1 + Math.sin(_gfx * 5) * 0.04 + Math.sin(_gfx * 11 + 1.3) * 0.025;
         var torchR = TS * 4 * flick;
@@ -3051,6 +3094,8 @@ function createShootScene(state, opts) {
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
 })(typeof window !== 'undefined' ? window : globalThis, {
   createFieldScene:   createFieldScene,
+  lerp:               lerp,
+  stepEase:           stepEase,
   createPkScene:      createPkScene,
   createLiftingScene: createLiftingScene,
   createShootScene:   createShootScene,
