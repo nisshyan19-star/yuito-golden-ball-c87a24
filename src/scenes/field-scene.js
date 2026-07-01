@@ -35,6 +35,52 @@ function frontTile(x, y, facing) {
 }
 
 /**
+ * walkSideFlip: フィールド歩行スプライト(side)を左右反転して描くべきか。
+ *   side素材は基本「左向き」で生成済み → 右移動のときだけ反転して右向きにする。
+ *   ただしイクマの side 素材だけAI生成が「右向き」なので、逆に左移動のとき反転する。
+ * @param {string} id キャラID（yuito/ikuma/aoshi/tomoki/itsuki）
+ * @param {string} facing 'up' | 'down' | 'left' | 'right'
+ * @returns {boolean} 左右反転して描くなら true
+ */
+function walkSideFlip(id, facing) {
+  var sideFacesRight = (id === 'ikuma');   // ikuma_side だけ右向き素材
+  return sideFacesRight ? (facing === 'left') : (facing === 'right');
+}
+
+// npcMarkerKind: マップ上のNPCの頭上に出すマークの種類を決める。
+//   話しかけ処理 _talkTo と同じ優先順位（shop→forge→joinId→boss→bossRush→quest→会話）で判定する。
+//   純粋関数（副作用なし）＝ node --test で回帰できる。S.questStage 等に依存せず、
+//   済み判定は state.flags / state.party を直接見る。
+//   戻り値: 'inn' | 'shop' | 'forge' | 'ally' | 'boss' | 'quest' | 'talk' | 'none'
+function npcMarkerKind(npc, state) {
+  if (!npc) return 'none';
+  var flags = (state && state.flags) || {};
+  var party = (state && state.party) || [];
+  // 役割が「済み状態」のとき落ちる先＝会話できるなら talk、会話も無ければ none。
+  var talk = ((npc.pages && npc.pages.length) || (npc.afterPages && npc.afterPages.length)) ? 'talk' : 'none';
+
+  if (npc.shop) return (npc.shop.type === 'inn') ? 'inn' : 'shop';
+  if (npc.forge) return 'forge';
+  if (npc.joinId) {
+    var joined = party.some(function (p) { return p.id === npc.joinId; });
+    return joined ? 'talk' : 'ally';   // 加入済みは _talkTo で会話するので talk
+  }
+  if (npc.boss) {
+    var bwin = npc.boss.winFlag;
+    return (bwin && flags[bwin]) ? 'talk' : 'boss';
+  }
+  if (npc.bossRush) {
+    var rwin = npc.bossRush.winFlag;
+    return (rwin && flags[rwin]) ? 'talk' : 'boss';
+  }
+  if (npc.quest) {
+    var dflag = npc.quest.doneFlag;
+    return (dflag && flags[dflag]) ? 'talk' : 'quest';
+  }
+  return talk;
+}
+
+/**
  * isWalkable: 座標 (x,y) に踏み込めるか判定する。
  *   - グリッド範囲外 → false
  *   - タイルが walkable:false（壁/水）→ false
@@ -2345,11 +2391,12 @@ function createFieldScene(state) {
             drew = S.drawImageSprite(ctx, 'monwalk_' + act.baseId, artData, footCX, footBottom - mH / 2 + 2, mH);
           }
         } else if (walkArt) {
-          // 横向き(side)素材は全キャラ「左向き」で生成済み。右移動のときだけ左右反転して使い回す。
+          // 横向き(side)素材は基本「左向き」で生成済み＝右移動のときだけ左右反転して使い回す。
+          // ただしイクマの side 素材だけAI生成が「右向き」なので、反転条件を逆にする（左移動のとき反転）。
           var dKey = act.id + ((act.facing === 'up') ? '_up'
                             : (act.facing === 'down') ? '_down'
                             : '_side');
-          var fl = (act.facing === 'right');
+          var fl = walkSideFlip(act.id, act.facing);
           var wu = walkArt[dKey];
           if (wu) {
             var bH = TS * 1.35;                          // タイルより少し大きい存在感
@@ -2901,6 +2948,8 @@ function createShootScene(state, opts) {
   createLiftingScene: createLiftingScene,
   createShootScene:   createShootScene,
   frontTile:        frontTile,
+  walkSideFlip:     walkSideFlip,
+  npcMarkerKind:    npcMarkerKind,
   isWalkable:       isWalkable,
   clampCamera:      clampCamera,
   pendingCutscene:  pendingCutscene,
