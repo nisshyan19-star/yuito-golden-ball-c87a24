@@ -80,6 +80,67 @@ function npcMarkerKind(npc, state) {
   return talk;
 }
 
+// _drawNpcMarker: npcMarkerKind の結果を NPC の頭上に小さなバッジで描く。
+//   sx,sy は NPC スプライトの左上スクリーン座標。phase(_gfx) で ふわふわ上下する。
+//   文字記号($ ! ?)は nested の glyph() で描き、ベッド/金づち/✦ は手描き。
+function _drawNpcMarker(ctx, kind, sx, sy, TS, phase) {
+  if (!kind || kind === 'none') return;
+  var COL = {
+    inn: '#2bb673', shop: '#2bb673', forge: '#f0a020',
+    ally: '#ffd200', boss: '#e8443a', quest: '#a065d0', talk: '#ffd200'
+  };
+  var col = COL[kind] || '#ffd200';
+  var small = (kind === 'talk');          // 通常会話は控えめ
+  var rad = small ? 6 : 8;                 // バッジ半径
+  var bob = Math.sin(phase * 3) * 1.6;     // ふわふわ上下
+  var cx = sx + TS / 2;
+  var cy = sy - rad - 2 + bob;             // 頭上
+
+  function glyph(ch) {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold ' + Math.round(rad * 1.9) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ch, cx, cy + 0.5);
+  }
+
+  ctx.save();
+  // 影（少し大きい黒丸）→ 本体（役割色）→ 白フチ
+  ctx.beginPath(); ctx.arc(cx, cy, rad + 1.2, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+  ctx.fillStyle = col; ctx.fill();
+  ctx.lineWidth = 1.4; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+
+  ctx.fillStyle = '#ffffff';
+  if (kind === 'shop') glyph('$');
+  else if (kind === 'boss' || kind === 'talk') glyph('!');
+  else if (kind === 'quest') glyph('?');
+  else if (kind === 'inn') {
+    // ベッド：マット＋枕
+    var bw = rad * 1.35, bh = rad * 0.5;
+    ctx.fillRect(cx - bw / 2, cy - bh / 2 + 1, bw, bh);
+    ctx.fillRect(cx - bw / 2, cy - bh / 2 - 1.5, bw * 0.34, bh);
+  } else if (kind === 'forge') {
+    // 金づち：柄＋頭（少し傾ける）
+    ctx.save();
+    ctx.translate(cx, cy); ctx.rotate(-0.5);
+    ctx.fillRect(-0.9, -rad * 0.55, 1.8, rad * 1.15);
+    ctx.fillRect(-rad * 0.55, -rad * 0.68, rad * 1.1, rad * 0.42);
+    ctx.restore();
+  } else if (kind === 'ally') {
+    // ✦（4方向にとがった星）
+    var r2 = rad * 0.78;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - r2); ctx.lineTo(cx + r2 * 0.32, cy - r2 * 0.32);
+    ctx.lineTo(cx + r2, cy); ctx.lineTo(cx + r2 * 0.32, cy + r2 * 0.32);
+    ctx.lineTo(cx, cy + r2); ctx.lineTo(cx - r2 * 0.32, cy + r2 * 0.32);
+    ctx.lineTo(cx - r2, cy); ctx.lineTo(cx - r2 * 0.32, cy - r2 * 0.32);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
 /**
  * isWalkable: 座標 (x,y) に踏み込めるか判定する。
  *   - グリッド範囲外 → false
@@ -2310,13 +2371,17 @@ function createFieldScene(state) {
         _drawChestGlow(ctx, sx, sy, TS, _gfx + ci * 1.7);
       }
 
-      // 5. NPC
+      // 5. NPC（＋頭上マーク＝話せる人/お店/鍛冶/仲間/ボス/クエストを一目でわかるように）
       var npcs = map.npcs || [];
       for (var ni = 0; ni < npcs.length; ni++) {
         var npc = npcs[ni];
         var nsp = S.SPRITES[npc.sprite];
         S.drawShadow(ctx, offX + npc.x * TS + TS / 2, offY + npc.y * TS + TS - 3, 10, 4);
         if (nsp) S.drawSprite(ctx, nsp, offX + npc.x * TS, offY + npc.y * TS, 1);
+        var mkind = npcMarkerKind(npc, state);
+        if (mkind !== 'none') {
+          _drawNpcMarker(ctx, mkind, offX + npc.x * TS, offY + npc.y * TS, TS, _gfx + ni * 0.6);
+        }
       }
 
       // 6. パーティ隊列（後続の仲間＋先頭のユイト）。
