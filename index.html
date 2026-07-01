@@ -7626,6 +7626,72 @@ function stepEase(t) {
   return t * (2 - t);
 }
 
+// ── 弾7-②：ミニマップ用の地形分類（純粋関数） ──
+// 生タイルを 'floor'（歩ける）/'wall'（通れない）に粗く丸める。
+// secret:true（隠し通路 H など）は wall 扱い＝ミニマップに隠し要素を露出しない。
+function minimapCell(grid, x, y, legend) {
+  if (!grid || y < 0 || y >= grid.length) return 'wall';
+  var row = grid[y];
+  if (!row || x < 0 || x >= row.length) return 'wall';
+  var ch = row.charAt(x);
+  var def = legend && legend[ch];
+  if (!def) return 'wall';
+  if (def.secret === true) return 'wall';
+  if (def.walkable === true) return 'floor';
+  return 'wall';
+}
+
+// ── 弾7-②：ミニマップ描画（画面右上・常時オーバーレイ） ──
+// 地形=粗い点（floor薄/wall濃）、出口=黄マーカー、自分=点滅する赤点。
+// 暗闇マップ(map.dark)は地形を伏せて自分と出口のみ（迷子防止優先）。
+// phase: 点滅アニメ用位相（呼び出し側の _gfx を渡す）。y0: パネル上端Y。
+function _drawMinimap(ctx, S, map, px, py, VW, phase, y0) {
+  if (!map || !map.grid || !map.grid.length) return;
+  var legend = S.TILE_LEGEND || {};
+  var cols = map.grid[0].length, rows = map.grid.length;
+  var MAXW = 66, MAXH = 66, PAD = 4;
+  var cell = Math.max(1, Math.floor(Math.min(MAXW / cols, MAXH / rows)));
+  var innerW = cols * cell, innerH = rows * cell;
+  var panelW = innerW + PAD * 2, panelH = innerH + PAD * 2;
+  var x0 = VW - panelW - 6;
+  var top = y0;
+  // パネル枠
+  S.drawWindow(ctx, x0, top, panelW, panelH, { radius: 6, border: '#8fd0ff' });
+  var gx = x0 + PAD, gy = top + PAD;
+  var dark = !!map.dark;
+  // 地形
+  for (var y = 0; y < rows; y++) {
+    for (var x = 0; x < cols; x++) {
+      var kind = minimapCell(map.grid, x, y, legend);
+      if (dark) {
+        ctx.fillStyle = 'rgba(20,24,38,0.75)';
+      } else if (kind === 'floor') {
+        ctx.fillStyle = 'rgba(150,180,120,0.55)';
+      } else {
+        ctx.fillStyle = 'rgba(40,50,70,0.70)';
+      }
+      ctx.fillRect(gx + x * cell, gy + y * cell, cell, cell);
+    }
+  }
+  // 出口（黄マーカー）
+  if (map.exits && map.exits.length) {
+    ctx.fillStyle = '#ffd34d';
+    for (var e = 0; e < map.exits.length; e++) {
+      var ex = map.exits[e];
+      if (ex == null || ex.x == null || ex.y == null) continue;
+      ctx.fillRect(gx + ex.x * cell, gy + ex.y * cell, Math.max(2, cell), Math.max(2, cell));
+    }
+  }
+  // 自分（点滅する赤点）
+  var blink = 0.5 + 0.5 * Math.sin((phase || 0) * 3);
+  ctx.save();
+  ctx.globalAlpha = 0.55 + 0.45 * blink;
+  ctx.fillStyle = '#ff5d5d';
+  var selfSize = Math.max(3, cell + 1);
+  ctx.fillRect(gx + px * cell - (selfSize - cell) / 2, gy + py * cell - (selfSize - cell) / 2, selfSize, selfSize);
+  ctx.restore();
+}
+
 // ── 弾6：DQ風の地形タイル（コードで手描き＝procedural）＋ふちどり（autotile） ──
 //   新タイル（森/川/橋/岩/花畑）は AI テクスチャを持たないので canvas に直接描く。
 //   下地（草 or 水）はタイルループ側で先に敷き、ここでは上に「もの」を重ねる。
@@ -9366,6 +9432,10 @@ function createFieldScene(state) {
         var _ob = S.objectiveFor((state && state.flags) || {});
         if (_ob && _ob.bar) _drawObjectiveBar(ctx, S, _ob.bar);
       }
+
+      // 9. 弾7-②：ミニマップ（右上・常時）。目標バーがある時は下にずらす。
+      var _mmY0 = (typeof _ob !== 'undefined' && _ob && _ob.bar) ? 58 : 6;
+      _drawMinimap(ctx, S, map, px, py, VW, _gfx, _mmY0);
     },
   };
 }
@@ -9847,6 +9917,7 @@ function createShootScene(state, opts) {
   createFieldScene:   createFieldScene,
   lerp:               lerp,
   stepEase:           stepEase,
+  minimapCell:        minimapCell,
   createPkScene:      createPkScene,
   createLiftingScene: createLiftingScene,
   createShootScene:   createShootScene,
