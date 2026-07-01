@@ -7568,6 +7568,25 @@ function _drawChestAura(ctx, sx, sy, TS, phase) {
   ctx.restore();
 }
 
+// _drawOpenedChest: 開封済みの宝箱を「ふたが開いた空箱」で薄く（低alpha）残す。
+//   どこの宝を取ったか一目でわかり、取りこぼし探索がラクになる。
+function _drawOpenedChest(ctx, sx, sy, TS) {
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = '#7a4f28'; ctx.fillRect(sx + 5, sy + 14, TS - 10, TS - 16);
+  ctx.fillStyle = '#3a250f'; ctx.fillRect(sx + 7, sy + 15, TS - 14, 4);
+  ctx.fillStyle = '#96602f';
+  ctx.beginPath();
+  ctx.moveTo(sx + 5, sy + 14);
+  ctx.lineTo(sx + 7, sy + 6);
+  ctx.lineTo(sx + TS - 7, sy + 6);
+  ctx.lineTo(sx + TS - 5, sy + 14);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(58,35,15,0.8)'; ctx.lineWidth = 1;
+  ctx.strokeRect(sx + 5, sy + 14, TS - 10, TS - 16);
+  ctx.restore();
+}
+
 function _drawChestGlow(ctx, sx, sy, TS, phase) {
   var cx = sx + TS / 2, cy = sy + 2;
   var tw = Math.abs(Math.sin(phase * 2.2));
@@ -9128,7 +9147,7 @@ function createFieldScene(state) {
       for (var ci = 0; ci < chests.length; ci++) {
         var ch = chests[ci];
         var sx = offX + ch.x * TS, sy = offY + ch.y * TS;
-        if (opened[ch.id]) continue;
+        if (opened[ch.id]) { _drawOpenedChest(ctx, sx, sy, TS); continue; }
         // 足元にやわらかい光の輪＝遠くからでも「宝がある」がわかる
         _drawChestAura(ctx, sx, sy, TS, _gfx + ci * 1.3);
         ctx.fillStyle = '#8a5a2e'; ctx.fillRect(sx + 5, sy + 13, TS - 10, TS - 15);
