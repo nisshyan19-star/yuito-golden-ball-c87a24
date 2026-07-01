@@ -426,7 +426,24 @@ function createMenuScene(state) {
     }
     if (mode === 'world') {
       if (item && item.v === 'world_back') { enter('main'); return; }
-      return; // ファストトラベルは Task 5 で実装
+      if (item && item.node && item.node.warp) {
+        // 未訪問の町は行けない
+        if (item.seen === false) {
+          showMsg(['まだ いったことが ないよ！'], 'world');
+          return;
+        }
+        // 訪問済みの町へファストトラベル：position を差し替えて field シーン再生成
+        var node = item.node;
+        state.position = state.position || {};
+        state.position.map = node.maps[0];
+        state.position.x = node.warp.x;
+        state.position.y = node.warp.y;
+        if (S.playSe) S.playSe('confirm');
+        S.popScene();   // メニューを閉じる
+        S.replaceScene(S.createFieldScene(state)); // フィールド再生成（冒頭で visited も記録）
+        return;
+      }
+      return;
     }
     if (mode === 'items') {
       if (item.v === '__back' || item.v === '__none') { enter('main'); return; }
