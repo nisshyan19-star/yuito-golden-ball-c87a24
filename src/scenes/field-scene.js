@@ -1705,6 +1705,12 @@ function createFieldScene(state) {
   // 元データは壊さず、npcs だけ差し替えた浅いクローンを使う。
   var map = _withActiveNpcs(rawMap, (state && state.flags) || {});
 
+  // 弾7-④:訪問記録（世界地図・ファストトラベルの解禁判定に使う）。古いセーブは || {} で初期化。
+  if (state) {
+    state.visited = state.visited || {};
+    if (pos && pos.map) state.visited[pos.map] = true;
+  }
+
   // ── このマップで流すステージBGM名（audio.js の SRPG_BGM のキー）──
   //   ambient は通常マップにも付くので判定には使わず、マップ名と dark で決める。
   //   町/村＝'town'、洞窟/塔/神殿/城/dark＝'dungeon'、それ以外＝'field'。

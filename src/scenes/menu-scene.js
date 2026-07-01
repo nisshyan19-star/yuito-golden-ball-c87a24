@@ -6,6 +6,56 @@
 //    トップレベルの const/let は同名衝突で構文エラー（黒画面）になる。
 //    → このファイルはトップレベルを「関数宣言のみ」にし、ヘルパは全て createMenuScene
 //      内のクロージャ、データ(ITEMS/SKILLS)は S(window.SRPG) から遅延参照する。
+//    ※ 弾7-④の WORLD_MAP_NODES 等は var 関数宣言相当（衝突チェック済みの新規名）。
+
+// ── 弾7-④：世界地図の静的レイアウトデータ（読み取り専用） ──
+// x,y は 0..1 の正規化座標。maps は実マップID（ダンジョンは各階を集約）。
+// warp は町のファストトラベル到着マス。label は S.MAPS が無い時のフォールバック名。
+var WORLD_MAP_NODES = [
+  { id: 'field1',        label: 'はじまりの草原',   type: 'field',   x: 0.14, y: 0.30, maps: ['field1'] },
+  { id: 'town1',         label: 'ハーバータウン',   type: 'town',    x: 0.28, y: 0.22, maps: ['town1'], warp: { x: 7, y: 2 } },
+  { id: 'field2',        label: 'ナイタースタジアム', type: 'field', x: 0.30, y: 0.45, maps: ['field2'] },
+  { id: 'village1',      label: 'みのりの村',       type: 'town',    x: 0.16, y: 0.55, maps: ['village1'], warp: { x: 10, y: 1 } },
+  { id: 'cave1',         label: 'ほのおの どうくつ', type: 'dungeon', x: 0.40, y: 0.60, maps: ['cave1'] },
+  { id: 'field3',        label: 'サンドコート',     type: 'field',   x: 0.46, y: 0.30, maps: ['field3'] },
+  { id: 'tower_ice',     label: 'こおりの とう',    type: 'dungeon', x: 0.55, y: 0.18, maps: ['tower_ice_1f', 'tower_ice_2f', 'tower_ice_3f'] },
+  { id: 'field4',        label: 'レイニーピッチ',   type: 'field',   x: 0.58, y: 0.42, maps: ['field4'] },
+  { id: 'shrine_forest', label: 'もりの しんでん',  type: 'dungeon', x: 0.50, y: 0.72, maps: ['shrine_forest_1f', 'shrine_forest_2f', 'shrine_forest_3f'] },
+  { id: 'town2',         label: 'フォレストタウン', type: 'town',    x: 0.62, y: 0.62, maps: ['town2'], warp: { x: 7, y: 2 } },
+  { id: 'cave_water',    label: 'みずの どうくつ',  type: 'dungeon', x: 0.72, y: 0.55, maps: ['cave_water_1f', 'cave_water_2f', 'cave_water_3f'] },
+  { id: 'field5',        label: 'スカイスタジアム', type: 'field',   x: 0.70, y: 0.30, maps: ['field5'] },
+  { id: 'town3',         label: 'クラウドタウン',   type: 'town',    x: 0.78, y: 0.20, maps: ['town3'], warp: { x: 7, y: 2 } },
+  { id: 'ch2_gate',      label: 'やみの もん',      type: 'field',   x: 0.82, y: 0.42, maps: ['ch2_gate'] },
+  { id: 'ch2_town',      label: 'ノルドタウン',     type: 'town',    x: 0.88, y: 0.55, maps: ['ch2_town'], warp: { x: 14, y: 9 } },
+  { id: 'ch2_pass',      label: 'こおりの とうげ',  type: 'field',   x: 0.86, y: 0.72, maps: ['ch2_pass'] },
+  { id: 'field6',        label: 'ダークアリーナ',   type: 'field',   x: 0.92, y: 0.34, maps: ['field6'] },
+  { id: 'ch2_castle',    label: 'やみのしろ',       type: 'dungeon', x: 0.94, y: 0.82, maps: ['ch2_castle'] },
+];
+
+// 主要ノード間の繋がり（世界地図の連絡線。概略・見た目用）
+var WORLD_MAP_LINKS = [
+  ['field1', 'town1'], ['field1', 'field2'], ['field2', 'village1'], ['field2', 'field3'],
+  ['field3', 'cave1'], ['field3', 'tower_ice'], ['tower_ice', 'field4'], ['field4', 'shrine_forest'],
+  ['shrine_forest', 'town2'], ['town2', 'cave_water'], ['town2', 'field5'], ['field5', 'town3'],
+  ['town3', 'ch2_gate'], ['ch2_gate', 'ch2_town'], ['ch2_town', 'ch2_pass'], ['ch2_gate', 'field6'],
+  ['ch2_pass', 'ch2_castle'],
+];
+
+// 訪問済みマップを1つでも含むノードだけ返す（未訪問はモヤ用に除外）。
+function visibleWorldNodes(nodes, visited) {
+  var v = visited || {};
+  return (nodes || []).filter(function (n) {
+    return n.maps && n.maps.some(function (m) { return !!v[m]; });
+  });
+}
+
+// ファストトラベル可能な「訪問済みの町」ノードだけ返す。
+function fastTravelTowns(nodes, visited) {
+  var v = visited || {};
+  return (nodes || []).filter(function (n) {
+    return n.type === 'town' && n.warp && n.maps.some(function (m) { return !!v[m]; });
+  });
+}
 
 function createMenuScene(state) {
   var S = (typeof window !== 'undefined') ? window.SRPG : null;
@@ -71,6 +121,7 @@ function createMenuScene(state) {
       { label: 'そうび',   v: 'equip'   },
       { label: 'ずかん',   v: 'dex'     },
       { label: 'じっせき', v: 'ach'     },
+      { label: 'せかいちず', v: 'world' },
       { label: 'しょうごう', v: 'title' },
       { label: 'さくせん', v: 'tactics' },
       { label: 'セーブ',   v: 'save'    },
@@ -322,6 +373,7 @@ function createMenuScene(state) {
     else if (m === 'tactics')     buildTactics();
     else if (m === 'title')       buildTitle();
     else if (m === 'party')       { buildParty(); clampPartyCursor(); }
+    else if (m === 'world')       buildWorld();
     else if (m === 'status')      { /* statusIdx は呼び出し側で設定 */ }
   }
 
@@ -339,6 +391,7 @@ function createMenuScene(state) {
       case 'equip_slot':  enter('equip_char');  break;
       case 'equip_pick':  enter('equip_slot');  break;
       case 'tactics':     enter('main');        break;
+      case 'world':       enter('main');        break;
     }
   }
 
@@ -362,6 +415,7 @@ function createMenuScene(state) {
         case 'dex':     dexIdx = 0; mode = 'dex'; cursor = 0; break;
         case 'ach':     achIdx = 0; mode = 'ach'; cursor = 0; break;
         case 'title':   enter('title');   break;
+        case 'world':   enter('world');   break;
         case 'items':   enter('items');   break;
         case 'equip':   enter('equip_char'); break;
         case 'tactics': enter('tactics'); break;
@@ -369,6 +423,10 @@ function createMenuScene(state) {
         case 'close':   if (S && S.popScene) S.popScene(); break;
       }
       return;
+    }
+    if (mode === 'world') {
+      if (item && item.v === 'world_back') { enter('main'); return; }
+      return; // ファストトラベルは Task 5 で実装
     }
     if (mode === 'items') {
       if (item.v === '__back' || item.v === '__none') { enter('main'); return; }
@@ -496,6 +554,88 @@ function createMenuScene(state) {
       for (var d = 0; d < Math.min(2, dl.length); d++) {
         S.drawText(ctx, dl[d], X + 16, dy + d * 16, { size: 11, color: '#bfe6c8' });
       }
+    }
+  }
+
+  // ── 弾7-④：世界地図モード ──
+  function worldNodeName(node) {
+    return (S && S.MAPS && S.MAPS[node.maps[0]] && S.MAPS[node.maps[0]].name) || node.label;
+  }
+  function buildWorld() {
+    mode = 'world';
+    cursor = 0;
+    var visited = (state && state.visited) || {};
+    var towns = WORLD_MAP_NODES.filter(function (n) { return n.type === 'town' && n.warp; });
+    listCache = towns.map(function (n) {
+      var seen = n.maps.some(function (m) { return !!visited[m]; });
+      return {
+        label: seen ? ('▶ ' + worldNodeName(n)) : '？？？',
+        v: 'wt:' + n.id,
+        node: n,
+        seen: seen,
+      };
+    });
+    listCache.push({ label: 'もどる', v: 'world_back' });
+  }
+  function drawWorldPanel(ctx) {
+    var visited = (state && state.visited) || {};
+    var curMap = (state && state.position && state.position.map) || null;
+    // 地図エリア（上半分）
+    var MX = 24, MY = 34, MW = VW - 48, MH = 150;
+    S.drawWindow(ctx, MX, MY, MW, MH, { radius: 10, border: '#5ec8ff' });
+    S.drawText(ctx, 'せかいちず', VW / 2, MY - 18, { size: 14, color: '#dff4ff', align: 'center' });
+    function nx(n) { return MX + 8 + n.x * (MW - 16); }
+    function ny(n) { return MY + 8 + n.y * (MH - 16); }
+    // 連絡線（両端が訪問済みノードの時だけ薄く）
+    var byId = {};
+    for (var i = 0; i < WORLD_MAP_NODES.length; i++) byId[WORLD_MAP_NODES[i].id] = WORLD_MAP_NODES[i];
+    ctx.save();
+    ctx.strokeStyle = 'rgba(120,160,200,0.35)';
+    ctx.lineWidth = 1;
+    for (var l = 0; l < WORLD_MAP_LINKS.length; l++) {
+      var a = byId[WORLD_MAP_LINKS[l][0]], b = byId[WORLD_MAP_LINKS[l][1]];
+      if (!a || !b) continue;
+      var aSeen = a.maps.some(function (m) { return !!visited[m]; });
+      var bSeen = b.maps.some(function (m) { return !!visited[m]; });
+      if (!aSeen || !bSeen) continue;
+      ctx.beginPath(); ctx.moveTo(nx(a), ny(a)); ctx.lineTo(nx(b), ny(b)); ctx.stroke();
+    }
+    ctx.restore();
+    // ノード
+    var typeColor = { town: '#ffd34d', field: '#8fe0a0', dungeon: '#c98cff' };
+    for (var j = 0; j < WORLD_MAP_NODES.length; j++) {
+      var n = WORLD_MAP_NODES[j];
+      var seen = n.maps.some(function (m) { return !!visited[m]; });
+      var cx = nx(n), cy = ny(n);
+      var isCur = curMap && n.maps.indexOf(curMap) >= 0;
+      if (!seen) {
+        // 未訪問＝モヤ（暗い点＋?）
+        ctx.fillStyle = 'rgba(60,70,90,0.7)';
+        ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+        S.drawText(ctx, '?', cx, cy - 5, { size: 9, color: '#7a86a0', align: 'center' });
+        continue;
+      }
+      if (isCur) {
+        // 現在地＝光るリング
+        ctx.save();
+        ctx.strokeStyle = '#fff2a0'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+      ctx.fillStyle = typeColor[n.type] || '#ffffff';
+      ctx.beginPath(); ctx.arc(cx, cy, 4, 0, Math.PI * 2); ctx.fill();
+      S.drawText(ctx, worldNodeName(n), cx, cy + 5, { size: 8, color: '#e8f2ff', align: 'center' });
+    }
+    // 町リスト（下半分・ファストトラベル選択）
+    var LY = MY + MH + 8;
+    S.drawWindow(ctx, MX, LY, MW, VH - LY - 12, { radius: 8, border: '#5ec8ff' });
+    S.drawText(ctx, 'いきたい まちを えらんでね', VW / 2, LY + 6, { size: 10, color: '#bfe6c8', align: 'center' });
+    var rowY = LY + 26, rowH = 20;
+    for (var r = 0; r < listCache.length; r++) {
+      var it = listCache[r];
+      var col = (r === cursor) ? '#fff2a0' : (it.seen === false ? '#7a86a0' : '#e8f2ff');
+      var pre = (r === cursor) ? '▶ ' : '  ';
+      S.drawText(ctx, pre + it.label, MX + 14, rowY + r * rowH, { size: 12, color: col, align: 'left' });
     }
   }
 
@@ -749,6 +889,7 @@ function createMenuScene(state) {
       else if (mode === 'dex')     drawDexPanel(ctx);
       else if (mode === 'ach')     drawAchPanel(ctx);
       else if (mode === 'title')   drawTitlePanel(ctx);
+      else if (mode === 'world')   drawWorldPanel(ctx);
       else if (mode === 'message') drawMessage(ctx);
       else                         drawListPanel(ctx);
     },
@@ -761,4 +902,8 @@ function createMenuScene(state) {
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
 })(typeof window !== 'undefined' ? window : globalThis, {
   createMenuScene: createMenuScene,
+  WORLD_MAP_NODES: WORLD_MAP_NODES,
+  WORLD_MAP_LINKS: WORLD_MAP_LINKS,
+  visibleWorldNodes: visibleWorldNodes,
+  fastTravelTowns: fastTravelTowns,
 });
