@@ -1687,6 +1687,25 @@ function _drawGroundDecor(ctx, map, theme, c0, c1, r0, r1, offX, offY, TS, legen
   ctx.restore();
 }
 
+// ── マップ切替演出の純粋関数（弾2・機能⑥）─────────────────────
+// 黒オーバーレイ不透明度 0..1。remain=残りフェード秒, total=フェード全体秒。
+function fadeAlpha(remain, total) {
+  if (!total || total <= 0) return 0;
+  var a = remain / total;
+  if (a < 0) return 0;
+  if (a > 1) return 1;
+  return a;
+}
+// マップ名フラッシュ不透明度 0..1。残り40%地点までは 1、そこから線形に 0 へ。
+function flashAlpha(remain, total) {
+  if (!total || total <= 0) return 0;
+  if (remain <= 0) return 0;
+  if (remain >= total) return 1;
+  var fadeStart = total * 0.4;
+  if (remain >= fadeStart) return 1;
+  return remain / fadeStart;
+}
+
 // ── シーンファクトリ ────────────────────────────────────────────────
 
 /**
@@ -1781,6 +1800,12 @@ function createFieldScene(state) {
 
   // ワープパネルの渦アニメ用の位相（draw ごとに少しずつ回す・見た目だけ）。
   var _gfx = 0;
+
+  // ── マップ切替の入場演出（弾2・機能⑥）＝描画専用・毎回の再生成で自動開始 ──
+  var FADE_TIME = 0.35;        // 黒→透明のフェード秒
+  var NAME_FLASH_TIME = 1.4;   // マップ名を大きく出す秒
+  var _enterFade = FADE_TIME;       // 残りフェード秒（FADE_TIME→0）
+  var _nameFlash = NAME_FLASH_TIME; // 残りフラッシュ秒（NAME_FLASH_TIME→0）
 
   // ── 内部ヘルパ ───────────────────────────────────────────────────
 
@@ -2302,6 +2327,10 @@ function createFieldScene(state) {
     update: function (dt, input) {
       if (!S) return;
 
+      // 入場演出の減衰（描画専用・ゲーム進行に非干渉）
+      if (_enterFade > 0) _enterFade -= dt;
+      if (_nameFlash > 0) _nameFlash -= dt;
+
       // ステージBGMを毎フレーム保証（同じ曲なら playBgm は即 return＝軽い）。
       // 戦闘やメニューから戻った直後も、ここで自分のBGMへ復帰する。
       if (S.playBgm) S.playBgm(_bgmName);
@@ -2388,6 +2417,7 @@ function createFieldScene(state) {
         state.position.x = exit.tx;
         state.position.y = exit.ty;
         if (S.saveGame) S.saveGame(state);
+        if (S.playSe) S.playSe('stairs');
         if (S.replaceScene) S.replaceScene(S.createFieldScene(state));
         return;
       }
@@ -2724,6 +2754,23 @@ function createFieldScene(state) {
       if (typeof nearestExitLabel === 'function' && S.MAPS) {
         var _sign = nearestExitLabel(map, px, py, 2, S.MAPS);
         if (_sign) _drawSignpost(ctx, S, _sign, VW, VH);
+      }
+
+      // ── マップ切替の入場演出（最前面）──────────────────────────
+      var _fa = fadeAlpha(_enterFade, FADE_TIME);
+      if (_fa > 0) {
+        ctx.fillStyle = 'rgba(0,0,0,' + _fa + ')';
+        ctx.fillRect(0, 0, VW, VH);
+      }
+      var _na = flashAlpha(_nameFlash, NAME_FLASH_TIME);
+      if (_na > 0) {
+        ctx.save();
+        ctx.globalAlpha = _na;
+        // 半透明の帯＋大きなマップ名（常設の小さいネームプレートとは別物）
+        ctx.fillStyle = 'rgba(6,10,28,0.72)';
+        ctx.fillRect(0, VH / 2 - 30, VW, 60);
+        S.drawText(ctx, map.name, VW / 2, VH / 2 - 12, { size: 24, color: '#ffe9a8', align: 'center' });
+        ctx.restore();
       }
     },
   };
@@ -3208,6 +3255,8 @@ function createShootScene(state, opts) {
   stepEase:           stepEase,
   minimapCell:        minimapCell,
   nearestExitLabel:   nearestExitLabel,
+  fadeAlpha:          fadeAlpha,
+  flashAlpha:         flashAlpha,
   createPkScene:      createPkScene,
   createLiftingScene: createLiftingScene,
   createShootScene:   createShootScene,

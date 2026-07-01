@@ -25,6 +25,8 @@ var SRPG_SE = {
   // ごほうび系
   levelup: [{ f: 523, d: 0.08, t: 'square', g: 0.2 }, { f: 659, d: 0.08, t: 'square', g: 0.2 }, { f: 784, d: 0.08, t: 'square', g: 0.2 }, { f: 1046, d: 0.18, t: 'square', g: 0.2 }],
   treasure:[{ f: 784, d: 0.08, t: 'square', g: 0.2 }, { f: 1046, d: 0.08, t: 'square', g: 0.2 }, { f: 1318, d: 0.16, t: 'square', g: 0.2 }],
+  // マップ切替（弾2・機能⑥）：階段をのぼるような上昇3音
+  stairs:  [{ f: 587, d: 0.06, t: 'square', g: 0.18 }, { f: 784, d: 0.06, t: 'square', g: 0.18 }, { f: 1046, d: 0.12, t: 'square', g: 0.18 }],
   victory: [{ f: 523, d: 0.10, t: 'square', g: 0.22 }, { f: 659, d: 0.10, t: 'square', g: 0.22 }, { f: 784, d: 0.10, t: 'square', g: 0.22 }, { f: 1046, d: 0.26, t: 'square', g: 0.22 }],
   defeat:  [{ f: 392, d: 0.14, t: 'sawtooth', g: 0.2, df: 196 }, { f: 196, d: 0.22, t: 'sawtooth', g: 0.2, df: 98 }],
 };
