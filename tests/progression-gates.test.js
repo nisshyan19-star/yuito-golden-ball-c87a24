@@ -31,10 +31,19 @@ test('objectiveFor: 将軍撃破後は こおりの とう(アイスゴーレム
   assert.ok(o.npc.includes('アイス・ゴーレム'));
 });
 
-test('objectiveFor: アイス撃破後は やみのしろ(ネオ・カイザー) を指す', () => {
+test('objectiveFor: アイス撃破後は もりの しんでん(ガイア) を指す', () => {
   const o = story.objectiveFor({
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true,
+  });
+  assert.ok(o.bar.includes('もりの しんでん'), 'bar: ' + o.bar);
+  assert.ok(o.npc.includes('ガイア'));
+});
+
+test('objectiveFor: 森撃破後は やみのしろ(ネオ・カイザー) を指す', () => {
+  const o = story.objectiveFor({
+    boss_magma: true, boss_guardian: true, boss_kaiser: true,
+    boss_dark_general: true, boss_ice: true, boss_forest: true,
   });
   assert.ok(o.bar.includes('やみのしろ'), 'bar: ' + o.bar);
   assert.ok(o.npc.includes('ネオ・カイザー'));
@@ -43,7 +52,7 @@ test('objectiveFor: アイス撃破後は やみのしろ(ネオ・カイザー)
 test('objectiveFor: 全部倒したら done=true', () => {
   const o = story.objectiveFor({
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
-    boss_dark_general: true, boss_ice: true, boss_neo_kaiser: true,
+    boss_dark_general: true, boss_ice: true, boss_forest: true, boss_neo_kaiser: true,
   });
   assert.strictEqual(o.done, true);
   assert.ok(o.bar.includes('クリア'));
@@ -101,11 +110,17 @@ test('ゲート2: ch2_town→tower_ice_1f は boss_dark_general が必要', () =
   assert.strictEqual(e.requireFlag, 'boss_dark_general');
   assert.ok(e.lockedMsg && e.lockedMsg.includes('ヴォルク'), 'lockedMsgが将軍を案内');
 });
-test('ゲート3: ch2_pass→ch2_castle は boss_ice が必要（将軍ではなくアイス）', () => {
-  const e = findExit('ch2_pass', 'ch2_castle');
-  assert.ok(e, 'ch2_pass→ch2_castle 出口が存在');
+test('ゲート3: ch2_pass→shrine_forest_1f は boss_ice が必要（氷の塔クリアで森が開く）', () => {
+  const e = findExit('ch2_pass', 'shrine_forest_1f');
+  assert.ok(e, 'ch2_pass→shrine_forest_1f 出口が存在');
   assert.strictEqual(e.requireFlag, 'boss_ice');
   assert.ok(e.lockedMsg && e.lockedMsg.includes('アイス'), 'lockedMsgがアイスゴーレムを案内');
+});
+test('ゲート4: shrine_forest_3f→ch2_castle は boss_forest が必要（森の守り神ガイア撃破で城が開く）', () => {
+  const e = findExit('shrine_forest_3f', 'ch2_castle');
+  assert.ok(e, 'shrine_forest_3f→ch2_castle 出口が存在');
+  assert.strictEqual(e.requireFlag, 'boss_forest');
+  assert.ok(e.lockedMsg && e.lockedMsg.includes('森'), 'lockedMsgが森の守り神を案内');
 });
 test('案内コーチが town1 と ch2_town に居る（guide:true・coachスプライト）', () => {
   const t1 = (MAPS.town1.npcs || []).find((n) => n.guide);

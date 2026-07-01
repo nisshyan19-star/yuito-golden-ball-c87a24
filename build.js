@@ -7,6 +7,7 @@ const ORDER = [
   'src/logic/progression.js', 'src/logic/items-effect.js', 'src/logic/battle.js',
   'src/logic/monster.js', 'src/logic/forge.js', 'src/logic/tournament.js', 'src/logic/ally-ai.js', 'src/logic/save.js',
   'src/engine/canvas.js', 'src/engine/render.js', 'src/engine/input.js',
+  'src/engine/audio.js',
   'src/engine/scene.js', 'src/engine/storage.js',
   'src/scenes/dialog.js', 'src/scenes/title-scene.js', 'src/scenes/field-scene.js',
   'src/scenes/battle-scene.js', 'src/scenes/menu-scene.js', 'src/scenes/shop-scene.js', 'src/scenes/forge-scene.js', 'src/scenes/tournament-scene.js',

@@ -42,6 +42,11 @@ var TILE_LEGEND = {
   // Phase7-④「こおりの とう」：氷のダンジョン用タイル（field-scene.js がコードで描く）。
   'I': { sprite: 't_ice',     walkable: true  }, // 氷のゆか（つるつる光る・歩ける）
   'X': { sprite: 't_icewall', walkable: false }, // 氷のかべ（あつい氷・通れない）
+  // Phase7-⑤「もりの しんでん」：森の神殿用タイル（field-scene.js がコードで描く）。
+  'M': { sprite: 't_moss', walkable: true  }, // 苔のゆか（やわらかい緑・歩ける）
+  'V': { sprite: 't_vine', walkable: false }, // つるのかべ（からみつく・通れない）
+  // Phase7-⑥「みずの どうくつ」：地底湖の浅瀬タイル（field-scene.js の _drawShallowTile が描く）。
+  'a': { sprite: 't_shallow', walkable: true }, // 浅瀬（水色のあさい水・じゃぶじゃぶ歩ける）
 };
 
 // ── マップ集 ─────────────────────────────────────────────────────────
@@ -56,11 +61,9 @@ var MAPS = {
     cutscene: {
       flag: 'cs_intro',
       pages: [
-        '―― ピッチランド。\nサッカーが だいすきな\nみんなの まち。',
-        'ある ひ、たからものの\n「おうごんの サッカーボール」が\nぬすまれて しまった。',
-        'ぬすんだのは やみの ていおう\nダーク・カイザー！',
-        'ボールが きえると\nまちの えがおも きえていく……',
-        'しょうねん ユイトは たちあがった。\n「ぼくが とりもどす！」',
+        '―― はじまりの草原。\nあさの ひかりが まぶしい。',
+        'みなみへ つづく みちの さき、\nさいしょの まちが みえる。',
+        'ユイト「いくぞ！ おうごんの\nボール、いま むかえに いく！」',
       ],
     },
     grid: [
@@ -446,11 +449,12 @@ var MAPS = {
     cutscene: {
       flag: 'cs_field6',
       pages: [
-        'くらい アリーナ。\nここに ダーク・カイザーが\nいる――。',
-        'ユイト「ついに ここまで きた。\nみんな、ありがとう。」',
+        'くらい アリーナ。\nくうきが ずしりと おもい。\nここに カイザーが いる――。',
+        'ながい たびだった。\nたくさんの てきと たたかい、\nここまで きた。',
+        'ユイト「みんな、\nここまで ついてきて くれて\nありがとう。」',
         'イクマ「なに いってんだ、\nさいごまで いっしょだろ！」',
-        'アオシ「いくぞ ユイト。\nボールを とりもどすんだ！」',
-        'ユイトは うなずいた。\n「いくぞ ――けっせんだ！」',
+        'アオシ「おちつけ、ユイト。\nぼくらの サッカーを\nしんじれば いい。」',
+        'ユイトは まえを みすえた。\nユイト「いくぞ――けっせんだ！」',
       ],
     },
     grid: [
@@ -987,6 +991,161 @@ var MAPS = {
     },
   },
 
+  // ── Phase7-⑤「もりの しんでん」：氷の塔とラスボス城のあいだの本線ダンジョン（3層）──
+  //   ambient:'forest' ＝ こもれびの緑の光の粒。新タイル M=苔床(歩ける)／V=つる壁(通れない)。
+  //   構造はこおりの とう（実証済み）の文字置換：X→V壁・I→M苔床・内部X→T木。踏破性そのまま。
+  shrine_forest_1f: {
+    id: 'shrine_forest_1f',
+    name: 'もりの しんでん 1かい',
+    ambient: 'forest',
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1  上り階段(8,1)→2F
+      'VMMMMMMMMMMMMMMV', // r2  (8,2)=2Fから降りた到着
+      'VMMTTMMMMMMTTMMV', // r3
+      'VMMTMMMMMMMMTMMV', // r4
+      'VMMMMMMMMMMMMMMV', // r5  ガイドNPC コーチ(3,5)
+      'VMMMMMTTTTMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VMMTTMMMMMMTTMMV', // r8
+      'VMMTMMMMMMMMTMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VHVMMMMMMMMMMMMV', // r14  かくし通路 H(1,14)→隠し宝
+      'VMVMMMMMMMMMMMMV', // r15  隠し宝(1,15)／道中宝(14,15)／(8,15)=ch2_passからの到着
+      'VVMMMMMMMMMMMMMV', // r16  帰還(8,16)→ch2_pass
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      {
+        x: 3, y: 5, sprite: 'coach',
+        pages: [
+          'コーチ\n「ここは もりの しんでんだ。\nさいじょうかいに 森の守り神が\nいるらしいぞ。」',
+          '「うえへ うえへと のぼって\nしんでんの ぬしを たおせば\nやみのしろへの みちが ひらく。」',
+          '「みどりの ひかりに きをつけて\nがんばって のぼるんだ！」',
+        ],
+      },
+    ],
+    chests: [
+      { id: 'shrine1f_chest1', x: 14, y: 15, item: 'firstaid', amount: 2, label: 'きゅうきゅうセット' },
+      { id: 'shrine1f_chest_hidden', x: 1, y: 15, item: 'mat_gold', amount: 2, label: 'こがねの かけら' },
+    ],
+    exits: [
+      { x: 8, y: 1,  to: 'shrine_forest_2f', tx: 8, ty: 15 },
+      { x: 8, y: 16, to: 'ch2_pass',         tx: 7, ty: 2 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['moss_golem', 'forest_crow', 'thorn_goblin'],
+      rare: { rate: 0.05, enemies: ['emerald_deer'] },
+    },
+  },
+
+  shrine_forest_2f: {
+    id: 'shrine_forest_2f',
+    name: 'もりの しんでん 2かい',
+    ambient: 'forest',
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1  上り階段(8,1)→3F
+      'VMMMMMMMMMMMMMMV', // r2  (8,2)=3Fから降りた到着
+      'VVVVVVMMMMVVVVVV', // r3
+      'VMMMMMMMMMMMMMMV', // r4
+      'VMMVVVMMMMVVVMMV', // r5
+      'VMMVMMMMMMMMVMMV', // r6
+      'VMMVMMMMMMMMVMMV', // r7
+      'VMMVMMMMMMMMVMMV', // r8  中央宝(8,8)
+      'VMMVVVMMMMVVVMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VHVMMMMMMMMMMMMV', // r14  かくし通路 H(1,14)
+      'VMVMMMMMMMMMMMMV', // r15  隠し宝(1,15)／(8,15)=1Fからの到着
+      'VVMMMMMMMMMMMMMV', // r16  帰還(8,16)→1F
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [],
+    chests: [
+      { id: 'shrine2f_chest1', x: 8, y: 8, item: 'restart_whistle', amount: 1, label: 'リスタートの笛' },
+      { id: 'shrine2f_chest_hidden', x: 1, y: 15, item: 'mat_crystal', amount: 2, label: 'ちからの クリスタル' },
+    ],
+    exits: [
+      { x: 8, y: 1,  to: 'shrine_forest_3f', tx: 8, ty: 15 },
+      { x: 8, y: 16, to: 'shrine_forest_1f', tx: 8, ty: 2 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['moss_golem', 'forest_crow', 'thorn_goblin'],
+      rare: { rate: 0.05, enemies: ['emerald_deer'] },
+    },
+  },
+
+  shrine_forest_3f: {
+    id: 'shrine_forest_3f',
+    name: 'もりの しんでん さいじょうかい',
+    ambient: 'forest',
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1  北の扉(8,1)→やみのしろ／ロック宝(12,1)
+      'VMMMMMMMMMMMMMMV', // r2  (8,2)=やみのしろから来た到着
+      'VMMMMMMMMMMMMMMV', // r3  ボスNPC 森の守り神(8,3)
+      'VMMMMMMMMMMMMMMV', // r4
+      'VMMMVVVMMVVVMMMV', // r5
+      'VMMMMMMMMMMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VVMMMMMMMMMMMMVV', // r8
+      'VMMMMMMMMMMMMMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMVVVMMVVVMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VHVMMMMMMMMMMMMV', // r14  かくし通路 H(1,14)
+      'VMVMMMMMMMMMMMMV', // r15  隠し宝(1,15)／(8,15)=2Fからの到着
+      'VVMMMMMMMMMMMMMV', // r16  帰還(8,16)→2F
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      {
+        x: 8, y: 3, sprite: 'kaiser',
+        boss: {
+          enemies: ['forest_guardian'],
+          winFlag: 'boss_forest', vanishFlag: 'boss_forest',
+          reward: { item: 'leaf_blade', amount: 1, label: 'こもれびの つるぎ' },
+        },
+        pages: [
+          'みどりの ひかりが\nしんでんを つつんでいる…',
+          '森の守り神\n「この もりの おくへ\nすすもうとする ものよ。」',
+          '「わが ちからを こえて みせよ！\nみどりの いかずちを うけよ！」',
+        ],
+        afterPages: ['森の守り神は しずかに うなずき\nひかりとなって きえていった。\nやみのしろへの みちが ひらいた！'],
+      },
+    ],
+    chests: [
+      {
+        id: 'shrine3f_chest_boss', x: 12, y: 1, item: 'bark_mail', amount: 1, label: 'はがねの きのよろい',
+        requireFlag: 'boss_forest',
+        lockedMsg: 'つたが からみついて\nびくとも しない。\n森の守り神を たおせば\nほどけそうだ…',
+      },
+      { id: 'shrine3f_chest_hidden', x: 1, y: 15, item: 'mat_star', amount: 1, label: 'でんせつの ほし' },
+    ],
+    exits: [
+      {
+        x: 8, y: 1, to: 'ch2_castle', tx: 7, ty: 15,
+        requireFlag: 'boss_forest',
+        lockedMsg: 'やみのしろへの もんは\nみどりの ちからで とじている。\n森の守り神を たおせば\nひらく かもしれない…',
+      },
+      { x: 8, y: 16, to: 'shrine_forest_2f', tx: 8, ty: 2 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['moss_golem', 'forest_crow', 'thorn_goblin'],
+      rare: { rate: 0.05, enemies: ['emerald_deer'] },
+    },
+  },
+
   // ── town2：フォレストタウン（field3 と field4 のあいだ・森の町） ────────
   town2: {
     id: 'town2',
@@ -1079,6 +1238,34 @@ var MAPS = {
         ],
         afterPages: ['また PKせんで あそぼう！\nうでが なまらないように な。'],
       },
+      // リフティングコーチ（機能③・ミニゲーム）：話すと リフティングに ちょうせんできる。
+      {
+        x: 6, y: 14, sprite: 'coach',
+        lifting: {
+          winFlag: 'lifting_master', target: 15, lives: 3,
+          reward: { gold: 250, item: 'jelly', amount: 4, label: 'エナジーゼリー4こ' },
+        },
+        pages: [
+          'おっす！ リフティングコーチだ。',
+          'ボールを おとさず 15かい つづけられるかな？\nまん中で けってい/↑ を おすんだ！',
+          'まん中に ちかいほど よく つづくよ。\nさあ、ちょうせん してみよう！',
+        ],
+        afterPages: ['また リフティングで あそぼう！\nあしさばきの れんしゅうだ。'],
+      },
+      // まとあてコーチ（機能③・ミニゲーム）：話すと まとあてシュートに ちょうせんできる。
+      {
+        x: 9, y: 14, sprite: 'coach',
+        shoot: {
+          winFlag: 'shoot_master', target: 8, shots: 12,
+          reward: { gold: 350, item: 'firstaid', amount: 3, label: 'きゅうきゅうセット3こ' },
+        },
+        pages: [
+          'よう！ まとあてコーチだ。',
+          'ゴールの ひかる まとを ねらって シュート！\n12本ちゅう 8ヒット できたら きみの かちだ。',
+          '←→↑↓で カーソルを うごかして\nけっていで シュート！ さあ いくぞ！',
+        ],
+        afterPages: ['また まとあてで あそぼう！\nシュートの せいどを あげような。'],
+      },
       // サッカー トーナメント（追加弾5-C）：PKを せいはした人が ちょうせんできる 3チーム勝ち抜き。ゆうしょうで トロフィー。
       {
         x: 11, y: 14, sprite: 'coach',
@@ -1095,6 +1282,15 @@ var MAPS = {
         lockedPages: [
           'ここは つよい チームが あつまる トーナメント。',
           'まずは PKコーチで うでを みがいてから\nまた おいで！',
+        ],
+      },
+      // みずの どうくつ の道しるべ（入口(2,16)のすぐ上）：任意ダンジョンの場所を おしえる村人。
+      {
+        x: 2, y: 14, sprite: 'shopkeep',
+        pages: [
+          'にしの いわばに、ふかい あなが\nあいているのを しってるかい？',
+          '「みずの どうくつ」って よばれてる。\nそこを おりていくと、ちていこが\nひろがっているらしいよ。',
+          'おくには つよい ぬしが いるけど…\nおたからも ねむってるって うわささ！',
         ],
       },
     ],
@@ -1115,8 +1311,152 @@ var MAPS = {
     ],
     exits: [
       { x: 7, y: 16, to: 'field4', tx: 7, ty: 2 },
+      // 任意ダンジョン「みずの どうくつ」へ：西の岩場の入口(2,16)→cave_water_1f(8,15)に到着。
+      { x: 2, y: 16, to: 'cave_water_1f', tx: 8, ty: 15 },
     ],
     encounter: { rate: 0, enemies: [] },
+  },
+
+  // ── Phase7-⑥「みずの どうくつ」：town2 から いける 任意の多層ダンジョン（3層）──
+  //   ambient:'rain' ＝ 青い減光＋しずくのような すじ＝じめじめした 地底の水洞窟。
+  //   新タイル a=浅瀬(歩ける・さざ波)／既存 c=洞窟ゆか, C=洞窟かべ(かたい), ~=ふかい水(通れない), b=橋(歩ける), H=かくし通路。
+  //   本線(7ボスのスパイン)には つながない＝寄り道専用。objectiveFor の目標バーには出さない。
+  cave_water_1f: {
+    id: 'cave_water_1f',
+    name: 'みずの どうくつ ちかいっかい',
+    ambient: 'rain',
+    grid: [
+      'CCCCCCCCCCCCCCCC', // r0
+      'CccccccccccccccC', // r1  上り階段(8,1)→2F
+      'CccccccccccccccC', // r2  (8,2)=2Fから降りた到着
+      'CccCCcccccCCcccC', // r3
+      'Ccc~~ccccc~~cccC', // r4  ふかい水の ふち
+      'Ccc~accccca~cccC', // r5
+      'CccaaacccaaacccC', // r6  ← 中央は あさい みずうみ
+      'CccaaaaaaaaacccC', // r7
+      'CccaaaaaaaaacccC', // r8  道中宝(5,8)＝浅瀬の たからばこ
+      'CccaaaaaaaaacccC', // r9
+      'CccaaacccaaacccC', // r10
+      'Ccc~accccca~cccC', // r11
+      'Ccc~~ccccc~~cccC', // r12
+      'CccCCcccccCCcccC', // r13
+      'CHCccccccccccccC', // r14  かくし通路 H(1,14)→隠し宝
+      'CcCccccccccccccC', // r15  隠し宝(1,15)／(8,15)=町からの到着
+      'CCcccccccccccccC', // r16  帰還(8,16)→town2
+      'CCCCCCCCCCCCCCCC', // r17
+    ],
+    npcs: [],
+    chests: [
+      { id: 'cavew1f_chest1', x: 5, y: 8, item: 'firstaid', amount: 2, label: 'きゅうきゅうセット' },
+      { id: 'cavew1f_chest_hidden', x: 1, y: 15, item: 'mat_gold', amount: 2, label: 'こがねの かけら' },
+    ],
+    exits: [
+      { x: 8, y: 1,  to: 'cave_water_2f', tx: 8, ty: 15 },
+      { x: 8, y: 16, to: 'town2',         tx: 3, ty: 16 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['aqua_slime', 'tide_fox', 'whirl_wisp'],
+      rare: { rate: 0.05, enemies: ['pearl_turtle'] },
+    },
+  },
+
+  cave_water_2f: {
+    id: 'cave_water_2f',
+    name: 'みずの どうくつ ちかにかい',
+    ambient: 'rain',
+    grid: [
+      'CCCCCCCCCCCCCCCC', // r0
+      'CccccccccccccccC', // r1  上り階段(8,1)→3F
+      'CccccccccccccccC', // r2  (8,2)=3Fから降りた到着
+      'CccaaaaaaaaacccC', // r3  あさせ
+      'CccaaaaaaaaacccC', // r4
+      'CccccccccccccccC', // r5
+      'Ccc~~~~bb~~~~ccC', // r6  ふかい水路＋はし(7,8列)
+      'Ccc~~~~bb~~~~ccC', // r7
+      'CccccccccccccccC', // r8
+      'CccaaaaaaaaacccC', // r9  道中宝(8,9)＝はしの むこうの あさせ
+      'CccaaaaaaaaacccC', // r10
+      'CccccccccccccccC', // r11
+      'CccCCcccccCCcccC', // r12
+      'CccCCcccccCCcccC', // r13
+      'CHCccccccccccccC', // r14  かくし通路 H(1,14)
+      'CcCccccccccccccC', // r15  隠し宝(1,15)／(8,15)=1Fからの到着
+      'CCcccccccccccccC', // r16  帰還(8,16)→1F
+      'CCCCCCCCCCCCCCCC', // r17
+    ],
+    npcs: [],
+    chests: [
+      { id: 'cavew2f_chest1', x: 8, y: 9, item: 'restart_whistle', amount: 1, label: 'リスタートの笛' },
+      { id: 'cavew2f_chest_hidden', x: 1, y: 15, item: 'mat_crystal', amount: 2, label: 'ちからの クリスタル' },
+    ],
+    exits: [
+      { x: 8, y: 1,  to: 'cave_water_3f', tx: 8, ty: 15 },
+      { x: 8, y: 16, to: 'cave_water_1f', tx: 8, ty: 2 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['aqua_slime', 'tide_fox', 'whirl_wisp'],
+      rare: { rate: 0.05, enemies: ['pearl_turtle'] },
+    },
+  },
+
+  cave_water_3f: {
+    id: 'cave_water_3f',
+    name: 'みずの どうくつ さいかそう',
+    ambient: 'rain',
+    grid: [
+      'CCCCCCCCCCCCCCCC', // r0
+      'CccccccccccccccC', // r1  ロック宝(6,1)＝ボス撃破で解除
+      'CccccccccccccccC', // r2
+      'CccccccccccccccC', // r3  ボスNPC(8,3)
+      'CccccccccccccccC', // r4
+      'Ccc~~ccccc~~cccC', // r5  ボス部屋を かこむ 水たまり
+      'Cccc~~ccc~~ccccC', // r6
+      'CccccaaaaacccccC', // r7  中央の あさせ
+      'CccccaaaaacccccC', // r8
+      'CccccaaaaacccccC', // r9
+      'Cccc~~ccc~~ccccC', // r10
+      'Ccc~~ccccc~~cccC', // r11
+      'CccccccccccccccC', // r12
+      'CccccccccccccccC', // r13
+      'CHCccccccccccccC', // r14  かくし通路 H(1,14)
+      'CcCccccccccccccC', // r15  隠し宝(1,15)／(8,15)=2Fからの到着
+      'CCcccccccccccccC', // r16  帰還(8,16)→2F
+      'CCCCCCCCCCCCCCCC', // r17
+    ],
+    npcs: [
+      {
+        x: 8, y: 3, sprite: 'kaiser',
+        boss: {
+          enemies: ['aqua_golem'],
+          winFlag: 'boss_water', vanishFlag: 'boss_water',
+          reward: { item: 'tide_spike', amount: 1, label: 'うしおの スパイク' },
+        },
+        pages: [
+          'ちていこの みずが\nゆらゆらと ひかっている…',
+          'アクア・ゴーレム\n「ちていこの しずけさを\nやぶる ものは だれだ！」',
+          '「みずの いかりを おもいしれ！」',
+        ],
+        afterPages: ['アクア・ゴーレムは くずれ\nしずかな みずに もどった。'],
+      },
+    ],
+    chests: [
+      {
+        id: 'cavew3f_chest_boss', x: 6, y: 1, item: 'coral_mail', amount: 1, label: 'さんごの よろい',
+        requireFlag: 'boss_water',
+        lockedMsg: 'みずの ちからで かたく\nとざされている。\nゴーレムを たおせば\nひらきそうだ…',
+      },
+      { id: 'cavew3f_chest_hidden', x: 1, y: 15, item: 'mat_star', amount: 1, label: 'でんせつの ほし' },
+    ],
+    exits: [
+      { x: 8, y: 16, to: 'cave_water_2f', tx: 8, ty: 2 },
+    ],
+    encounter: {
+      rate: 0.10,
+      enemies: ['aqua_slime', 'tide_fox', 'whirl_wisp'],
+      rare: { rate: 0.05, enemies: ['pearl_turtle'] },
+    },
   },
 
   // ── town3：クラウドタウン（field5 と field6 のあいだ・決戦まえの空の町） ─
@@ -1130,8 +1470,10 @@ var MAPS = {
       flag: 'cs_town3',
       pages: [
         'くもの うえの まち、\nクラウドタウン。\nこの さきは けっせんだ。',
-        'みなと そらを みあげる。\nどこかで ボールの おとが\nきこえた きが した。',
-        'ユイト「あと すこしだ。\nぜったいに とりもどす。」',
+        'まちの ひとびとが、\nしずかに ユイトたちを\nみまもって いる。',
+        'みなで そらを みあげる。\nどこか とおくで、ボールを\nける おとが きこえた。',
+        'それは きっと おうごんの\nボールが よんでいる おと。',
+        'ユイト「あと すこしだ。\nぜったいに とりもどして\nみせる。」',
       ],
     },
     grid: [
@@ -1712,7 +2054,7 @@ var MAPS = {
     ambient: 'snow',   // 雪：ふぶく氷の峠
     grid: [
       '################', // r0
-      '#......,.......#', // r1  ← 北出口(7,1)→ ch2_castle（要 boss_dark_general）
+      '#......,.......#', // r1  ← 北出口(7,1)→ shrine_forest_1f（要 boss_ice）
       '#......,.......#', // r2
       '#......,.......#', // r3
       '#......,.......#', // r4  ← ヴォルク(7,4)
@@ -1768,9 +2110,9 @@ var MAPS = {
     exits: [
       { x: 7, y: 16, to: 'ch2_town', tx: 7, ty: 2 },
       {
-        x: 7, y: 1, to: 'ch2_castle', tx: 7, ty: 15,
+        x: 7, y: 1, to: 'shrine_forest_1f', tx: 8, ty: 15,
         requireFlag: 'boss_ice',
-        lockedMsg: 'やみのしろの もんは かたい。\nこおりの とうの ぬし\nアイス・ゴーレムを たおせば\nひらく かもしれない…',
+        lockedMsg: 'きたへの みちは とざされている。\nこおりの とうの ぬし\nアイス・ゴーレムを たおせば\nもりの しんでんへ すすめそうだ…',
       },
     ],
     encounter: {
@@ -1810,8 +2152,8 @@ var MAPS = {
       '#......,.......#', // r12
       '#......,.......#', // r13
       '#......,.......#', // r14
-      '#......,.......#', // r15 ← 到着(7,15)
-      '#......,.......#', // r16 ← 南出口(7,16)→ ch2_pass
+      '#......,.......#', // r15 ← 到着(7,15)＝もりの しんでん 3Fから
+      '#......,.......#', // r16 ← 南出口(7,16)→ shrine_forest_3f
       '################', // r17
     ],
     npcs: [
@@ -1846,7 +2188,7 @@ var MAPS = {
       { x: 10, y: 13, type: 'flower' },
     ],
     exits: [
-      { x: 7, y: 16, to: 'ch2_pass', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'shrine_forest_3f', tx: 8, ty: 2 },
     ],
     encounter: {
       rate: 0.06,

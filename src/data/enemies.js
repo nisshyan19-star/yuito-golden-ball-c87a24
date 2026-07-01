@@ -171,23 +171,23 @@ const ENEMIES = {
   //   ザコ3体（power/speed/technique を散らす）＋レア（silver_fox）＋ボス（ice_golem・2形態）。
   //   frost_keeper(こおりのキーパー)が すでに throwin_golem を使うので、氷の敵は別アートにする。
   snow_yeti: {
-    id:'snow_yeti', name:'ゆきの イエティ', type:'power', art:'stamina_zombie',
+    id:'snow_yeti', name:'ゆきの イエティ', type:'power', art:'snow_yeti',
     hp:78, atk:25, def:14, spd:7, exp:66, gold:48,
     drops: [{ id:'mat_silver', chance:0.42 }, { id:'mat_crystal', chance:0.22 }],
   },
   blizzard_bat: {
-    id:'blizzard_bat', name:'ふぶきコウモリ', type:'speed', art:'yellowcard_bat',
+    id:'blizzard_bat', name:'ふぶきコウモリ', type:'speed', art:'blizzard_bat',
     hp:52, atk:24, def:9, spd:19, exp:52, gold:38,
     drops: [{ id:'mat_leather', chance:0.4 }, { id:'mat_silver', chance:0.28 }],
   },
   frost_wisp: {
-    id:'frost_wisp', name:'こおりの ひとだま', type:'technique', art:'offside_ghost',
+    id:'frost_wisp', name:'こおりの ひとだま', type:'technique', art:'frost_wisp',
     hp:56, atk:23, def:10, spd:14, exp:54, gold:40,
     drops: [{ id:'mat_silver', chance:0.4 }, { id:'mat_crystal', chance:0.18 }],
   },
   // レアモンスター（氷の塔）：超高報酬・高防御・高速。低確率で1体だけ出現。
   silver_fox: {
-    id:'silver_fox', name:'ぎんいろギツネ', type:'speed', art:'trick_fox',
+    id:'silver_fox', name:'ぎんいろギツネ', type:'speed', art:'silver_fox',
     isRare: true,
     hp:26, atk:10, def:26, spd:23, exp:300, gold:240,
     drops: [{ id:'mat_crystal', chance:0.7 }, { id:'mat_gold', chance:0.35 }, { id:'mat_star', chance:0.12 }],
@@ -195,7 +195,7 @@ const ENEMIES = {
   // ダンジョンボス（氷の塔さいじょうかい）：アイス・ゴーレム。2形態。
   //   倒すと flags.boss_ice → 最上階おくの宝箱（フロストメイル）が ひらく。
   ice_golem: {
-    id:'ice_golem', name:'アイス・ゴーレム', type:'power', art:'metal_keeper',
+    id:'ice_golem', name:'アイス・ゴーレム', type:'power', art:'ice_golem',
     isBoss: true,
     hp:260, atk:25, def:22, spd:8, exp:360, gold:300,
     drops: [{ id:'mat_gold', chance:1.0 }, { id:'mat_crystal', chance:0.8 }, { id:'mat_star', chance:0.5 }],
@@ -284,6 +284,104 @@ const ENEMIES = {
         '「ぐぬぬ… ならば\nすべてを かけて たたかう！」',
       ],
       defeat: '「これが… ひかりの ちから…\nもう やみは よみがえらぬ…」',
+    },
+  },
+
+  // ════════════════════════════════════════════════════════
+  // Phase7-⑤「もりの しんでん」：森の神殿に出る敵たち。
+  //   本線の こおりの とう → もりの しんでん の順なので、
+  //   こおりの とう雑魚より ひとまわり 強い数値にしてある。
+  // ════════════════════════════════════════════════════════
+  // 雑魚①（パワー）：こけの ゴーレム。HP高め・足おそい・かたい。
+  moss_golem: {
+    id:'moss_golem', name:'こけの ゴーレム', type:'power', art:'moss_golem',
+    hp:96, atk:28, def:18, spd:6, exp:78, gold:56,
+    drops: [{ id:'mat_silver', chance:0.5 }, { id:'mat_crystal', chance:0.2 }],
+  },
+  // 雑魚②（スピード）：もりの カラス。すばやい・HP低め。
+  forest_crow: {
+    id:'forest_crow', name:'もりの カラス', type:'speed', art:'forest_crow',
+    hp:60, atk:27, def:10, spd:21, exp:60, gold:44,
+    drops: [{ id:'mat_silver', chance:0.42 }, { id:'mat_crystal', chance:0.18 }],
+  },
+  // 雑魚③（テクニック）：いばらの ゴブリン。バランス型。
+  thorn_goblin: {
+    id:'thorn_goblin', name:'いばらの ゴブリン', type:'technique', art:'thorn_goblin',
+    hp:66, atk:26, def:12, spd:15, exp:64, gold:48,
+    drops: [{ id:'mat_silver', chance:0.45 }, { id:'mat_crystal', chance:0.22 }],
+  },
+  // レアモンスター（もりの しんでん）：エメラルドの しか。超高報酬・高防御・低HP・足はやい。
+  emerald_deer: {
+    id:'emerald_deer', name:'エメラルドの しか', type:'speed', art:'emerald_deer',
+    isRare: true,
+    hp:28, atk:11, def:28, spd:24, exp:340, gold:280,
+    drops: [{ id:'mat_crystal', chance:0.7 }, { id:'mat_gold', chance:0.4 }, { id:'mat_star', chance:0.18 }],
+  },
+  // ボス（もりの しんでん 最上階）：森の守り神 ガイア。2形態。
+  //   倒すと flags.boss_forest → 闇の城ラスボスへの道がひらく。
+  forest_guardian: {
+    id:'forest_guardian', name:'もりの まもりがみ ガイア', type:'power', art:'forest_guardian',
+    isBoss: true,
+    hp:310, atk:27, def:24, spd:10, exp:520, gold:480,
+    drops: [{ id:'mat_gold', chance:1.0 }, { id:'mat_crystal', chance:1.0 }, { id:'mat_star', chance:0.7 }],
+    phases: [
+      { atk:27, def:24, spd:10 },
+      { hpRatio:0.5, atk:34, def:27, spd:13 },
+    ],
+    quotes: {
+      intro: ['「もりに ふみこむ ものよ…\nそのちからを ためさせて もらう！」'],
+      phase: '「ほう… なかなか やるな。\nならば 森の いかりを みせよう！」',
+      defeat: '「みごとだ… きみたちなら\nもりを まかせられる…」',
+    },
+  },
+
+  // ════════════════════════════════════════════════════════
+  // Phase7-⑥「みずの どうくつ」：地底湖のダンジョンに出る敵たち（任意ダンジョン）。
+  //   art は既存 ENEMY_ART のキーを流用＝新規アートは増やさない。
+  //   森の しんでん と おなじ強さ帯（任意ダンジョンなので 寄り道しても 損しない）。
+  //   ザコ3体（power/speed/technique）＋レア（pearl_turtle）＋ボス（aqua_golem・2形態）。
+  // ════════════════════════════════════════════════════════
+  // 雑魚①（パワー）：みずの スライム。HP高め・かたい・足おそい。
+  aqua_slime: {
+    id:'aqua_slime', name:'みずの スライム', type:'power', art:'mud_slime',
+    hp:90, atk:27, def:16, spd:7, exp:74, gold:54,
+    drops: [{ id:'mat_silver', chance:0.5 }, { id:'mat_crystal', chance:0.2 }],
+  },
+  // 雑魚②（スピード）：しおの きつね。すばやい・HP低め。
+  tide_fox: {
+    id:'tide_fox', name:'しおの きつね', type:'speed', art:'trick_fox',
+    hp:58, atk:26, def:10, spd:20, exp:58, gold:44,
+    drops: [{ id:'mat_silver', chance:0.42 }, { id:'mat_crystal', chance:0.18 }],
+  },
+  // 雑魚③（テクニック）：うずの ひとだま。バランス型。
+  whirl_wisp: {
+    id:'whirl_wisp', name:'うずの ひとだま', type:'technique', art:'losstime_ghost',
+    hp:62, atk:25, def:11, spd:14, exp:60, gold:46,
+    drops: [{ id:'mat_silver', chance:0.45 }, { id:'mat_crystal', chance:0.22 }],
+  },
+  // レアモンスター（みずの どうくつ）：しんじゅの カメ。超高報酬・高防御・低HP。
+  pearl_turtle: {
+    id:'pearl_turtle', name:'しんじゅの カメ', type:'power', art:'metal_keeper',
+    isRare: true,
+    hp:32, atk:11, def:30, spd:18, exp:330, gold:270,
+    drops: [{ id:'mat_crystal', chance:0.7 }, { id:'mat_gold', chance:0.4 }, { id:'mat_star', chance:0.16 }],
+  },
+  // ボス（みずの どうくつ 最下層）：アクア・ゴーレム。2形態。
+  //   art は throwin_golem（ゴーレム体型の絵）を流用。
+  //   倒すと flags.boss_water → 最下層おくの宝箱（さんごの よろい）が ひらく。
+  aqua_golem: {
+    id:'aqua_golem', name:'アクア・ゴーレム', type:'power', art:'throwin_golem',
+    isBoss: true,
+    hp:270, atk:26, def:23, spd:8, exp:420, gold:360,
+    drops: [{ id:'mat_gold', chance:1.0 }, { id:'mat_crystal', chance:0.8 }, { id:'mat_star', chance:0.5 }],
+    phases: [
+      { atk:26, def:23, spd:8 },
+      { hpRatio:0.5, atk:34, def:26, spd:11 },
+    ],
+    quotes: {
+      intro: ['「ちていこの しずけさを\nやぶる ものは だれだ！」'],
+      phase: '「みずの いかりを\nおもいしれ！」',
+      defeat: '「しずまる… また\nみずの そこへ かえろう…」',
     },
   },
 };

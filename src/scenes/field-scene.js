@@ -551,7 +551,7 @@ function _drawSkyLayer(ctx, theme, VW, VH, phase) {
       var dy = 16 + _hash01(i * 4.1) * VH * 0.35;
       _puff(ctx, dx, dy, 34, 16, col);
     }
-  } else if (theme === 'petals' || theme === 'leaves' || theme === 'sand') {
+  } else if (theme === 'petals' || theme === 'leaves' || theme === 'sand' || theme === 'forest') {
     // 雲かげ：うっすら暗い楕円がゆっくり流れる＝晴れた屋外の奥行き。
     for (i = 0; i < 3; i++) {
       var w3 = VW + 260;
@@ -639,6 +639,20 @@ function _drawWeatherLayer(ctx, theme, VW, VH, phase) {
       }
       ctx.fillStyle = 'rgba(255,' + (big ? 190 : 168) + ',' + (big ? 110 : 72) + ',' + a.toFixed(3) + ')';
       ctx.beginPath(); ctx.arc(px, py, big ? 2.4 : 1.4, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (theme === 'forest') {
+    // こもれび：木の すきまから さしこむ 黄みどりの ひかりの つぶが ふわふわ ただよう（グローつき）。
+    for (i = 0; i < 18; i++) {
+      base = _hash01(i) * VW;
+      px = base + Math.sin(phase * 0.8 + i) * 20;
+      py = (_hash01(i * 1.5) * VH + phase * 7) % (VH + 18) - 9;
+      a = 0.3 + 0.5 * Math.abs(Math.sin(phase * 1.8 + i * 1.2));
+      var fg = ctx.createRadialGradient(px, py, 0, px, py, 5);
+      fg.addColorStop(0, 'rgba(214,255,150,' + a.toFixed(3) + ')');
+      fg.addColorStop(1, 'rgba(170,230,110,0)');
+      ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(235,255,190,' + a.toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(px, py, 1.3, 0, Math.PI * 2); ctx.fill();
     }
   } else { // 'petals'（既定）：さくらの花びらがひらひら舞う。
     var pcol = ['rgba(255,200,228,', 'rgba(255,232,242,', 'rgba(255,182,214,'];
@@ -767,6 +781,8 @@ var _BASE_TILES_T = {
   t_sand: 1, t_snow: 1, t_deepwater: 1, t_cobble: 1, t_wood: 1,
   t_cavefloor: 1, t_cavewall: 1, t_lava: 1,
   t_ice: 1, t_icewall: 1,
+  t_moss: 1, t_vine: 1,
+  t_shallow: 1,
 };
 function _isBaseTile(sprite) { return !!_BASE_TILES_T[sprite]; }
 // 水面のきらめき/ふちどりの対象になる下地か（浅い水・深い水）。
@@ -793,6 +809,9 @@ function _drawBaseTile(ctx, sprite, x, y, s, ph, r, c) {
     case 't_lava':      _drawLavaTile(ctx, x, y, s, ph, r, c); return;
     case 't_ice':       _drawIceTile(ctx, x, y, s, r, c); return;
     case 't_icewall':   _drawIceWallTile(ctx, x, y, s, r, c); return;
+    case 't_moss':      _drawMossTile(ctx, x, y, s, r, c); return;
+    case 't_vine':      _drawVineWallTile(ctx, x, y, s, r, c); return;
+    case 't_shallow':   _drawShallowTile(ctx, x, y, s, r, c); return;
   }
 }
 
@@ -995,6 +1014,31 @@ function _drawIceTile(ctx, x, y, s, r, c) {
   ctx.restore();
 }
 
+// 浅瀬（みずの どうくつ：歩いて渡れる あさい みず）：あわい アクア＋さざ波＋きらめき。
+//   深い水(_drawWaterBase deep)より明るい水色にして「ここは入れる」と分かるようにする。
+function _drawShallowTile(ctx, x, y, s, r, c) {
+  var g = ctx.createLinearGradient(x, y, x, y + s);
+  g.addColorStop(0, '#5bc4d6'); g.addColorStop(1, '#3a92b4');
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, s, s);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+  ctx.strokeStyle = 'rgba(255,255,255,0.40)'; ctx.lineWidth = 1.4; // さざ波（よこの波線）
+  for (var i = 0; i < 2; i++) {
+    var wy = y + (0.30 + i * 0.34) * s + _tileRnd(r, c, i + 3) * s * 0.12;
+    var wx = x + _tileRnd(r, c, i + 7) * s * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(x, wy);
+    ctx.quadraticCurveTo(wx + s * 0.25, wy - s * 0.10, wx + s * 0.5, wy);
+    ctx.quadraticCurveTo(wx + s * 0.75, wy + s * 0.10, x + s, wy);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; // きらめき（2点）
+  ctx.fillRect(x + _tileRnd(r, c, 11) * s * 0.85, y + _tileRnd(r, c, 14) * s * 0.5, 2, 2);
+  ctx.fillRect(x + _tileRnd(r, c, 17) * s * 0.85, y + s * 0.55 + _tileRnd(r, c, 19) * s * 0.35, 2, 2);
+  ctx.restore();
+}
+
 // 氷のかべ（こおりの とう）：あつい氷のブロック。たて面のグラデ＋角のハイライトと影で立体に。
 function _drawIceWallTile(ctx, x, y, s, r, c) {
   var g = ctx.createLinearGradient(x, y, x, y + s);
@@ -1012,6 +1056,68 @@ function _drawIceWallTile(ctx, x, y, s, r, c) {
   ctx.fillRect(x, y, s, 2);
   ctx.fillStyle = 'rgba(40,84,130,0.4)';    // 下フチの影
   ctx.fillRect(x, y + s - 3, s, 3);
+}
+
+// 苔のゆか（もりの しんでん）：しっとりした濃い緑のじゅうたん。
+//   草原より濃く・やわらかいまだら＋小さなコケのつぶ＋ところどころ明るい こけ。
+function _drawMossTile(ctx, x, y, s, r, c) {
+  var g = ctx.createLinearGradient(x, y, x, y + s);
+  g.addColorStop(0, '#3f7a39'); // 上はやや明るい緑
+  g.addColorStop(1, '#2f5f2c'); // 下は濃い緑
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, s, s);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+  ctx.fillStyle = 'rgba(28,72,30,0.5)'; // 濃い苔のまだら
+  for (var i = 0; i < 4; i++) {
+    var bx = x + _tileRnd(r, c, i) * s * 0.85;
+    var by = y + _tileRnd(r, c, i + 5) * s * 0.85;
+    ctx.beginPath();
+    ctx.arc(bx, by, s * (0.08 + _tileRnd(r, c, i + 9) * 0.06), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = 'rgba(140,200,120,0.45)'; // 明るい こけの ハイライト
+  for (var j = 0; j < 3; j++) {
+    var lx = x + _tileRnd(r, c, j + 11) * s * 0.85;
+    var ly = y + _tileRnd(r, c, j + 14) * s * 0.85;
+    ctx.fillRect(lx, ly, s * 0.10, s * 0.07);
+  }
+  ctx.restore();
+}
+
+// つるのかべ（もりの しんでん）：石のかべに みどりの つるが からみつく。通れない。
+//   氷のかべと同じ立体の作り＋ つるの線を上から重ねて「みどりの壁」に見せる。
+function _drawVineWallTile(ctx, x, y, s, r, c) {
+  var g = ctx.createLinearGradient(x, y, x, y + s);
+  g.addColorStop(0, '#5e6b4a'); g.addColorStop(1, '#3c462f'); // こけむした灰緑の石
+  ctx.fillStyle = g;
+  ctx.fillRect(x, y, s, s);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(x, y, s, s); ctx.clip();
+  ctx.fillStyle = 'rgba(255,255,255,0.14)'; // 左上の明るい面
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + s * (0.5 + _tileRnd(r, c, 1) * 0.2), y);
+  ctx.lineTo(x + s * (0.3 + _tileRnd(r, c, 2) * 0.2), y + s);
+  ctx.lineTo(x, y + s);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(60,130,55,0.85)'; ctx.lineWidth = 2; // からみつく つる（たての うねり）
+  for (var i = 0; i < 2; i++) {
+    var vx = x + (0.3 + i * 0.4) * s + _tileRnd(r, c, i + 3) * s * 0.12;
+    ctx.beginPath();
+    ctx.moveTo(vx, y);
+    ctx.quadraticCurveTo(vx + s * 0.18, y + s * 0.5, vx, y + s);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(120,190,90,0.8)'; // つるの葉っぱ
+  for (var j = 0; j < 3; j++) {
+    var lx = x + _tileRnd(r, c, j + 7) * s * 0.85;
+    var ly = y + _tileRnd(r, c, j + 10) * s * 0.85;
+    ctx.fillRect(lx, ly, s * 0.12, s * 0.08);
+  }
+  ctx.fillStyle = 'rgba(20,30,15,0.45)'; // 下フチの影
+  ctx.fillRect(x, y + s - 3, s, 3);
+  ctx.restore();
 }
 
 // proc タイルの装飾を下地の上に重ねる（時間 ph でゆれ・ながれ）。
@@ -1144,6 +1250,7 @@ function _toneFor(theme) {
     case 'sky':    return 'rgba(150,210,255,0.16)';
     case 'sand':   return 'rgba(224,184,96,0.24)';
     case 'leaves': return 'rgba(196,132,52,0.22)';
+    case 'forest': return 'rgba(40,110,60,0.18)';
     case 'petals': return 'rgba(255,214,236,0.10)';
     default:       return '';
   }
@@ -1181,8 +1288,10 @@ function _drawToneOverlay(ctx, theme, VW, VH, phase, isDark) {
 function _drawAmbientLife(ctx, theme, VW, VH, phase) {
   ctx.save();
   var i;
-  if (theme === 'petals' || theme === 'leaves') {
-    var bcols = (theme === 'leaves') ? ['#ffd23f', '#ff9a3c'] : ['#ff9ecb', '#fff0a0', '#a6e3ff'];
+  if (theme === 'petals' || theme === 'leaves' || theme === 'forest') {
+    var bcols = (theme === 'leaves') ? ['#ffd23f', '#ff9a3c']
+      : (theme === 'forest') ? ['#b6e86a', '#fff0a0', '#8ad0ff']
+      : ['#ff9ecb', '#fff0a0', '#a6e3ff'];
     var n = (theme === 'leaves') ? 2 : 3;
     for (i = 0; i < n; i++) {
       var bw = VW + 80;
@@ -1233,6 +1342,7 @@ function _decorPalette(theme) {
     case 'sky':    return ['#bfe6ff', '#ffffff', '#ffe6a0'];               // 高原
     case 'night':  return ['#9ec8ff', '#c8b0ff', '#fff0a0'];               // 夜に映える
     case 'embers': return ['#ff9a5a', '#ffd06a', '#e06030'];               // 火の色
+    case 'forest': return ['#9ad36a', '#e8e26a', '#c0e88a', '#7bbf52'];   // もりの 草花
     default:       return ['#ff8fc4', '#fff0a0', '#a6e3ff', '#ff6f9a', '#c08bff']; // 春の花畑
   }
 }
@@ -1344,6 +1454,16 @@ function createFieldScene(state) {
   // 加入済み/撃破済みの NPC（vanishFlag が立っている）を除いた表示用マップ。
   // 元データは壊さず、npcs だけ差し替えた浅いクローンを使う。
   var map = _withActiveNpcs(rawMap, (state && state.flags) || {});
+
+  // ── このマップで流すステージBGM名（audio.js の SRPG_BGM のキー）──
+  //   ambient は通常マップにも付くので判定には使わず、マップ名と dark で決める。
+  //   町/村＝'town'、洞窟/塔/神殿/城/dark＝'dungeon'、それ以外＝'field'。
+  var _bgmName = (function () {
+    var id = String(pos.map || '');
+    if (/town|village/.test(id)) return 'town';
+    if (map.dark || /cave|tower|shrine|castle|dungeon/.test(id)) return 'dungeon';
+    return 'field';
+  })();
 
   // このマップ入場時に一度だけ流すカットシーン（イベント・弾4）。
   // update の最初に未再生なら再生する。再生したら flag を立てて二度は出さない。
@@ -1601,6 +1721,58 @@ function createFieldScene(state) {
       return;
     }
 
+    // ⑦.2 リフティング ミニゲーム（機能③）：コーチに話すと リフティングに ちょうせん。
+    //    しょうりで winFlag＋ごほうび（初回のみ）。2回目以降は ごほうび無しで 何度でも あそべる。
+    if (npc.lifting) {
+      var lf = npc.lifting;
+      var lfFlags = state.flags || {};
+      var lfWonBefore = !!(lf.winFlag && lfFlags[lf.winFlag]);
+      var lfIntro = lfWonBefore ? (npc.afterPages || ['また リフティングで あそぼう！']) : (npc.pages || ['リフティングに ちょうせん する？']);
+      S.pushScene(S.createDialog(lfIntro, { onComplete: function () {
+        S.pushScene(S.createLiftingScene(state, { target: lf.target, lives: lf.lives, onComplete: function (win, count) {
+          if (win && !lfWonBefore) {
+            if (!state.flags) state.flags = {};
+            if (lf.winFlag) state.flags[lf.winFlag] = true;
+            var summary = (lf.reward && typeof S.grantReward === 'function') ? S.grantReward(state, lf.reward) : '';
+            if (S.saveGame) S.saveGame(state);
+            var msg = summary ? ('かった！ ' + count + 'かい！\nごほうびに ' + summary + 'を もらった！') : ('かった！ ' + count + 'かい！');
+            S.pushScene(S.createDialog([msg]));
+          } else if (win) {
+            S.pushScene(S.createDialog(['また かった！ ' + count + 'かい！\nみごとな あしさばき だ！']));
+          } else {
+            S.pushScene(S.createDialog(['ざんねん… ' + count + 'かい。\nまた ちょうせんしてね！']));
+          }
+        } }));
+      } }));
+      return;
+    }
+
+    // ⑦.3 まとあて シュート ミニゲーム（機能③）：コーチに話すと まとあてに ちょうせん。
+    //    しょうりで winFlag＋ごほうび（初回のみ）。2回目以降は ごほうび無しで 何度でも あそべる。
+    if (npc.shoot) {
+      var sh = npc.shoot;
+      var shFlags = state.flags || {};
+      var shWonBefore = !!(sh.winFlag && shFlags[sh.winFlag]);
+      var shIntro = shWonBefore ? (npc.afterPages || ['また まとあてで あそぼう！']) : (npc.pages || ['まとあてに ちょうせん する？']);
+      S.pushScene(S.createDialog(shIntro, { onComplete: function () {
+        S.pushScene(S.createShootScene(state, { target: sh.target, shots: sh.shots, onComplete: function (win, hits) {
+          if (win && !shWonBefore) {
+            if (!state.flags) state.flags = {};
+            if (sh.winFlag) state.flags[sh.winFlag] = true;
+            var summary = (sh.reward && typeof S.grantReward === 'function') ? S.grantReward(state, sh.reward) : '';
+            if (S.saveGame) S.saveGame(state);
+            var msg = summary ? ('かった！ ' + hits + 'ヒット！\nごほうびに ' + summary + 'を もらった！') : ('かった！ ' + hits + 'ヒット！');
+            S.pushScene(S.createDialog([msg]));
+          } else if (win) {
+            S.pushScene(S.createDialog(['また かった！ ' + hits + 'ヒット！\nすばらしい シュートだ！']));
+          } else {
+            S.pushScene(S.createDialog(['ざんねん… ' + hits + 'ヒット。\nまた ちょうせんしてね！']));
+          }
+        } }));
+      } }));
+      return;
+    }
+
     // ⑦.5 サッカー トーナメント（追加弾5-C）：主催者に話すと 3チーム勝ち抜きの トーナメントに ちょうせん。
     //    requireFlag（pk_master）未達なら ろっくメッセージ。ゆうしょうで winFlag＋トロフィー報酬＋実績/称号。
     //    2回目以降は ごほうび無しで 何度でも あそべる。
@@ -1725,6 +1897,7 @@ function createFieldScene(state) {
       if (!state.inventory) state.inventory = {};
       state.inventory[chest.item] = (state.inventory[chest.item] || 0) + chest.amount;
       S.saveGame(state);
+      if (S.playSe) S.playSe('treasure'); // 宝箱オープンのキラキラ音
       S.pushScene(S.createDialog([
         'たからばこを あけた！',
         chest.label + 'を てにいれた！',
@@ -1857,6 +2030,10 @@ function createFieldScene(state) {
   return {
     update: function (dt, input) {
       if (!S) return;
+
+      // ステージBGMを毎フレーム保証（同じ曲なら playBgm は即 return＝軽い）。
+      // 戦闘やメニューから戻った直後も、ここで自分のBGMへ復帰する。
+      if (S.playBgm) S.playBgm(_bgmName);
 
       // 0. カットシーン（イベント・弾4）：このマップ入場時に一度だけ再生。
       //    flag を立てて saveGame し、ダイアログを積む（入力より先に処理）。
@@ -2416,13 +2593,313 @@ function createPkScene(state, opts) {
   };
 }
 
+/**
+ * createLiftingScene — リフティング ミニゲーム（機能③）
+ *   まんなかで タイミングよく けってい/↑ を おすと リフティング成功。
+ *   まん中に ちかいほど よい（perfect/good=せいこう、miss=しっぱい）。
+ *   目標回数(TARGET)まで つづけたら 勝ち。ミスを LIVES 回 すると まけ。
+ *   まわす はやさは 成功回数が ふえるほど はやくなる（S.liftingSpeed）。
+ *   純粋判定は S.liftingJudge / S.liftingWin に委譲（描画・進行だけ ここが担当）。
+ * @param {object} state - ゲーム状態（読み取りのみ・報酬付与は呼び出し側）
+ * @param {{ onComplete?: function, target?: number, lives?: number, _fixedPos?: number }} [opts]
+ * @returns {object} シーン（update/draw/isDone/_debug）
+ */
+function createLiftingScene(state, opts) {
+  opts = opts || {};
+  var S = (typeof window !== 'undefined' ? window : globalThis).SRPG;
+  var VW = S.VW, VH = S.VH;
+  var TARGET = opts.target || 15;
+  var LIVES = opts.lives || 3;
+
+  var _count = 0;       // 成功回数
+  var _lives = LIVES;   // のこりミス回数
+  var _marker = 0;      // タイミングバーの マーカー位置（0〜1）
+  var _dir = 1;         // マーカーの いききする むき
+  var _phase = 'play';  // 'play' | 'done'
+  var _timer = 0;       // done の経過時間
+  var _done = false;
+  var _lastJudge = null;// 直近の 判定（perfect/good/miss）
+  var _flash = 0;       // 判定表示の のこり時間
+
+  function _pos() {
+    return (opts._fixedPos != null) ? opts._fixedPos : _marker; // テスト用に位置を固定できる
+  }
+
+  function _tap() {
+    var j = S.liftingJudge(_pos());
+    _lastJudge = j;
+    _flash = 0.45;
+    if (j === 'miss') {
+      _lives--;
+      if (_lives <= 0) { _phase = 'done'; _timer = 0; }
+    } else {
+      _count++;
+      if (_count >= TARGET) { _phase = 'done'; _timer = 0; }
+    }
+  }
+
+  function _finish() {
+    if (_done) return;
+    _done = true;
+    var win = S.liftingWin(_count, TARGET);
+    S.popScene();
+    if (typeof opts.onComplete === 'function') opts.onComplete(win, _count);
+  }
+
+  return {
+    update: function (dt, input) {
+      var pressed = (input && input.pressed) || {};
+      if (_flash > 0) _flash = Math.max(0, _flash - dt);
+      if (_phase === 'play') {
+        // マーカーを いききさせる（成功回数で だんだん はやく＝むずかしく）
+        var sp = S.liftingSpeed(_count);
+        _marker += _dir * sp * dt;
+        if (_marker >= 1) { _marker = 1; _dir = -1; }
+        else if (_marker <= 0) { _marker = 0; _dir = 1; }
+        if (pressed.confirm || pressed.up) { _tap(); return; }
+        return;
+      }
+      if (_phase === 'done') {
+        _timer += dt;
+        if (_timer >= 0.4 && (pressed.confirm || pressed.cancel)) _finish();
+        return;
+      }
+    },
+
+    draw: function (ctx) {
+      // 1. スタジアム背景（ひるまの あかるい しばふ）
+      var bg = ctx.createLinearGradient(0, 0, 0, VH);
+      bg.addColorStop(0,   '#8fd0ff');
+      bg.addColorStop(0.5, '#bfe6ff');
+      bg.addColorStop(1,   '#2f8f42');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, VW, VH);
+
+      // 2. タイトル
+      S.drawWindow(ctx, VW / 2 - 80, 14, 160, 28, { radius: 8, border: '#ffd34d' });
+      S.drawText(ctx, 'リフティング！', VW / 2, 21, { size: 16, color: '#7a4a00', align: 'center' });
+
+      // 3. せんしゅ＆ボール（マーカー位置で ボールの たかさが かわる）
+      var cx = VW / 2;
+      var groundY = 250;
+      // 選手（かんたんな棒人間）
+      ctx.fillStyle = '#3a63c8';
+      ctx.fillRect(cx - 10, groundY - 34, 20, 34);       // 体
+      ctx.fillStyle = '#ffd0b0';
+      ctx.beginPath(); ctx.arc(cx, groundY - 44, 9, 0, Math.PI * 2); ctx.fill(); // 頭
+      // ボール（marker 0=足もと / 1=たかく）
+      var ballY = groundY - 20 - _marker * 120;
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath(); ctx.arc(cx, ballY, 11, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, ballY, 11, 0, Math.PI * 2); ctx.stroke();
+
+      // 4. タイミングバー（まんなかが perfect ゾーン）
+      var barX = 34, barY = 300, barW = VW - 68, barH = 22;
+      S.drawWindow(ctx, barX - 4, barY - 4, barW + 8, barH + 8, { radius: 6, border: '#5ec8ff' });
+      // good ゾーン（うすい黄）
+      ctx.fillStyle = 'rgba(255,211,77,0.35)';
+      ctx.fillRect(barX + barW * 0.22, barY, barW * 0.56, barH);
+      // perfect ゾーン（こい黄）
+      ctx.fillStyle = 'rgba(255,180,0,0.6)';
+      ctx.fillRect(barX + barW * 0.38, barY, barW * 0.24, barH);
+      // マーカー
+      var mx = barX + barW * _marker;
+      ctx.fillStyle = '#ff3b3b';
+      ctx.fillRect(mx - 3, barY - 6, 6, barH + 12);
+
+      // 5. スコア
+      S.drawWindow(ctx, VW / 2 - 90, barY + 40, 180, 30, { radius: 6, border: '#5ec8ff' });
+      S.drawText(ctx, 'リフティング ' + _count + ' / ' + TARGET + '   ミス のこり ' + _lives,
+                 VW / 2, barY + 48, { size: 12, color: '#3a2a00', align: 'center' });
+
+      // 6. メッセージ窓
+      var msgY = VH - 96;
+      S.drawWindow(ctx, 12, msgY, VW - 24, 80, { radius: 8, border: '#ffd34d' });
+      var line1, line2;
+      if (_phase === 'play') {
+        if (_flash > 0 && _lastJudge) {
+          line1 = _lastJudge === 'perfect' ? 'ナイス！ パーフェクト！' : (_lastJudge === 'good' ? 'いいね！' : 'あっ…！');
+        } else {
+          line1 = 'まんなかで けってい/↑！';
+        }
+        line2 = 'まん中に ちかいほど よいよ';
+      } else {
+        var win = S.liftingWin(_count, TARGET);
+        line1 = win ? ('かち！  ' + _count + ' かい！ すごい！') : ('まけ…  ' + _count + ' かい');
+        line2 = 'けってい/キャンセル で とじる';
+      }
+      S.drawText(ctx, line1, VW / 2, msgY + 22, { size: 15, color: '#7a4a00', align: 'center' });
+      S.drawText(ctx, line2, VW / 2, msgY + 50, { size: 11, color: '#5a4020', align: 'center' });
+    },
+
+    isDone: function () { return _done; },
+
+    // テスト/検証用：内部状態を観測する。
+    _debug: function () {
+      return { phase: _phase, count: _count, lives: _lives, target: TARGET, win: S.liftingWin(_count, TARGET), marker: _marker };
+    },
+  };
+}
+
+/**
+ * createShootScene — まとあて シュート ミニゲーム（機能③）
+ *   3×3=9マスの ゴールで、ひかっている 的ゾーンに カーソルを あわせて けってい で シュート。
+ *   ←→↑↓で カーソル移動、けっていで シュート。的と 同じマスなら ヒット（S.shootHit）。
+ *   目標ヒット数(TARGET)に とどけば 勝ち。シュート回数(SHOTS)を つかいきったら おわり。
+ *   的ゾーンは S.nextTargetZone で 毎回 うごく（純粋判定に委譲）。
+ * @param {object} state - ゲーム状態（読み取りのみ・報酬付与は呼び出し側）
+ * @param {{ onComplete?: function, target?: number, shots?: number }} [opts]
+ * @returns {object} シーン（update/draw/isDone/_debug）
+ */
+function createShootScene(state, opts) {
+  opts = opts || {};
+  var S = (typeof window !== 'undefined' ? window : globalThis).SRPG;
+  var VW = S.VW, VH = S.VH;
+  var ZONES = 9;
+  var TARGET = opts.target || 8;   // 目標ヒット数
+  var SHOTS = opts.shots || 12;    // シュートできる回数
+
+  var _cursor = 4;                              // カーソル位置（0〜8・まんなか始まり）
+  var _zone = S.nextTargetZone(Math.random, null, ZONES); // ひかる 的ゾーン
+  var _hits = 0;
+  var _shot = 0;
+  var _phase = 'aim';  // 'aim' | 'done'
+  var _timer = 0;
+  var _done = false;
+  var _lastHit = null; // 直近の ヒット/はずれ
+  var _flash = 0;
+
+  function _move(dc, dr) {
+    var col = _cursor % 3, row = Math.floor(_cursor / 3);
+    col = Math.max(0, Math.min(2, col + dc));
+    row = Math.max(0, Math.min(2, row + dr));
+    _cursor = row * 3 + col;
+  }
+
+  function _shoot() {
+    var hit = S.shootHit(_cursor, _zone);
+    _lastHit = hit;
+    _flash = 0.4;
+    if (hit) _hits++;
+    _shot++;
+    if (S.shootWin(_hits, TARGET)) { _phase = 'done'; _timer = 0; }
+    else if (_shot >= SHOTS) { _phase = 'done'; _timer = 0; }
+    else { _zone = S.nextTargetZone(Math.random, _zone, ZONES); }
+  }
+
+  function _finish() {
+    if (_done) return;
+    _done = true;
+    var win = S.shootWin(_hits, TARGET);
+    S.popScene();
+    if (typeof opts.onComplete === 'function') opts.onComplete(win, _hits);
+  }
+
+  return {
+    update: function (dt, input) {
+      var pressed = (input && input.pressed) || {};
+      if (_flash > 0) _flash = Math.max(0, _flash - dt);
+      if (_phase === 'aim') {
+        if (pressed.left) { _move(-1, 0); return; }
+        if (pressed.right) { _move(1, 0); return; }
+        if (pressed.up) { _move(0, -1); return; }
+        if (pressed.down) { _move(0, 1); return; }
+        if (pressed.confirm) { _shoot(); return; }
+        return;
+      }
+      if (_phase === 'done') {
+        _timer += dt;
+        if (_timer >= 0.4 && (pressed.confirm || pressed.cancel)) _finish();
+        return;
+      }
+    },
+
+    draw: function (ctx) {
+      // 1. スタジアム背景
+      var bg = ctx.createLinearGradient(0, 0, 0, VH);
+      bg.addColorStop(0,   '#0b1733');
+      bg.addColorStop(0.5, '#13245a');
+      bg.addColorStop(1,   '#0a3d1f');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, VW, VH);
+
+      // 2. タイトル
+      S.drawWindow(ctx, VW / 2 - 80, 14, 160, 28, { radius: 8, border: '#ffd34d' });
+      S.drawText(ctx, 'まとあて シュート！', VW / 2, 21, { size: 15, color: '#ffe9a8', align: 'center' });
+
+      // 3. 3×3 ゴール（的ゾーンを ハイライト・カーソルを 枠で表示）
+      var gx = 44, gy = 96, gw = VW - 88, gh = gw; // せいほうけい
+      var cw = gw / 3, ch = gh / 3;
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 4;
+      ctx.strokeRect(gx, gy, gw, gh);
+      for (var z = 0; z < 9; z++) {
+        var zc = z % 3, zr = Math.floor(z / 3);
+        var zx = gx + zc * cw, zy = gy + zr * ch;
+        // ゾーン区切り
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1;
+        ctx.strokeRect(zx, zy, cw, ch);
+        // 的ゾーン（ひかる）
+        if (z === _zone) {
+          ctx.fillStyle = 'rgba(255,211,77,0.55)';
+          ctx.fillRect(zx + 2, zy + 2, cw - 4, ch - 4);
+          // まと（同心円）
+          var mcx = zx + cw / 2, mcy = zy + ch / 2;
+          ctx.strokeStyle = '#ff5a5a'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(mcx, mcy, Math.min(cw, ch) * 0.28, 0, Math.PI * 2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(mcx, mcy, Math.min(cw, ch) * 0.13, 0, Math.PI * 2); ctx.stroke();
+        }
+        // カーソル
+        if (z === _cursor) {
+          ctx.strokeStyle = (_flash > 0 && _lastHit) ? '#7dff7d' : '#5ec8ff';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(zx + 4, zy + 4, cw - 8, ch - 8);
+        }
+      }
+
+      // 4. スコア
+      S.drawWindow(ctx, VW / 2 - 100, gy + gh + 16, 200, 30, { radius: 6, border: '#5ec8ff' });
+      S.drawText(ctx, 'ヒット ' + _hits + ' / ' + TARGET + '   のこり ' + Math.max(0, SHOTS - _shot) + 'ぼん',
+                 VW / 2, gy + gh + 24, { size: 12, color: '#dff4ff', align: 'center' });
+
+      // 5. メッセージ窓
+      var msgY = VH - 96;
+      S.drawWindow(ctx, 12, msgY, VW - 24, 80, { radius: 8, border: '#ffd34d' });
+      var line1, line2;
+      if (_phase === 'aim') {
+        if (_flash > 0 && _lastHit !== null) {
+          line1 = _lastHit ? 'ヒット！！' : 'はずれ…';
+        } else {
+          line1 = 'ひかる まとを ねらえ！';
+        }
+        line2 = '←→↑↓で いどう  けっていで シュート';
+      } else {
+        var win = S.shootWin(_hits, TARGET);
+        line1 = win ? ('かち！  ' + _hits + ' ヒット！') : ('まけ…  ' + _hits + ' ヒット');
+        line2 = 'けってい/キャンセル で とじる';
+      }
+      S.drawText(ctx, line1, VW / 2, msgY + 22, { size: 15, color: (_flash > 0 && _lastHit) ? '#ffe9a8' : '#dff4ff', align: 'center' });
+      S.drawText(ctx, line2, VW / 2, msgY + 50, { size: 11, color: '#bcd6f0', align: 'center' });
+    },
+
+    isDone: function () { return _done; },
+
+    // テスト/検証用：内部状態を観測する。
+    _debug: function () {
+      return { phase: _phase, cursor: _cursor, zone: _zone, hits: _hits, shot: _shot, shots: SHOTS, target: TARGET, zones: ZONES, win: S.shootWin(_hits, TARGET) };
+    },
+  };
+}
+
 // ── UMD エクスポート ──────────────────────────────────────────────────
 (function (root, api) {
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
 })(typeof window !== 'undefined' ? window : globalThis, {
-  createFieldScene: createFieldScene,
-  createPkScene:    createPkScene,
+  createFieldScene:   createFieldScene,
+  createPkScene:      createPkScene,
+  createLiftingScene: createLiftingScene,
+  createShootScene:   createShootScene,
   frontTile:        frontTile,
   isWalkable:       isWalkable,
   clampCamera:      clampCamera,

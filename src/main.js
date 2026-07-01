@@ -15,6 +15,7 @@
 
     S.initCanvas(canvas);
     S.initInput(canvas);
+    if (S.initAudio) S.initAudio(); // 効果音の初期化（最初の操作で音が解錠される）
 
     // タイトル画面からゲームを開始する（Task9 〜）
     S.pushScene(S.createTitleScene());
@@ -28,6 +29,13 @@
       last = now;
 
       var input = S.pollInput();
+
+      // 効果音：確定/キャンセル/カーソル移動を1か所で鳴らす（UI操作の手応え）
+      if (S.playSe && input && input.pressed) {
+        if (input.pressed.confirm) S.playSe('confirm');
+        else if (input.pressed.cancel) S.playSe('cancel');
+        else if (input.pressed.up || input.pressed.down || input.pressed.left || input.pressed.right) S.playSe('move');
+      }
 
       S.updateScenes(dt, input);
 

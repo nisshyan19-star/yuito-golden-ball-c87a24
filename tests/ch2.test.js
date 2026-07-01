@@ -93,11 +93,11 @@ test('town3 の北exit(7,1)が ch2_gate へ・requireFlag:boss_kaiser', () => {
   assert.strictEqual(north.requireFlag, 'boss_kaiser');
 });
 
-test('ch2_pass の北exit(7,1)は requireFlag:boss_ice（氷の塔クリアで 闇の城が開く）', () => {
+test('ch2_pass の北exit(7,1)は requireFlag:boss_ice（氷の塔クリアで もりの しんでんが開く）', () => {
   const exits = MAPS.ch2_pass.exits || [];
   const north = exits.find((e) => e.x === 7 && e.y === 1);
   assert.ok(north, 'ch2_pass に北exit(7,1)が無い');
-  assert.strictEqual(north.to, 'ch2_castle');
+  assert.strictEqual(north.to, 'shrine_forest_1f');
   assert.strictEqual(north.requireFlag, 'boss_ice');
 });
 

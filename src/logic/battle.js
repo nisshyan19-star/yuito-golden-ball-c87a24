@@ -135,7 +135,75 @@ function availableCombos(party) {
   return out;
 }
 
+// ── サッカーミニゲーム拡充（機能③）：リフティング／まとあてシュートの純粋判定 ──
+//   PK戦（pkResolve）と同じく、判定だけを純粋関数に切り出す。描画・進行は field-scene.js が担当。
+
+/**
+ * リフティングの 1タップを判定する純粋関数。
+ *   タイミングバーの マーカー位置 pos（0〜1・まんなか 0.5 が いちばん いい）で 出来ばえを返す。
+ * @param {number} pos - マーカー位置（0〜1）
+ * @returns {'perfect'|'good'|'miss'}
+ */
+function liftingJudge(pos) {
+  var d = Math.abs((pos == null ? 0 : pos) - 0.5);
+  if (d <= 0.12) return 'perfect';
+  if (d <= 0.28) return 'good';
+  return 'miss';
+}
+
+/**
+ * リフティングの マーカー往復速度（count が ふえるほど はやく＝むずかしくなる）。
+ *   base 未指定は 0.9（毎秒 0〜1 を いききする割合）。count に対して 単調増加。
+ * @param {number} count - いまの 成功回数
+ * @param {number} [base=0.9]
+ * @returns {number}
+ */
+function liftingSpeed(count, base) {
+  var b = (typeof base === 'number') ? base : 0.9;
+  return b * (1 + (count || 0) * 0.06);
+}
+
+/**
+ * リフティングの 勝利判定（純粋関数）。成功回数 count が 目標 target 以上なら 勝ち。
+ */
+function liftingWin(count, target) {
+  return (count || 0) >= (target || 0);
+}
+
+/**
+ * まとあてシュート：次に ひかる 的ゾーンを えらぶ純粋関数。
+ *   0〜(zones-1) から えらび、avoid と 同じにはしない（的が うごいて 見えるように）。
+ * @param {function} [rng] - [0,1) を返す関数（テスト用に注入可・未指定は Math.random）
+ * @param {number|null} [avoid] - さける ゾーン番号（null/未指定なら どれでも可）
+ * @param {number} [zones=9] - ゾーン総数（3×3=9）
+ * @returns {number} 0〜zones-1 の ゾーン番号
+ */
+function nextTargetZone(rng, avoid, zones) {
+  var n = zones || 9;
+  var r = (typeof rng === 'function') ? rng : Math.random;
+  if (n <= 1) return 0;
+  var z = Math.floor(r() * n);
+  if (z >= n) z = n - 1;                 // r()===1 の 保険
+  if (z < 0) z = 0;
+  if (avoid != null && z === avoid) z = (z + 1) % n; // avoid を さける
+  return z;
+}
+
+/**
+ * まとあてシュート：カーソルの ゾーンが 的ゾーンと 同じなら ヒット（純粋関数）。
+ */
+function shootHit(cursor, target) {
+  return cursor === target;
+}
+
+/**
+ * まとあてシュートの 勝利判定（純粋関数）。ヒット数 hits が 目標 target 以上なら 勝ち。
+ */
+function shootWin(hits, target) {
+  return (hits || 0) >= (target || 0);
+}
+
 (function (root, api) {
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (typeof window !== 'undefined') root.SRPG = Object.assign(root.SRPG || {}, api);
-})(typeof window !== 'undefined' ? window : globalThis, { calcDamage, applyDamage, isDefeated, typeMultiplier, pkResolve, availableCombos });
+})(typeof window !== 'undefined' ? window : globalThis, { calcDamage, applyDamage, isDefeated, typeMultiplier, pkResolve, availableCombos, liftingJudge, liftingSpeed, liftingWin, nextTargetZone, shootHit, shootWin });

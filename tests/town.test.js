@@ -129,7 +129,9 @@ test('出口の連結が町を挟んだ順路になっている', () => {
   assert.deepStrictEqual(to('town1'),  ['field2', 'village1']);
   assert.deepStrictEqual(to('field2'), ['field3']);
   assert.deepStrictEqual(to('field3'), ['town2']);
-  assert.deepStrictEqual(to('town2'),  ['field4']);
+  // town2 は北で field4 へ。Phase7-⑥で 西の岩場から 任意ダンジョン
+  // 「みずの どうくつ」(cave_water_1f)への 入口が 加わった。
+  assert.deepStrictEqual(to('town2'),  ['field4', 'cave_water_1f']);
   assert.deepStrictEqual(to('field4'), ['field5']);
   assert.deepStrictEqual(to('field5'), ['town3']);
   // town3 は南で field6 へ。追加弾5（第2章）で 北の とびらが 加わり、

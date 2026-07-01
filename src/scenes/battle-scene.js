@@ -573,6 +573,7 @@ function createBattleScene(state, enemyPool, opts) {
     }
     if (!target) return null;
     target = _redirect(actor, target);
+    if (S && S.playSe) S.playSe('attack');
     _lunge(actor, target);
     const dmg = _dealAttack(actor, target, 1);
     _gainKiai(actor, 12);   // 攻撃するとキアイが溜まる
@@ -603,6 +604,7 @@ function createBattleScene(state, enemyPool, opts) {
     // 必殺技/超必殺(type:'ultimate')はカットイン全画面演出（大フラッシュ＋大シェイク＋ズーム）。
     const _isUlt = !!sk.kiai || sk.type === 'ultimate';
     if (sk.type === 'attack' || sk.type === 'ultimate') {
+      if (S && S.playSe) S.playSe('special');
       _onCast(actor, _isUlt ? '#ff9a3a' : '#ffd76e');
       if (_isUlt) _cutin(sk.kiai ? '#ffdf7a' : '#ffffff');
       if (sk.target === 'all') {
@@ -628,6 +630,7 @@ function createBattleScene(state, enemyPool, opts) {
       if (!sk.kiai) _gainKiai(actor, 10);   // 通常とくぎでもキアイは溜まる（必殺は消費直後なので除外）
     } else if (sk.type === 'heal') {
       const amt = sk.heal || sk.amount || 0;
+      if (S && S.playSe) S.playSe('heal');
       _onCast(actor, '#7bff8a');
       if (sk.kiai) _cutin('#9bffb0');   // 必殺の回復（ミラクル・ヒール等）もカットイン
       if (sk.target === 'allies') {
@@ -659,6 +662,7 @@ function createBattleScene(state, enemyPool, opts) {
     // メンバー（生存者）のキアイを全消費し、発動カットインを出す。
     const members = (c.members || []).map(_findUnit).filter((u) => u && !_isDead(u));
     members.forEach((u) => { u.kiai = 0; _onCast(u, '#ffd76e'); });
+    if (S && S.playSe) S.playSe('special');
     _cutin('#ffe6a0');   // 連携技は全画面カットイン（大フラッシュ＋大シェイク＋ズーム）
     const names = members.map((u) => u.name).join('と');
     const pages = [names + 'の れんけいわざ！\n「' + c.name + '」！！'];
@@ -886,15 +890,18 @@ function createBattleScene(state, enemyPool, opts) {
     });
     pages.push('てきを たおした！');
     pages.push('けいけんち ' + reward.exp + ' かくとく！\n' + reward.gold + 'ゴールド てにいれた！');
+    let _leveledUpAny = false;
     _aliveParty().forEach((m) => {
       if (!(S && S.gainExp)) return;
       const res = S.gainExp(m, reward.exp);
-      if (res.leveledUp) pages.push(m.name + 'は レベル ' + m.level + 'に あがった！');
+      if (res.leveledUp) { pages.push(m.name + 'は レベル ' + m.level + 'に あがった！'); _leveledUpAny = true; }
       (res.learned || []).forEach((sid) => {
         const sk = SKILLS[sid];
         if (sk) pages.push(m.name + 'は 「' + sk.name + '」を おぼえた！');
       });
     });
+    // 効果音：レベルアップしたら祝福感の強い levelup、無ければ勝利ファンファーレ（1回だけ＝重なり防止）
+    if (S && S.playSe) S.playSe(_leveledUpAny ? 'levelup' : 'victory');
     // スカウトした敵を party/roster へ確定（state を丸ごとJSON化保存するので push で永続化される）。
     if (_scouted && _scouted.length) {
       const mlib = _monster();
@@ -1228,10 +1235,11 @@ function createBattleScene(state, enemyPool, opts) {
     if (S && S.drawShadow) S.drawShadow(ctx, cx, cy + size * 0.55, size * 0.5, size * 0.16);
     // AI生成アート（あれば優先）。全身立ち絵なので足元を影に乗せる。
     const ART = (S && S.ENEMY_ART) ? S.ENEMY_ART : null;
-    // ラスボスは第二形態(_phase>=2)で「怒り形態」の絵に差し替える。
+    // 2段階ボスは第二形態(_phase>=2)で「怒り形態」の絵に差し替える。
     let artKey = e.art || e.baseId;
-    if (e.baseId === 'dark_kaiser' && e._phase >= 2 && ART && ART.dark_kaiser_rage) {
-      artKey = 'dark_kaiser_rage';
+    var RAGE_ART = { dark_kaiser: 'dark_kaiser_rage', ice_golem: 'ice_golem_rage', forest_guardian: 'forest_guardian_rage' };
+    if (e._phase >= 2 && RAGE_ART[e.baseId] && ART && ART[RAGE_ART[e.baseId]]) {
+      artKey = RAGE_ART[e.baseId];
     }
     if (ART && ART[artKey] && S && S.drawImageSprite) {
       if (S.drawImageSprite(ctx, artKey, ART[artKey], cx, cy - size * 0.18, size * 2.55)) {
@@ -1556,6 +1564,9 @@ function createBattleScene(state, enemyPool, opts) {
   return {
     update: function (dt, input) {
       if (!S) return;
+      // バトルBGMを毎フレーム保証。戦闘を抜けるとフィールド側の update が
+      // 自分のステージBGMへ戻すので、ここでは 'battle' を鳴らすだけでよい。
+      if (S.playBgm) S.playBgm('battle');
       _advanceFx(dt);   // メッセージ表示中もエフェクトは進める（先頭で必ず呼ぶ）
       const pressed = (input && input.pressed) || {};
       if (_msg) {

@@ -38,6 +38,17 @@ const ITEMS = {
   //   ミスリル(atk26/def18)と せいなる(atk40/def28)の あいだの つよさ。
   frost_spike:     { id:'frost_spike',     name:'フロストスパイク',       kind:'weapon', atk:30,  price:900,  desc:'こうげき+30。こおりの ちからを やどした つめたい スパイク。' },
   frost_mail:      { id:'frost_mail',      name:'フロストメイル',         kind:'armor',  def:22,  price:900,  desc:'まもり+22。つめたさが みを まもる こおりの よろい。' },
+
+  // ── 森の神殿のたから（Phase7-⑤）：shrine_forest_3f ボス（森の守り神 ガイア）の ごほうび。 ──
+  //   フロスト(atk30/def22)より つよく、ボスラッシュ トロフィー champion_spike(atk32) は
+  //   こえない＝氷の塔の frost_spike と おなじ思想で「トロフィーが 最強の ぶき」を まもる。
+  leaf_blade:      { id:'leaf_blade',      name:'こもれびの つるぎ',       kind:'weapon', atk:31,  price:1100, desc:'こうげき+31。もりの ひかりを やどした みどりの つるぎ。' },
+  bark_mail:       { id:'bark_mail',       name:'はがねの きのよろい',     kind:'armor',  def:24,  price:1100, desc:'まもり+24。おおきな きの みきで つくった じょうぶな よろい。' },
+
+  // ── みずの どうくつのたから（Phase7-⑥）：cave_water_3f ボス（アクア・ゴーレム）の ごほうび。 ──
+  //   任意ダンジョンなので 森の神殿(atk31/def24)と おなじ強さ帯。トロフィー champion_spike(atk32) は こえない。
+  tide_spike:      { id:'tide_spike',      name:'うしおの スパイク',       kind:'weapon', atk:31,  price:1100, desc:'こうげき+31。みずの ながれを やどした すずやかな スパイク。' },
+  coral_mail:      { id:'coral_mail',      name:'さんごの よろい',         kind:'armor',  def:23,  price:1100, desc:'まもり+23。うみの さんごで つくった しなやかで かたい よろい。' },
 };
 
 (function (root, api) {

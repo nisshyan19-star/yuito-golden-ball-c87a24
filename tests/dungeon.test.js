@@ -21,9 +21,10 @@ test('専用ボス gold_emperor が全ボス中 最強ステータスである',
   assert.ok(Array.isArray(e.phases) && e.phases.length === 2, '2段階構成でない');
   assert.ok(e.quotes && e.quotes.intro && e.quotes.phase && e.quotes.defeat, 'セリフが揃っていない');
   // 既存の最強ボス phantom_striker(hp200) を超える。
-  // 追加弾5（第2章）の新ボス（dark_general/neo_kaiser）は別章の物語ボスなので、
+  // 追加弾5（第2章）の新ボス（dark_general/neo_kaiser）と Phase7 の 本線ダンジョンボス
+  // （forest_guardian＝もりの しんでんの ガイア）は 物語ボスなので、
   // やりこみ用 隠しボスの「最強」判定からは除外する。
-  const CH2_BOSSES = ['dark_general', 'neo_kaiser'];
+  const CH2_BOSSES = ['dark_general', 'neo_kaiser', 'forest_guardian'];
   const bosses = Object.values(ENEMIES).filter((x) => x.isBoss);
   const maxOther = Math.max(...bosses
     .filter((x) => x.id !== 'gold_emperor' && CH2_BOSSES.indexOf(x.id) < 0)

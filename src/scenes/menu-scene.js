@@ -66,6 +66,7 @@ function createMenuScene(state) {
     listCache = [
       { label: 'つよさ',   v: 'status'  },
       { label: 'なかま',   v: 'party'   },
+      { label: 'はなす',   v: 'talk'    },
       { label: 'どうぐ',   v: 'items'   },
       { label: 'そうび',   v: 'equip'   },
       { label: 'ずかん',   v: 'dex'     },
@@ -193,6 +194,90 @@ function createMenuScene(state) {
     if (!isSelectable(listCache[cursor])) moveCursorSelectable(1);
   }
 
+  // ── なかまと はなす（会話イベント／掛け合い）─────────────────────────
+  // 現在地(state.position.map)と「今パーティにいる仲間」で会話を出し分ける。
+  // 新しい識別子は全て createMenuScene のクロージャ内＝バンドル鉄則①衝突ゼロ。
+  function talkCtx() {
+    var mp = String((state.position && state.position.map) || '');
+    if (/town|village/.test(mp))                     return 'town';
+    if (/cave|tower|shrine|castle|dungeon/.test(mp)) return 'dungeon';
+    return 'field';
+  }
+  // 会話プール。ctx='town'|'dungeon'|'field'|'any'、who=登場に必要なキャラid。
+  // ユイト(リーダー)は常にいるので who:['yuito'] の any が必ず1つは成立＝空にならない。
+  function talkPool() {
+    return [
+      // ── まち ──
+      { ctx: 'town', who: ['yuito'], lines: ['ユイト「まちは にぎやかだなあ！\nおいしい ものも いっぱいだ！」'] },
+      { ctx: 'town', who: ['yuito', 'ikuma'], lines: [
+        'イクマ「なあユイト、あの みせ よってこうぜ！」',
+        'ユイト「いいね！つよい そうびが あるかも！」'] },
+      { ctx: 'town', who: ['yuito', 'aoshi'], lines: [
+        'アオシ「まちでは じょうほうを あつめよう。」',
+        'ユイト「さすがアオシ、たよりに なる！」'] },
+      { ctx: 'town', who: ['yuito', 'tomoki'], lines: [
+        'トモキ「まちの ちびっこに 手を ふられたよ。」',
+        'ユイト「トモキは みんなの にんきものだね！」'] },
+      { ctx: 'town', who: ['yuito', 'itsuki'], lines: [
+        'イツキ「ここは しずかで おちつくな。」',
+        'ユイト「イツキも たまには のんびりしなよ！」'] },
+      // ── ダンジョン ──
+      { ctx: 'dungeon', who: ['yuito'], lines: ['ユイト「うわ、うすぐらいぞ…\nでも まえに すすもう！」'] },
+      { ctx: 'dungeon', who: ['yuito', 'ikuma'], lines: [
+        'イクマ「こういう ところ、ワクワクするな！」',
+        'ユイト「イクマは こわいもの なしだな！」'] },
+      { ctx: 'dungeon', who: ['yuito', 'aoshi'], lines: [
+        'アオシ「わなに ちゅうい。あわてないで。」',
+        'ユイト「わかった、アオシに まかせる！」'] },
+      { ctx: 'dungeon', who: ['yuito', 'tomoki'], lines: [
+        'トモキ「みんな、ぼくの うしろに いて。」',
+        'ユイト「トモキが いると あんしんだ！」'] },
+      { ctx: 'dungeon', who: ['yuito', 'itsuki'], lines: [
+        'イツキ「てきの けはいが する。ゆだんするな。」',
+        'ユイト「よし、みんなで のりきろう！」'] },
+      // ── フィールド ──
+      { ctx: 'field', who: ['yuito'], lines: ['ユイト「かぜが きもちいい！\nつぎの まちは どっちかな？」'] },
+      { ctx: 'field', who: ['yuito', 'ikuma'], lines: [
+        'イクマ「ユイト、そこまで きょうそうだ！」',
+        'ユイト「まてよイクマ、はやすぎ！」'] },
+      { ctx: 'field', who: ['yuito', 'aoshi'], lines: [
+        'ユイト「アオシは いつも れいせいだね。」',
+        'アオシ「…みんなが いるから、おちつける。」'] },
+      // ── どこでも（any）──
+      { ctx: 'any', who: ['yuito'], lines: ['ユイト「おうごんの ボールを とりもどすまで\nぜったい あきらめないぞ！」'] },
+      { ctx: 'any', who: ['yuito'], lines: ['ユイト「みんなで サッカーを たのしむ。\nそれが ぼくの ゆめだ！」'] },
+      { ctx: 'any', who: ['yuito', 'ikuma'], lines: [
+        'イクマ「むかしは ライバルだったけど…」',
+        'ユイト「いまは さいこうの しんゆうだ！」'] },
+      { ctx: 'any', who: ['yuito', 'tomoki', 'itsuki'], lines: [
+        'トモキ「まもりは まかせて。」',
+        'イツキ「うしろは しんぱい いらない。」',
+        'ユイト「さいきょうの ディフェンスだ！」'] },
+      { ctx: 'any', who: ['yuito', 'ikuma', 'aoshi', 'tomoki', 'itsuki'], lines: [
+        'ユイト「５にん そろえば むてきだ！」',
+        'みんな「おー！！」'] },
+    ];
+  }
+  // 現在地とパーティ編成に合う会話を1つ選ぶ。直前と同じものは避ける。
+  function pickTalk() {
+    var ctx = talkCtx();
+    var ids = {};
+    party().forEach(function (p) { if (p && p.id) ids[p.id] = true; });
+    var ok = talkPool().filter(function (e) {
+      if (e.ctx !== 'any' && e.ctx !== ctx) return false;
+      for (var i = 0; i < e.who.length; i++) { if (!ids[e.who[i]]) return false; }
+      return true;
+    });
+    if (!ok.length) return null;
+    // 直前と同じ会話を避ける。S._talkLastId はトップレベル宣言ではなくプロパティ代入。
+    var last = (S && S._talkLastId) || null;
+    var pool2 = ok.filter(function (e) { return e.lines[0] !== last; });
+    var use = pool2.length ? pool2 : ok;
+    var pick = use[Math.floor(Math.random() * use.length)];
+    if (S) S._talkLastId = pick.lines[0];
+    return pick;
+  }
+
   // ── 操作（装備・道具使用） ──
   function equipItem(id) {
     var slot = pendingSlot;
@@ -263,6 +348,17 @@ function createMenuScene(state) {
       switch (item.v) {
         case 'status':  statusIdx = 0; mode = 'status'; cursor = 0; break;
         case 'party':   enter('party'); break;
+        case 'talk': {
+          // メニューを閉じてフィールド上に会話を出す（dialog は field を透過描画する）。
+          var b = pickTalk();
+          if (b && S && S.createDialog && S.pushScene && S.popScene) {
+            S.popScene();
+            S.pushScene(S.createDialog(b.lines.slice()));
+          } else {
+            showMsg(['いまは はなす ことが なさそうだ。'], 'main');
+          }
+          break;
+        }
         case 'dex':     dexIdx = 0; mode = 'dex'; cursor = 0; break;
         case 'ach':     achIdx = 0; mode = 'ach'; cursor = 0; break;
         case 'title':   enter('title');   break;
@@ -346,11 +442,13 @@ function createMenuScene(state) {
 
   // ── 描画 ──
   function drawMainPanel(ctx) {
-    // コマンド窓（左）
-    S.drawWindow(ctx, 12, 24, 116, 196, { radius: 10, border: '#5ec8ff' });
+    // コマンド窓（左）：項目数に応じて高さを可変にしてはみ出しを防ぐ。
+    var n = listCache.length, rowH = 24;
+    var lh = Math.max(196, 44 + n * rowH);
+    S.drawWindow(ctx, 12, 24, 116, lh, { radius: 10, border: '#5ec8ff' });
     S.drawText(ctx, 'メニュー', 70, 32, { size: 13, color: '#ffd76e', align: 'center' });
-    for (var i = 0; i < listCache.length; i++) {
-      var y = 56 + i * 26;
+    for (var i = 0; i < n; i++) {
+      var y = 54 + i * rowH;
       if (i === cursor) S.drawText(ctx, '▶', 24, y, { size: 13, color: '#ffd76e' });
       S.drawText(ctx, listCache[i].label, 42, y, { size: 14, color: i === cursor ? '#ffffff' : '#cfe0ff' });
     }
