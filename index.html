@@ -7641,6 +7641,34 @@ function minimapCell(grid, x, y, legend) {
   return 'wall';
 }
 
+// ── 弾7-③：行き先看板用の最寄り出口判定（純粋関数） ──
+// px,py から radius マス以内で最も近い出口の案内文を返す。範囲外は null。
+// 行き先名は mapsById[to].name から引く（無ければ to をそのまま）。
+function nearestExitLabel(map, px, py, radius, mapsById) {
+  if (!map || !map.exits || !map.exits.length) return null;
+  var best = null, bestD = Infinity;
+  for (var i = 0; i < map.exits.length; i++) {
+    var ex = map.exits[i];
+    if (ex == null || ex.x == null || ex.y == null) continue;
+    var d = Math.abs(ex.x - px) + Math.abs(ex.y - py); // マンハッタン距離
+    if (d <= radius && d < bestD) { bestD = d; best = ex; }
+  }
+  if (!best) return null;
+  var dest = mapsById && mapsById[best.to];
+  var name = (dest && dest.name) || best.to;
+  return '→ ' + name + 'へ';
+}
+
+// ── 弾7-③：行き先看板の描画（画面下部・出口接近時のみ） ──
+// 仮想パッドの▼ボタン(x=55..105, y=457..507)と重ならないよう右下へ寄せる。
+function _drawSignpost(ctx, S, text, VW, VH) {
+  if (!text) return;
+  var w = 176, h = 24;
+  var x = VW - w - 6, y = VH - h - 10;
+  S.drawWindow(ctx, x, y, w, h, { radius: 8, border: '#7cf29b' });
+  S.drawText(ctx, text, x + w / 2, y + 6, { size: 12, color: '#c8f7d4', align: 'center' });
+}
+
 // ── 弾7-②：ミニマップ描画（画面右上・常時オーバーレイ） ──
 // 地形=粗い点（floor薄/wall濃）、出口=黄マーカー、自分=点滅する赤点。
 // 暗闇マップ(map.dark)は地形を伏せて自分と出口のみ（迷子防止優先）。
@@ -9436,6 +9464,12 @@ function createFieldScene(state) {
       // 9. 弾7-②：ミニマップ（右上・常時）。目標バーがある時は下にずらす。
       var _mmY0 = (typeof _ob !== 'undefined' && _ob && _ob.bar) ? 58 : 6;
       _drawMinimap(ctx, S, map, px, py, VW, _gfx, _mmY0);
+
+      // 10. 弾7-③：行き先看板（出口に近づいたら下部に「→ ○○へ」）
+      if (typeof nearestExitLabel === 'function' && S.MAPS) {
+        var _sign = nearestExitLabel(map, px, py, 2, S.MAPS);
+        if (_sign) _drawSignpost(ctx, S, _sign, VW, VH);
+      }
     },
   };
 }
@@ -9918,6 +9952,7 @@ function createShootScene(state, opts) {
   lerp:               lerp,
   stepEase:           stepEase,
   minimapCell:        minimapCell,
+  nearestExitLabel:   nearestExitLabel,
   createPkScene:      createPkScene,
   createLiftingScene: createLiftingScene,
   createShootScene:   createShootScene,
