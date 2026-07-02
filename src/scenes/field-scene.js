@@ -2953,6 +2953,116 @@ function createPkScene(state, opts) {
 }
 
 /**
+ * createJoinCutinScene — 仲間加入カットイン（物語編B）
+ *   暗転 → 金の放射光＋パーティクル → ALLY_ART 立ち絵がスケールイン →
+ *   「⚡○○が なかまに なった！」＋ポジション・タイプ色・ひとこと。
+ *   開始時に 加入ファンファーレSE 'join' を鳴らす。confirm/タップ で onClose。
+ *   立ち絵の描画は なかま ずかん（title-scene）と同じ ALLY_ART→drawImageSprite→SPRITES の順。
+ * @param {object} state ゲーム状態（読み取りのみ）
+ * @param {string} allyId 加入した仲間の id（characters.js のキー）
+ * @param {function} onClose 閉じたときに呼ぶ（フィールド復帰など）
+ * @returns {object} シーン（update/draw/isDone/_debug）
+ */
+function createJoinCutinScene(state, allyId, onClose) {
+  var S = (typeof window !== 'undefined' ? window : globalThis).SRPG;
+  var VW = S.VW, VH = S.VH;
+  var ch = (S.CHARACTERS && S.CHARACTERS[allyId]) || null;
+  var pf = (ch && ch.profile) || {};
+  var typeColors = { power: '#ff8a5c', speed: '#5cd0ff', technique: '#b98aff' };
+  var typeNames  = { power: 'パワー',  speed: 'スピード', technique: 'テクニック' };
+  var accent = (ch && typeColors[ch.type]) || '#ffd76e';
+
+  var _t = 0;         // 経過時間（スケールイン・放射光の回転に使う）
+  var _done = false;
+  var _seDone = false;
+
+  function _finish() {
+    if (_done) return;
+    _done = true;
+    if (typeof onClose === 'function') onClose();
+  }
+
+  return {
+    update: function (dt, input) {
+      _t += dt;
+      if (!_seDone) { _seDone = true; if (S.playSe) S.playSe('join'); }
+      var pressed = (input && input.pressed) || {};
+      // 立ち絵が出そろってから（0.5s〜）閉じられる
+      if (_t >= 0.5 && (pressed.confirm || pressed.cancel)) _finish();
+    },
+
+    draw: function (ctx) {
+      // 1. 暗転
+      ctx.fillStyle = 'rgba(3,5,12,0.92)';
+      ctx.fillRect(0, 0, VW, VH);
+
+      var cx = VW / 2, cy = 150;
+
+      // 2. 金の放射光（中心から回転）
+      var rays = 14, rot = _t * 0.6;
+      for (var i = 0; i < rays; i++) {
+        var a = rot + (i / rays) * Math.PI * 2;
+        ctx.fillStyle = (i % 2 === 0) ? 'rgba(255,216,110,0.16)' : 'rgba(255,216,110,0.06)';
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + Math.cos(a) * 360, cy + Math.sin(a) * 360);
+        ctx.lineTo(cx + Math.cos(a + 0.24) * 360, cy + Math.sin(a + 0.24) * 360);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      // 3. パーティクル（きらきら）
+      for (var p = 0; p < 18; p++) {
+        var pa = (p / 18) * Math.PI * 2 + _t * 1.4;
+        var pr = 60 + ((p * 37) % 90) + Math.sin(_t * 3 + p) * 10;
+        var ppx = cx + Math.cos(pa) * pr;
+        var ppy = cy + Math.sin(pa) * pr * 0.8;
+        ctx.fillStyle = 'rgba(255,240,180,0.9)';
+        ctx.fillRect(ppx - 1.5, ppy - 1.5, 3, 3);
+      }
+
+      // 4. 立ち絵（スケールイン：高さ 40→130 を 0.35s で）
+      var grow = Math.min(1, _t / 0.35);
+      var ph = 40 + 90 * grow;
+      if (S.drawShadow) S.drawShadow(ctx, cx, cy + ph / 2 - 2, 30 * grow, 7 * grow);
+      var art = S.ALLY_ART && S.ALLY_ART[allyId];
+      var drew = false;
+      if (art && typeof S.drawImageSprite === 'function') {
+        drew = S.drawImageSprite(ctx, 'joincut_' + allyId, art, cx, cy, ph, false);
+      }
+      if (!drew && S.SPRITES && S.SPRITES[allyId] && S.drawSprite) {
+        var sp = S.SPRITES[allyId], sc = Math.max(1, Math.round(4 * grow));
+        var sw = sp.map[0].length * sc, sh = sp.map.length * sc;
+        S.drawSprite(ctx, sp, Math.floor(cx - sw / 2), Math.floor(cy - sh / 2), sc);
+      }
+
+      // 5. 「⚡○○が なかまに なった！」
+      S.drawText(ctx, '⚡ ' + ((ch && ch.name) || 'なかま') + ' が なかまに なった！', VW / 2, 236, {
+        size: 16, color: accent, align: 'center', weight: 'bold', shadow: true,
+      });
+
+      // 6. ポジション・タイプ・ひとこと
+      S.drawText(ctx, ((ch && ch.position) || '') + '   タイプ：' + ((ch && typeNames[ch.type]) || '－'), VW / 2, 262, {
+        size: 11, color: '#dff4ff', align: 'center',
+      });
+      S.drawText(ctx, '『 ' + (pf.flavor || '') + ' 』', VW / 2, 284, {
+        size: 12, color: '#ffe89a', align: 'center',
+      });
+
+      // 7. 閉じる案内（演出が出そろってから）
+      if (_t >= 0.5) {
+        S.drawText(ctx, 'けってい/タップ で つづける', VW / 2, VH - 40, {
+          size: 11, color: '#9fb6da', align: 'center',
+        });
+      }
+    },
+
+    isDone: function () { return _done; },
+    _debug: function () { return { t: _t, done: _done, allyId: allyId }; },
+  };
+}
+
+/**
  * createLiftingScene — リフティング ミニゲーム（機能③）
  *   まんなかで タイミングよく けってい/↑ を おすと リフティング成功。
  *   まん中に ちかいほど よい（perfect/good=せいこう、miss=しっぱい）。
@@ -3265,6 +3375,7 @@ function createShootScene(state, opts) {
   createPkScene:      createPkScene,
   createLiftingScene: createLiftingScene,
   createShootScene:   createShootScene,
+  createJoinCutinScene: createJoinCutinScene,
   frontTile:        frontTile,
   walkSideFlip:     walkSideFlip,
   npcMarkerKind:    npcMarkerKind,
