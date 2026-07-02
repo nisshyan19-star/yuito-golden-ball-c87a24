@@ -71,8 +71,9 @@ test('カットシーンが field1/field6/town3 に定義されている', () =>
     ['town3',  'cs_town3'],
   ];
   specs.forEach(([mapId, flag]) => {
-    const cs = MAPS[mapId].cutscene;
-    assert.ok(cs, mapId + ' に cutscene が無い');
+    const list = MAPS[mapId].cutscenes || (MAPS[mapId].cutscene ? [MAPS[mapId].cutscene] : []);
+    const cs = list.find((c) => c.flag === flag);
+    assert.ok(cs, mapId + ' に cutscene(' + flag + ') が無い');
     assert.strictEqual(cs.flag, flag, mapId + ' の cutscene.flag が違う');
     assert.ok(Array.isArray(cs.pages) && cs.pages.length >= 3, mapId + ' の cutscene pages が不足');
   });

@@ -193,3 +193,16 @@ test('勝利イベント: 5マップに requireFlag=撃破フラグ の cutscene
     assert.ok(cs.pages && cs.pages.length >= 2, w.map + ' の pages が2枚以上');
   });
 });
+
+test('章転換: field6 に cs_after_ch1(requireFlag=boss_kaiser)、ch2_gate に章タイトルコール', () => {
+  const f6 = MAPS.field6.cutscenes || (MAPS.field6.cutscene ? [MAPS.field6.cutscene] : []);
+  const intro = f6.find((c) => c.flag === 'cs_field6');
+  assert.ok(intro, 'field6 の入場 cs_field6 は維持');
+  const after = f6.find((c) => c.flag === 'cs_after_ch1');
+  assert.ok(after, 'field6 に cs_after_ch1');
+  assert.strictEqual(after.requireFlag, 'boss_kaiser');
+  assert.ok(after.pages.length >= 2);
+
+  const gate = MAPS.ch2_gate.cutscene;
+  assert.ok(gate && gate.pages.some((p) => p.includes('だい2しょう')), 'ch2_gate に章タイトルコール');
+});

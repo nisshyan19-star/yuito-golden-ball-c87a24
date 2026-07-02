@@ -1755,6 +1755,13 @@ var MAPS = {
     id: 'field5',
     name: 'スカイスタジアム',
     ambient: 'sky',   // 空：雲が流れる＋きらめき
+    cutscenes: [
+      { flag: 'cs_win_guardian', requireFlag: 'boss_guardian', pages: [
+        'ガーディアンは ひかりに つつまれ\nしずかに きえていった。',
+        'トモキ「まもりを かためれば\nどんな てきも こわくない。」',
+        'イツキ「うしろは まかせろ。\nつぎは いよいよ ダークアリーナだ！」',
+      ] },
+    ],
     grid: [
       '################', // r0
       '#......,.......#', // r1
@@ -1829,17 +1836,22 @@ var MAPS = {
     ambient: 'embers',   // 火の粉：オレンジの粒が昇る
     // 決戦まえ・カットシーン（弾4）：ダークアリーナ入場で一度だけ流れる。
     //   仲間の演出は序盤で必ず加入する イクマ・アオシ に限定（未加入でも矛盾しない）。
-    cutscene: {
-      flag: 'cs_field6',
-      pages: [
+    cutscenes: [
+      { flag: 'cs_field6', pages: [
         'くらい アリーナ。\nくうきが ずしりと おもい。\nここに カイザーが いる――。',
         'ながい たびだった。\nたくさんの てきと たたかい、\nここまで きた。',
         'ユイト「みんな、\nここまで ついてきて くれて\nありがとう。」',
         'イクマ「なに いってんだ、\nさいごまで いっしょだろ！」',
         'アオシ「おちつけ、ユイト。\nぼくらの サッカーを\nしんじれば いい。」',
         'ユイトは まえを みすえた。\nユイト「いくぞ――けっせんだ！」',
-      ],
-    },
+      ] },
+      { flag: 'cs_after_ch1', requireFlag: 'boss_kaiser', pages: [
+        'トロフィーを かかげた 5にん。\nかんせいが スタジアムに ひびく。',
+        'だが とおくの そらに、\nくろい かげが うずまいていた。',
+        'アオシ「あれは…\nまだ おわって いないのか？」',
+        'ユイト「いこう。\nだい2しょうの はじまりだ！」',
+      ] },
+    ],
     grid: [
       '################', // r0
       '#......,.......#', // r1
@@ -2169,6 +2181,13 @@ var MAPS = {
     id: 'cave1',
     name: 'ほのおの どうくつ',
     dark: true,
+    cutscenes: [
+      { flag: 'cs_win_magma', requireFlag: 'boss_magma', pages: [
+        'マグマ・ゴーレムは くずれおちた。\nどうくつに しずけさが もどる。',
+        'イクマ「やったな ユイト！\nおれたちの スピードは\nマグマにも まけなかったぜ！」',
+        'ユイト「つぎは スカイスタジアムだ。\nいこう、みんな！」',
+      ] },
+    ],
     grid: [
       'CCCCCCCCCCCCCCCCCC', // y0
       'CCCccccccccccccCCC', // y1  ボス部屋・おく宝箱(4,1)
@@ -2320,6 +2339,13 @@ var MAPS = {
     id: 'tower_ice_3f',
     name: 'こおりの とう さいじょうかい',
     ambient: 'snow',
+    cutscenes: [
+      { flag: 'cs_win_ice', requireFlag: 'boss_ice', pages: [
+        'アイス・ゴーレムは くだけちり、\nこおりの とうに ひかりが さした。',
+        'アオシ「おちついて よめば、\nかたい こおりにも すきが ある。」',
+        'ユイト「つぎは もりの しんでんだ。\nもうすこしで やみに とどく！」',
+      ] },
+    ],
     grid: [
       'XXXXXXXXXXXXXXXX', // r0
       'XIIIIIIIIIIIIIIX', // r1  ロック宝(6,1)＝ボス撃破で解除
@@ -2470,6 +2496,13 @@ var MAPS = {
     id: 'shrine_forest_3f',
     name: 'もりの しんでん さいじょうかい',
     ambient: 'forest',
+    cutscenes: [
+      { flag: 'cs_win_forest', requireFlag: 'boss_forest', pages: [
+        '森の守り神 ガイアは\nみんなに ちからを たくして きえた。',
+        'ユイト「ここまで これたのは\nみんなが いたからだ。」',
+        'イクマ「けっせんだ ユイト。\nやみのしろへ、いこう！」',
+      ] },
+    ],
     grid: [
       'VVVVVVVVVVVVVVVV', // r0
       'VMMMMMMMMMMMMMMV', // r1  北の扉(8,1)→やみのしろ／ロック宝(12,1)
@@ -3265,6 +3298,7 @@ var MAPS = {
         'だが きたの そらに、\nくろい うずが ひろがっていく。',
         'たおしたはずの やみが、\nふたたび よみがえったのだ。',
         'やみの もんの むこうから\nつめたい きはいが ながれてくる。',
+        '― だい2しょう ―\n「やみの ぎゃくしゅう」',
         'ユイト「また みんなを\nおびえさせは しない。\nぼくが とめる！」',
       ],
     },
@@ -3435,6 +3469,13 @@ var MAPS = {
     id: 'ch2_pass',
     name: 'こおりの とうげ',
     ambient: 'snow',   // 雪：ふぶく氷の峠
+    cutscenes: [
+      { flag: 'cs_win_dark_general', requireFlag: 'boss_dark_general', pages: [
+        'やみの しょうぐん ヴォルクは\nふぶきの なかへ きえた。',
+        'アオシ「5人 そろえば、\nこんな つよい てきにも かてる。」',
+        'ユイト「きずなの ちからだ。\nこの とうげを こえて さきへ すすもう！」',
+      ] },
+    ],
     grid: [
       '################', // r0
       '#......,.......#', // r1  ← 北出口(7,1)→ shrine_forest_1f（要 boss_ice）
@@ -7020,10 +7061,15 @@ function clampCamera(desired, screen, mapPx) {
  */
 function pendingCutscene(map, flags) {
   flags = flags || {};
-  var cs = map && map.cutscene;
-  if (!cs || !cs.pages || !cs.pages.length) return null;
-  if (cs.flag && flags[cs.flag]) return null;
-  return cs;
+  var list = (map && map.cutscenes) || (map && map.cutscene ? [map.cutscene] : []);
+  for (var i = 0; i < list.length; i++) {
+    var cs = list[i];
+    if (!cs || !cs.pages || !cs.pages.length) continue;
+    if (cs.requireFlag && !flags[cs.requireFlag]) continue;
+    if (cs.flag && flags[cs.flag]) continue;
+    return cs;
+  }
+  return null;
 }
 
 // ── マップギミック（弾2）：純粋関数（テスト対象） ─────────────────────
