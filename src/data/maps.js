@@ -400,6 +400,13 @@ var MAPS = {
     id: 'field5',
     name: 'スカイスタジアム',
     ambient: 'sky',   // 空：雲が流れる＋きらめき
+    cutscenes: [
+      { flag: 'cs_win_guardian', requireFlag: 'boss_guardian', pages: [
+        'ガーディアンは ひかりに つつまれ\nしずかに きえていった。',
+        'トモキ「まもりを かためれば\nどんな てきも こわくない。」',
+        'イツキ「うしろは まかせろ。\nつぎは いよいよ ダークアリーナだ！」',
+      ] },
+    ],
     grid: [
       '################', // r0
       '#......,.......#', // r1
@@ -814,6 +821,13 @@ var MAPS = {
     id: 'cave1',
     name: 'ほのおの どうくつ',
     dark: true,
+    cutscenes: [
+      { flag: 'cs_win_magma', requireFlag: 'boss_magma', pages: [
+        'マグマ・ゴーレムは くずれおちた。\nどうくつに しずけさが もどる。',
+        'イクマ「やったな ユイト！\nおれたちの スピードは\nマグマにも まけなかったぜ！」',
+        'ユイト「つぎは スカイスタジアムだ。\nいこう、みんな！」',
+      ] },
+    ],
     grid: [
       'CCCCCCCCCCCCCCCCCC', // y0
       'CCCccccccccccccCCC', // y1  ボス部屋・おく宝箱(4,1)
@@ -965,6 +979,13 @@ var MAPS = {
     id: 'tower_ice_3f',
     name: 'こおりの とう さいじょうかい',
     ambient: 'snow',
+    cutscenes: [
+      { flag: 'cs_win_ice', requireFlag: 'boss_ice', pages: [
+        'アイス・ゴーレムは くだけちり、\nこおりの とうに ひかりが さした。',
+        'アオシ「おちついて よめば、\nかたい こおりにも すきが ある。」',
+        'ユイト「つぎは もりの しんでんだ。\nもうすこしで やみに とどく！」',
+      ] },
+    ],
     grid: [
       'XXXXXXXXXXXXXXXX', // r0
       'XIIIIIIIIIIIIIIX', // r1  ロック宝(6,1)＝ボス撃破で解除
@@ -1115,6 +1136,13 @@ var MAPS = {
     id: 'shrine_forest_3f',
     name: 'もりの しんでん さいじょうかい',
     ambient: 'forest',
+    cutscenes: [
+      { flag: 'cs_win_forest', requireFlag: 'boss_forest', pages: [
+        '森の守り神 ガイアは\nみんなに ちからを たくして きえた。',
+        'ユイト「ここまで これたのは\nみんなが いたからだ。」',
+        'イクマ「けっせんだ ユイト。\nやみのしろへ、いこう！」',
+      ] },
+    ],
     grid: [
       'VVVVVVVVVVVVVVVV', // r0
       'VMMMMMMMMMMMMMMV', // r1  北の扉(8,1)→やみのしろ／ロック宝(12,1)
@@ -2080,6 +2108,13 @@ var MAPS = {
     id: 'ch2_pass',
     name: 'こおりの とうげ',
     ambient: 'snow',   // 雪：ふぶく氷の峠
+    cutscenes: [
+      { flag: 'cs_win_dark_general', requireFlag: 'boss_dark_general', pages: [
+        'やみの しょうぐん ヴォルクは\nふぶきの なかへ きえた。',
+        'アオシ「5人 そろえば、\nこんな つよい てきにも かてる。」',
+        'ユイト「きずなの ちからだ。\nこの とうげを こえて さきへ すすもう！」',
+      ] },
+    ],
     grid: [
       '################', // r0
       '#......,.......#', // r1  ← 北出口(7,1)→ shrine_forest_1f（要 boss_ice）

@@ -176,3 +176,20 @@ test('加入演出: 仲間4人に joinStory が3ページ以上ある', () => {
     npc.joinStory.forEach((p) => assert.ok(typeof p === 'string' && p.length > 0));
   });
 });
+
+test('勝利イベント: 5マップに requireFlag=撃破フラグ の cutscenes がある', () => {
+  const want = [
+    { map: 'cave1',            flag: 'cs_win_magma',        req: 'boss_magma' },
+    { map: 'field5',           flag: 'cs_win_guardian',     req: 'boss_guardian' },
+    { map: 'ch2_pass',         flag: 'cs_win_dark_general', req: 'boss_dark_general' },
+    { map: 'tower_ice_3f',     flag: 'cs_win_ice',          req: 'boss_ice' },
+    { map: 'shrine_forest_3f', flag: 'cs_win_forest',       req: 'boss_forest' },
+  ];
+  want.forEach((w) => {
+    const list = MAPS[w.map].cutscenes || (MAPS[w.map].cutscene ? [MAPS[w.map].cutscene] : []);
+    const cs = list.find((c) => c.flag === w.flag);
+    assert.ok(cs, w.map + ' に ' + w.flag);
+    assert.strictEqual(cs.requireFlag, w.req, w.map + ' の requireFlag');
+    assert.ok(cs.pages && cs.pages.length >= 2, w.map + ' の pages が2枚以上');
+  });
+});
