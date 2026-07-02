@@ -76,12 +76,21 @@ function createNewGamePlus(prevState) {
     c.dead = false;
     return c;
   });
+  // 在籍している仲間の joined_* だけは復元する。
+  //   2しゅうめは field1〜4 の出口が joined_* でロックされるが、仲間は既に
+  //   party に居るので再加入イベントは起こらない。復元しないと出口が永久ロック
+  //   ＝詰みになる。ボス/ストーリー/宝フラグは持ち越さない（はじめから）。
+  var _JOINABLE = { ikuma: true, aoshi: true, tomoki: true, itsuki: true };
+  var carriedFlags = {};
+  party.forEach(function (p) {
+    if (p && _JOINABLE[p.id]) carriedFlags['joined_' + p.id] = true;
+  });
   return {
     party:        party,
     roster:       roster,
     inventory:    structuredClone(prev.inventory || { drink: 2 }),
     gold:         prev.gold || 0,
-    flags:        {},                                        // ストーリー/ボス/宝は はじめから
+    flags:        carriedFlags,                              // 在籍仲間の joined_* のみ復元
     dex:          structuredClone(prev.dex || {}),           // ずかんは えいぞく（やりこみ）
     achievements: structuredClone(prev.achievements || {}), // じっせきも えいぞく
     title:        prev.title || null,                        // そうび中の称号は いじする

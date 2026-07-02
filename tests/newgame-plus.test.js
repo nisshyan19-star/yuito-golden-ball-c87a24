@@ -59,6 +59,28 @@ test('もちもの/ゴールド/ずかん/じっせき/称号/せってい を �
   assert.strictEqual(ng.settings.difficulty, 'hard', 'むずかしさ維持');
 });
 
+// ── createNewGamePlus：在籍仲間の joined_* 復元（2しゅうめの出口ロック詰み防止）─
+test('party在籍の仲間4種は joined_* が復元される（出口ロックで詰まない）', () => {
+  const prev = clearedState();
+  // party = [yuito, ikuma]（clearedState が ikuma を加えている）
+  const ng = createNewGamePlus(prev);
+  assert.strictEqual(ng.flags.joined_ikuma, true, 'ikuma在籍→joined_ikumaが復元');
+  // 在籍していない仲間は復元されない（出口ロックは正しく働く）
+  assert.ok(!ng.flags.joined_aoshi, 'aoshi未在籍→joined_aoshiは立たない');
+  // ストーリー/ボスフラグは持ち越さない
+  assert.ok(!ng.flags.boss_kaiser, 'boss系は復元されない');
+});
+
+test('なかまモンスター(roster)や敵IDは joined_ を汚染しない', () => {
+  const prev = clearedState();
+  prev.party.push({ id: 'golden_ball', name: 'きんのボール', level: 5, exp: 0,
+                    maxHp: 30, hp: 30, maxMp: 0, mp: 0, kiai: 0, dead: false,
+                    skills: [], equip: { weapon: null, armor: null }, type: 'speed' });
+  const ng = createNewGamePlus(prev);
+  assert.ok(!ng.flags.joined_golden_ball, 'ホワイトリスト外は joined_ にならない');
+  assert.strictEqual(ng.flags.joined_ikuma, true, '正規の仲間は復元される');
+});
+
 // ── createNewGamePlus：全回復して再出発 ───────────────────────────────
 test('パーティは HP/MP 全回復・キアイ0・戦闘不能解除 で 出発する', () => {
   const prev = clearedState();
@@ -72,9 +94,13 @@ test('パーティは HP/MP 全回復・キアイ0・戦闘不能解除 で 出�
 });
 
 // ── createNewGamePlus：リセットするもの ──────────────────────────────
-test('フラグは空にリセット（ストーリー/ボス/宝が はじめから）', () => {
+test('ストーリー/ボス/宝フラグは はじめから（在籍仲間の joined_* だけ復元）', () => {
   const ng = createNewGamePlus(clearedState());
-  assert.deepStrictEqual(ng.flags, {}, 'flags が空');
+  // ボス/ストーリー/宝は持ち越さない
+  assert.ok(!ng.flags.boss_kaiser && !ng.flags.game_cleared && !ng.flags.secret_puzzle,
+    'ストーリー/ボス/宝は空');
+  // 在籍している仲間の joined_* だけが復元される
+  assert.deepStrictEqual(ng.flags, { joined_ikuma: true }, '在籍仲間のjoined_のみ');
 });
 
 test('いる場所は field1 のスタート位置にもどる', () => {
