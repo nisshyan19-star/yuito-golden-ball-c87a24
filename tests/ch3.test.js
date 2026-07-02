@@ -63,3 +63,15 @@ test('ch3: ネオ撃破で ch3_start フラグを立てる', () => {
   const bossNpc = (castle.npcs || []).find((n) => n.boss && n.boss.enemies && n.boss.enemies.includes('neo_kaiser'));
   assert.strictEqual(bossNpc.boss.setFlag, 'ch3_start');
 });
+
+test('ch3: boss_asterion 達成で真エンディングが返る', () => {
+  const state = {
+    party: [{ id: 'yuito', name: 'ユイト' }, { id: 'ikuma', name: 'イクマ' }],
+    flags: { boss_neo_kaiser: true, boss_asterion: true },
+  };
+  const pages = story.getEnding(state);
+  assert.ok(Array.isArray(pages) && pages.length > 0);
+  const text = pages.join('\n');
+  assert.ok(text.includes('だい3しょう') || text.includes('アステリオン') || text.includes('しんの'),
+    '真EDの文言が含まれる');
+});
