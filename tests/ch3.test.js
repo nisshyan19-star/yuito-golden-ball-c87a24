@@ -3,6 +3,8 @@ const test = require('node:test');
 const assert = require('node:assert');
 const story = require('../src/data/story.js');
 const MAPS = require('../src/data/maps.js').MAPS || require('../src/data/maps.js');
+const itemsMod = require('../src/data/items.js');
+const ITEMS = itemsMod.ITEMS || itemsMod;
 
 // 第2章まで全クリアの土台フラグ
 const CH2_DONE = {
@@ -131,4 +133,21 @@ test('ch3-S3: アステリオン戦は ending:true で真EDを発火し trial_3 
   assert.strictEqual(boss.requireFlag, 'trial_3');
   assert.strictEqual(boss.boss.winFlag, 'boss_asterion');
   assert.strictEqual(boss.boss.ending, true);
+});
+
+test('装備: star_boots は atk40（第3章の例外）', () => {
+  assert.strictEqual(ITEMS.star_boots.atk, 40);
+});
+
+test('装備: star_boots 以外の全武器は atk<=32', () => {
+  for (const id in ITEMS) {
+    const it = ITEMS[id];
+    if (it && it.kind === 'weapon' && id !== 'star_boots') {
+      assert.ok(it.atk <= 32, id + ' の atk が32超過: ' + it.atk);
+    }
+  }
+});
+
+test('装備: star_mail は def28', () => {
+  assert.strictEqual(ITEMS.star_mail.def, 28);
 });
