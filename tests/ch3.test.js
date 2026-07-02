@@ -82,6 +82,24 @@ test('ch3-S1: wc_stadium は 予選→準々→準決 の順に requireFlag で�
   assert.strictEqual(s.requireFlag, 'wc_quarter', '準決は準々突破を要求');
 });
 
+test('ch3-S2: nebula 各フロアの前進出口は直前フラグを要求する', () => {
+  const f1 = MAPS.nebula_f1, f2 = MAPS.nebula_f2, f3 = MAPS.nebula_f3;
+  assert.ok(f1 && f2 && f3, '3フロアが存在する');
+  const up1 = (f1.exits || []).find((e) => e.to === 'nebula_f2');
+  const up2 = (f2.exits || []).find((e) => e.to === 'nebula_f3');
+  assert.strictEqual(up1.requireFlag, 'nebula_f1');
+  assert.strictEqual(up2.requireFlag, 'nebula_f2');
+});
+
+test('ch3-S2: ゼロス撃破で star_boots を報酬に、star_shrine_1 へ誘導', () => {
+  const f3 = MAPS.nebula_f3;
+  const zerosNpc = (f3.npcs || []).find((n) => n.boss && n.boss.enemies.includes('zeros'));
+  assert.ok(zerosNpc);
+  assert.strictEqual(zerosNpc.requireFlag, 'nebula_f3');
+  assert.strictEqual(zerosNpc.boss.reward.item, 'star_boots');
+  assert.strictEqual(zerosNpc.boss.warpTo, 'star_shrine_1');
+});
+
 test('ch3: boss_asterion 達成で真エンディングが返る', () => {
   const state = {
     party: [{ id: 'yuito', name: 'ユイト' }, { id: 'ikuma', name: 'イクマ' }],

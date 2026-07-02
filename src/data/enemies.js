@@ -401,6 +401,35 @@ const ENEMIES = {
       defeat: '「みごとだ… きみたちが\nせかいいちだ。だが そらを みろ！」',
     },
   },
+
+  // === 第3章 S2：うちゅうせん ネビュラごう ===
+  mecha_soldier: {
+    id: 'mecha_soldier', name: 'メカ・ソルジャー', type: 'power', art: 'dark_kaiser',
+    hp: 110, atk: 24, def: 16, spd: 12, exp: 150, gold: 110,
+    appears: [30, 50],
+    drops: [{ id: 'mat_iron', chance: 0.6 }, { id: 'mat_crystal', chance: 0.3 }],
+  },
+  mecha_drone: {
+    id: 'mecha_drone', name: 'メカ・ドローン', type: 'speed', art: 'offside_ghost',
+    hp: 80, atk: 20, def: 10, spd: 22, exp: 130, gold: 90,
+    appears: [30, 50],
+    drops: [{ id: 'mat_iron', chance: 0.5 }],
+  },
+  zeros: {
+    id: 'zeros', name: 'メカ・エンペラー ゼロス', type: 'technique', art: 'dark_kaiser_rage', isBoss: true,
+    hp: 450, atk: 30, def: 22, spd: 16, exp: 1000, gold: 900,
+    drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_crystal', chance: 1.0 }, { id: 'mat_star', chance: 1.0 }],
+    phases: [
+      { atk: 30, def: 22, spd: 16 },
+      { hpRatio: 0.6, atk: 36, def: 24, spd: 19 },
+      { hpRatio: 0.3, atk: 42, def: 28, spd: 22 },
+    ],
+    quotes: {
+      intro: ['「ちきゅうの サッカーは\nわれわれ きかいが せいはする！」'],
+      phases: ['「システム、フルパワー!!」', '「ありえない… にんげんに\nまけるなど…!!」'],
+      defeat: '「なぜだ… なぜ きかいが\nこころに まけるのだ…」',
+    },
+  },
 };
 
 (function (root, api) {
