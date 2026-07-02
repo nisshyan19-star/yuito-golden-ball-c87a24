@@ -65,6 +65,9 @@ test('objectiveFor: 全部倒したら done=true', () => {
   const o = story.objectiveFor(Object.assign({}, J, {
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true, boss_forest: true, boss_neo_kaiser: true,
+    wc_qualify: true, wc_quarter: true, wc_semi: true, boss_volg: true,
+    nebula_f1: true, nebula_f2: true, nebula_f3: true, boss_zeros: true,
+    trial_1: true, trial_2: true, trial_3: true, boss_asterion: true,
   }));
   assert.strictEqual(o.done, true);
   assert.ok(o.bar.includes('クリア'));
