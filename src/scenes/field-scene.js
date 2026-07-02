@@ -1923,6 +1923,8 @@ function createFieldScene(state) {
         S.pushScene(S.createBattleScene(state, null, {
           forced: b.enemies, winFlag: b.winFlag, vanishFlag: b.vanishFlag,
           ending: b.ending, reward: b.reward,
+          setFlag: b.setFlag, afterPages: b.afterPages,
+          warpTo: b.warpTo, warpX: b.warpX, warpY: b.warpY,
         }));
       } }));
       return;

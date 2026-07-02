@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const story = require('../src/data/story.js');
+const MAPS = require('../src/data/maps.js').MAPS || require('../src/data/maps.js');
 
 // 第2章まで全クリアの土台フラグ
 const CH2_DONE = {
@@ -37,4 +38,28 @@ test('ch3: アステリオンまで全達成で done=true', () => {
   }));
   assert.strictEqual(o.done, true);
   assert.ok(o.bar.includes('クリア'), 'bar: ' + o.bar);
+});
+
+test('ch3: ネオ・カイザー戦は ending を発火しない（地続き突入）', () => {
+  const castle = MAPS.ch2_castle;
+  assert.ok(castle, 'ch2_castle が存在する');
+  const bossNpc = (castle.npcs || []).find((n) => n.boss && n.boss.enemies && n.boss.enemies.includes('neo_kaiser'));
+  assert.ok(bossNpc, 'neo_kaiser ボスNPCが存在する');
+  assert.ok(!bossNpc.boss.ending, 'neo_kaiser撃破で ending:true を出さない');
+  assert.strictEqual(bossNpc.boss.winFlag, 'boss_neo_kaiser');
+});
+
+test('ch3: ネオ撃破後 wc_stadium へ誘導する warp/exit がある', () => {
+  const castle = MAPS.ch2_castle;
+  const goesToStadium =
+    (castle.exits || []).some((e) => e.to === 'wc_stadium') ||
+    (castle.warps || []).some((w) => w.to === 'wc_stadium') ||
+    (castle.npcs || []).some((n) => n.boss && n.boss.warpTo === 'wc_stadium');
+  assert.ok(goesToStadium, 'wc_stadium への遷移口がある');
+});
+
+test('ch3: ネオ撃破で ch3_start フラグを立てる', () => {
+  const castle = MAPS.ch2_castle;
+  const bossNpc = (castle.npcs || []).find((n) => n.boss && n.boss.enemies && n.boss.enemies.includes('neo_kaiser'));
+  assert.strictEqual(bossNpc.boss.setFlag, 'ch3_start');
 });

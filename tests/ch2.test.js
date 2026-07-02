@@ -101,11 +101,14 @@ test('ch2_pass の北exit(7,1)は requireFlag:boss_ice（氷の塔クリアで �
   assert.strictEqual(north.requireFlag, 'boss_ice');
 });
 
-test('ch2_castle のラスボスNPCが ending:true / winFlag:boss_neo_kaiser', () => {
-  const npc = (MAPS.ch2_castle.npcs || []).find((n) => n.boss && n.boss.ending);
-  assert.ok(npc, 'ch2_castle に ending ボスNPCが無い');
+test('ch2_castle のラスボスNPCは neo_kaiser 撃破で第3章へ地続き（ending無し）', () => {
+  // 第3章追加により、ネオ・カイザー撃破は ending を発火せず wc_stadium へ遷移する。
+  const npc = (MAPS.ch2_castle.npcs || []).find((n) => n.boss && n.boss.enemies && n.boss.enemies.includes('neo_kaiser'));
+  assert.ok(npc, 'ch2_castle に neo_kaiser ボスNPCが無い');
   assert.strictEqual(npc.boss.winFlag, 'boss_neo_kaiser');
   assert.deepStrictEqual(npc.boss.enemies, ['neo_kaiser']);
+  assert.ok(!npc.boss.ending, 'neo_kaiser撃破で ending:true を出さない（地続き突入）');
+  assert.strictEqual(npc.boss.warpTo, 'wc_stadium');
 });
 
 test('ch2_pass の中ボスNPCが dark_general / winFlag:boss_dark_general', () => {

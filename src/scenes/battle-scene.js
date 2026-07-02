@@ -948,12 +948,33 @@ function createBattleScene(state, enemyPool, opts) {
       if (opts.winFlag)    state.flags[opts.winFlag] = true;
       if (opts.vanishFlag) state.flags[opts.vanishFlag] = true;
     }
+    // 章の地続き遷移（第3章）：撃破後に追加フラグを立てる。
+    if (opts.setFlag) {
+      state.flags = state.flags || {};
+      state.flags[opts.setFlag] = true;
+    }
     if (S && S.saveGame) S.saveGame(state);
+
+    // 撃破後の追加ストーリーページ（イベント演出）を勝利メッセージへ連結。
+    if (Array.isArray(opts.afterPages)) pages = pages.concat(opts.afterPages);
 
     // 勝利後のルーティング
     // ボスラッシュ（追加弾4-D）：onWin が あれば 次の戦闘へ つなぐ判断を 呼び出し側に まかせる。
     // _showMessages は シーンを 積まない（内部 _msg）ので、onWin の中で popScene すること。
     if (typeof opts.onWin === 'function') { _showMessages(pages, function () { opts.onWin(state); }); return; }
+    // 章遷移ワープ（第3章突入）：撃破後に別マップの指定座標へ飛ばしてフィールドを作り直す。
+    if (opts.warpTo) {
+      _showMessages(pages, function () {
+        state.position = state.position || {};
+        state.position.map = opts.warpTo;
+        if (typeof opts.warpX === 'number') state.position.x = opts.warpX;
+        if (typeof opts.warpY === 'number') state.position.y = opts.warpY;
+        if (S && S.saveGame) S.saveGame(state);
+        if (S && S.popScene) S.popScene();
+        if (S && S.replaceScene && S.createFieldScene) S.replaceScene(S.createFieldScene(state));
+      });
+      return;
+    }
     if (opts.ending) { _showMessages(pages, _goEnding); return; }
     if (opts.winFlag || opts.vanishFlag) { _showMessages(pages, _returnToFieldRebuild); return; }
     _showMessages(pages, _popToField);

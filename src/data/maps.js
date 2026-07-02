@@ -2276,7 +2276,23 @@ var MAPS = {
       },
       {
         x: 7, y: 5, sprite: 'kaiser',
-        boss: { enemies: ['neo_kaiser'], winFlag: 'boss_neo_kaiser', vanishFlag: 'boss_neo_kaiser', ending: true },
+        boss: {
+          enemies: ['neo_kaiser'],
+          winFlag: 'boss_neo_kaiser',
+          vanishFlag: 'boss_neo_kaiser',
+          // ending は出さない。地続きで第3章（せかいたいかい）へ。
+          afterPages: [
+            'ネオ・カイザーは、やみの\nかなたへ きえていった……',
+            'よみがえった やみが、\nこんどこそ ほろびたのだ。',
+            'まちに ひかりが もどり、\nおうごんの ボールが\nふたたび こがねに かがやく。',
+            'そのとき――\nそらの おくで なにかが\nキラリと またたいた きがした。',
+            'ユイト「……きのせいかな。\nさあ、つぎは ほんものの\nせかいたいかいだ！」',
+            'ユイト「せかい一に なって\nこの おうごんの ボールで\nみんなを えがおに するぞ！」',
+            'こうして ユイトたちは\nにっぽん だいひょうとして\nグランドスタジアムへ むかった。',
+          ],
+          warpTo: 'wc_stadium', warpX: 7, warpY: 15,
+          setFlag: 'ch3_start',
+        },
         pages: [
           'ネオ・カイザーが\nしずかに たちあがった。',
           '「ダーク・カイザーは\nわが いちぶに すぎぬ。」',
