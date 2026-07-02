@@ -142,3 +142,21 @@ test('案内コーチが town1 と ch2_town に居る（guide:true・coachスプ
   assert.ok(t2, 'ch2_townに案内コーチが居る');
   assert.strictEqual(t2.sprite, 'coach');
 });
+
+test('必須化: field1〜4 の南出口(7,16) に requireFlag/lockedMsg があり joined_* と一致する', () => {
+  const cases = [
+    { map: 'field1', to: 'town1',  flag: 'joined_ikuma',  joinId: 'ikuma'  },
+    { map: 'field2', to: 'field3', flag: 'joined_aoshi',  joinId: 'aoshi'  },
+    { map: 'field3', to: 'town2',  flag: 'joined_tomoki', joinId: 'tomoki' },
+    { map: 'field4', to: 'field5', flag: 'joined_itsuki', joinId: 'itsuki' },
+  ];
+  cases.forEach((c) => {
+    const e = (MAPS[c.map].exits || []).find((x) => x.to === c.to);
+    assert.ok(e, c.map + '→' + c.to + ' 出口が存在');
+    assert.strictEqual(e.requireFlag, c.flag, c.map + ' の requireFlag');
+    assert.ok(e.lockedMsg && e.lockedMsg.length > 0, c.map + ' に lockedMsg');
+    const npc = (MAPS[c.map].npcs || []).find((n) => n.joinId === c.joinId);
+    assert.ok(npc, c.map + ' に joinId=' + c.joinId + ' のNPC');
+    assert.strictEqual(e.requireFlag, 'joined_' + npc.joinId, 'requireFlag と joined_+joinId が一致');
+  });
+});

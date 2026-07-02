@@ -129,7 +129,9 @@ var MAPS = {
       { x: 10, y: 13, type: 'goal',   solid: true },
     ],
     exits: [
-      { x: 7, y: 16, to: 'town1', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'town1', tx: 7, ty: 2,
+        requireFlag: 'joined_ikuma',
+        lockedMsg: 'まちへ いくまえに…\nくさはらの どこかで\nはやての FW イクマが\nまっているみたいだ。\nさがして はなしかけよう！' },
     ],
     encounter: { rate: 0.045, enemies: ['foul_goblin', 'offside_ghost', 'mud_slime'], rare: { rate: 0.05, enemies: ['golden_ball'] } },
   },
@@ -210,7 +212,9 @@ var MAPS = {
       { x: 7, y: 14, dir: 'down' },
     ],
     exits: [
-      { x: 7, y: 16, to: 'field3', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'field3', tx: 7, ty: 2,
+        requireFlag: 'joined_aoshi',
+        lockedMsg: 'スタジアムの どこかに\nてんさい MF アオシが いる。\nなかまに さそってから\nさきへ すすもう！' },
     ],
     encounter: { rate: 0.05, enemies: ['foul_goblin', 'offside_ghost', 'mud_slime', 'corner_crow'], rare: { rate: 0.05, enemies: ['golden_ball'] } },
   },
@@ -282,7 +286,9 @@ var MAPS = {
     pushGoals:  [ { x: 11, y: 13 } ],
     pushPuzzle: { solveFlag: 'field3_puzzle', clearMsg: 'ガコン！ どこかで\nたからばこの カギが はずれた おとが した！' },
     exits: [
-      { x: 7, y: 16, to: 'town2', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'town2', tx: 7, ty: 2,
+        requireFlag: 'joined_tomoki',
+        lockedMsg: 'すなはまの どこかで\nまもりの DF トモキが\nきみを まっている。\nはなしかけて なかまに しよう！' },
     ],
     encounter: { rate: 0.055, enemies: ['offside_ghost', 'hand_monster', 'corner_crow', 'throwin_golem'], rare: { rate: 0.05, enemies: ['golden_ball'] } },
   },
@@ -360,7 +366,9 @@ var MAPS = {
       { x: 14, y: 9, tx: 2,  ty: 5 },
     ],
     exits: [
-      { x: 7, y: 16, to: 'field5', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'field5', tx: 7, ty: 2,
+        requireFlag: 'joined_itsuki',
+        lockedMsg: 'あめの ピッチの どこかに\nでんせつの GK イツキが いる。\n5にんめの なかまを\nむかえに いこう！' },
     ],
     encounter: { rate: 0.06, enemies: ['hand_monster', 'yellowcard_bat', 'throwin_golem', 'losstime_ghost'], rare: { rate: 0.05, enemies: ['metal_keeper'] } },
   },
