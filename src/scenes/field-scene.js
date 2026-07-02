@@ -2138,8 +2138,8 @@ function createFieldScene(state) {
       return;
     }
 
-    // ⑧ 通常会話
-    S.pushScene(S.createDialog(npc.pages));
+    // ⑧ 通常会話（進行で変わる variants に対応）
+    S.pushScene(S.createDialog(npcPagesFor(npc, (state && state.flags) || {})));
   }
 
   // ボスラッシュ本体（追加弾4-D）。歴代ボスと れんぞくで たたかう「ちょうせんの間」。
