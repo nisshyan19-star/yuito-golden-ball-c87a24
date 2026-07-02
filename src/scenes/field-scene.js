@@ -1870,17 +1870,19 @@ function createFieldScene(state) {
         S.pushScene(S.createDialog(npc.afterPages || ['いっしょに がんばろう！']));
         return;
       }
-      // 会話 → 加入処理 → 「○○が なかまになった！」→ フィールド再構築（NPC を消す）
-      S.pushScene(S.createDialog(npc.pages, { onComplete: function () {
-        var name = (typeof S.joinAlly === 'function') ? S.joinAlly(state, npc.joinId) : null;
-        if (npc.vanishFlag) {
-          if (!state.flags) state.flags = {};
-          state.flags[npc.vanishFlag] = true;
-        }
+      // 会話 → 加入ミニストーリー → 加入処理 → カットイン → フィールド再構築（NPC を消す）
+      var convo = (npc.pages || []).concat(npc.joinStory || []);
+      S.pushScene(S.createDialog(convo, { onComplete: function () {
+        if (typeof S.joinAlly === 'function') S.joinAlly(state, npc.joinId);
+        if (!state.flags) state.flags = {};
+        if (npc.vanishFlag) state.flags[npc.vanishFlag] = true;
         if (S.saveGame) S.saveGame(state);
-        S.pushScene(S.createDialog([(name || 'なかま') + ' が なかまに なった！'], { onComplete: function () {
-          if (S.replaceScene) S.replaceScene(S.createFieldScene(state));
-        } }));
+        var back = function () { if (S.replaceScene) S.replaceScene(S.createFieldScene(state)); };
+        if (typeof S.createJoinCutinScene === 'function') {
+          S.pushScene(S.createJoinCutinScene(state, npc.joinId, back));
+        } else {
+          S.pushScene(S.createDialog([(npc.joinId || 'なかま') + ' が なかまに なった！'], { onComplete: back }));
+        }
       } }));
       return;
     }
