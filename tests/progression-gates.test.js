@@ -4,56 +4,68 @@ const assert = require('node:assert');
 
 const story = require('../src/data/story.js');
 
-test('objectiveFor: 何もしていない時は ほのおの どうくつ を指す', () => {
+// 仲間4人 加入済み（joined_* 一式）。ボス段階のテストは全員加入前提で渡す。
+const J = { joined_ikuma: true, joined_aoshi: true, joined_tomoki: true, joined_itsuki: true };
+
+test('objectiveFor: 何もしていない時は イクマ加入 を指す', () => {
   const o = story.objectiveFor({});
+  assert.ok(o.bar.includes('イクマ'), 'barに「イクマ」が含まれる: ' + o.bar);
+  assert.ok(o.npc.includes('イクマ'), 'npc文にイクマが含まれる');
+  assert.strictEqual(o.done, false);
+});
+
+test('objectiveFor: イクマ加入後は ほのおの どうくつ を指す', () => {
+  const o = story.objectiveFor({ joined_ikuma: true });
   assert.ok(o.bar.includes('ほのお'), 'barに「ほのお」が含まれる: ' + o.bar);
   assert.ok(o.npc.includes('マグマ'), 'npc文にマグマが含まれる');
   assert.strictEqual(o.done, false);
 });
 
-test('objectiveFor: マグマ撃破後は スカイスタジアム(ガーディアン) を指す', () => {
-  const o = story.objectiveFor({ boss_magma: true });
+test('objectiveFor: 4人加入＋マグマ撃破後は スカイスタジアム(ガーディアン) を指す', () => {
+  const o = story.objectiveFor(Object.assign({}, J, { boss_magma: true }));
   assert.ok(o.bar.includes('スカイスタジアム'), 'bar: ' + o.bar);
   assert.ok(o.npc.includes('ガーディアン'));
 });
 
 test('objectiveFor: カイザー撃破後は こおりの とうげ(ヴォルク) を指す', () => {
-  const o = story.objectiveFor({ boss_magma: true, boss_guardian: true, boss_kaiser: true });
+  const o = story.objectiveFor(Object.assign({}, J, {
+    boss_magma: true, boss_guardian: true, boss_kaiser: true,
+  }));
   assert.ok(o.bar.includes('こおりの とうげ'), 'bar: ' + o.bar);
   assert.ok(o.npc.includes('ヴォルク'));
 });
 
 test('objectiveFor: 将軍撃破後は こおりの とう(アイスゴーレム) を指す', () => {
-  const o = story.objectiveFor({
+  const o = story.objectiveFor(Object.assign({}, J, {
     boss_magma: true, boss_guardian: true, boss_kaiser: true, boss_dark_general: true,
-  });
+  }));
   assert.ok(o.bar.includes('こおりの とう'), 'bar: ' + o.bar);
   assert.ok(o.npc.includes('アイス・ゴーレム'));
 });
 
 test('objectiveFor: アイス撃破後は もりの しんでん(ガイア) を指す', () => {
-  const o = story.objectiveFor({
+  const o = story.objectiveFor(Object.assign({}, J, {
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true,
-  });
+  }));
   assert.ok(o.bar.includes('もりの しんでん'), 'bar: ' + o.bar);
   assert.ok(o.npc.includes('ガイア'));
 });
 
 test('objectiveFor: 森撃破後は やみのしろ(ネオ・カイザー) を指す', () => {
-  const o = story.objectiveFor({
+  const o = story.objectiveFor(Object.assign({}, J, {
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true, boss_forest: true,
-  });
+  }));
   assert.ok(o.bar.includes('やみのしろ'), 'bar: ' + o.bar);
   assert.ok(o.npc.includes('ネオ・カイザー'));
 });
 
 test('objectiveFor: 全部倒したら done=true', () => {
-  const o = story.objectiveFor({
+  const o = story.objectiveFor(Object.assign({}, J, {
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true, boss_forest: true, boss_neo_kaiser: true,
-  });
+  }));
   assert.strictEqual(o.done, true);
   assert.ok(o.bar.includes('クリア'));
 });

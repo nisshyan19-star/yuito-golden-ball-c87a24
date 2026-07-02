@@ -224,21 +224,24 @@ test('森のたから（こもれびの つるぎ／はがねの きのよろい
 });
 
 // ── 進行ナビ：氷の塔クリア後・森未クリアなら「もりの しんでんへ！」 ──
+// 仲間4人 加入済み前提（新 spine では加入目標が先頭に入るため）
+const J = { joined_ikuma: true, joined_aoshi: true, joined_tomoki: true, joined_itsuki: true };
+
 test('objectiveFor: boss_ice 済み・boss_forest 未なら もくひょうは「もりの しんでんへ！」', () => {
-  const flags = {
+  const flags = Object.assign({}, J, {
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true,
-  };
+  });
   const obj = objectiveFor(flags);
   assert.strictEqual(obj.bar, 'もりの しんでんへ！');
   assert.strictEqual(obj.done, false);
 });
 
 test('objectiveFor: boss_forest も済むと つぎは「やみのしろへ！」', () => {
-  const flags = {
+  const flags = Object.assign({}, J, {
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true, boss_forest: true,
-  };
+  });
   const obj = objectiveFor(flags);
   assert.strictEqual(obj.bar, 'やみのしろへ！');
 });

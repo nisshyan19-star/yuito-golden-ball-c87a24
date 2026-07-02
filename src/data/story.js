@@ -175,9 +175,21 @@ function getEnding(state) {
 function objectiveFor(flags) {
   flags = flags || {};
   var spine = [
+    { flag: 'joined_ikuma',
+      bar: 'イクマを なかまに しよう！',
+      npc: 'はじまりの草原に いる\nはやての FW イクマに\nはなしかけて なかまに しよう！' },
     { flag: 'boss_magma',
       bar: 'ほのおの どうくつへ！',
       npc: 'みのりの村の おくに ある\nほのおの どうくつで\nマグマ・ゴーレムを たおそう！' },
+    { flag: 'joined_aoshi',
+      bar: 'アオシを なかまに しよう！',
+      npc: 'ナイタースタジアムに いる\nてんさい MF アオシに\nはなしかけて なかまに しよう！' },
+    { flag: 'joined_tomoki',
+      bar: 'トモキを なかまに しよう！',
+      npc: 'サンドコートに いる\nまもりの DF トモキに\nはなしかけて なかまに しよう！' },
+    { flag: 'joined_itsuki',
+      bar: 'イツキを なかまに しよう！',
+      npc: 'レイニーピッチに いる\nでんせつの GK イツキに\nはなしかけて なかまに しよう！' },
     { flag: 'boss_guardian',
       bar: 'スカイスタジアムへ！',
       npc: 'つぎは スカイスタジアムで\nガーディアンを たおそう！' },
