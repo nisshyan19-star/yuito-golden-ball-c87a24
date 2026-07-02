@@ -1862,6 +1862,11 @@ function createFieldScene(state) {
     if (npc.joinId) {
       var already = (state.party || []).some(function (p) { return p.id === npc.joinId; });
       if (already) {
+        // 自己修復（A-3の保険）：万一 joined_ フラグ欠けのセーブでも、話しかければ回復する。
+        if (!state.flags) state.flags = {};
+        state.flags['joined_' + npc.joinId] = true;
+        if (npc.vanishFlag) state.flags[npc.vanishFlag] = true;
+        if (S.saveGame) S.saveGame(state);
         S.pushScene(S.createDialog(npc.afterPages || ['いっしょに がんばろう！']));
         return;
       }

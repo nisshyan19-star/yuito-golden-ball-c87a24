@@ -111,12 +111,21 @@ function createNewGamePlus(prevState) {
     c.dead = false;
     return c;
   });
+  // 在籍している仲間の joined_* だけは復元する。
+  //   2しゅうめは field1〜4 の出口が joined_* でロックされるが、仲間は既に
+  //   party に居るので再加入イベントは起こらない。復元しないと出口が永久ロック
+  //   ＝詰みになる。ボス/ストーリー/宝フラグは持ち越さない（はじめから）。
+  var _JOINABLE = { ikuma: true, aoshi: true, tomoki: true, itsuki: true };
+  var carriedFlags = {};
+  party.forEach(function (p) {
+    if (p && _JOINABLE[p.id]) carriedFlags['joined_' + p.id] = true;
+  });
   return {
     party:        party,
     roster:       roster,
     inventory:    structuredClone(prev.inventory || { drink: 2 }),
     gold:         prev.gold || 0,
-    flags:        {},                                        // ストーリー/ボス/宝は はじめから
+    flags:        carriedFlags,                              // 在籍仲間の joined_* のみ復元
     dex:          structuredClone(prev.dex || {}),           // ずかんは えいぞく（やりこみ）
     achievements: structuredClone(prev.achievements || {}), // じっせきも えいぞく
     title:        prev.title || null,                        // そうび中の称号は いじする
@@ -1475,7 +1484,9 @@ var MAPS = {
       { x: 10, y: 13, type: 'goal',   solid: true },
     ],
     exits: [
-      { x: 7, y: 16, to: 'town1', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'town1', tx: 7, ty: 2,
+        requireFlag: 'joined_ikuma',
+        lockedMsg: 'まちへ いくまえに…\nくさはらの どこかで\nはやての FW イクマが\nまっているみたいだ。\nさがして はなしかけよう！' },
     ],
     encounter: { rate: 0.045, enemies: ['foul_goblin', 'offside_ghost', 'mud_slime'], rare: { rate: 0.05, enemies: ['golden_ball'] } },
   },
@@ -1556,7 +1567,9 @@ var MAPS = {
       { x: 7, y: 14, dir: 'down' },
     ],
     exits: [
-      { x: 7, y: 16, to: 'field3', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'field3', tx: 7, ty: 2,
+        requireFlag: 'joined_aoshi',
+        lockedMsg: 'スタジアムの どこかに\nてんさい MF アオシが いる。\nなかまに さそってから\nさきへ すすもう！' },
     ],
     encounter: { rate: 0.05, enemies: ['foul_goblin', 'offside_ghost', 'mud_slime', 'corner_crow'], rare: { rate: 0.05, enemies: ['golden_ball'] } },
   },
@@ -1628,7 +1641,9 @@ var MAPS = {
     pushGoals:  [ { x: 11, y: 13 } ],
     pushPuzzle: { solveFlag: 'field3_puzzle', clearMsg: 'ガコン！ どこかで\nたからばこの カギが はずれた おとが した！' },
     exits: [
-      { x: 7, y: 16, to: 'town2', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'town2', tx: 7, ty: 2,
+        requireFlag: 'joined_tomoki',
+        lockedMsg: 'すなはまの どこかで\nまもりの DF トモキが\nきみを まっている。\nはなしかけて なかまに しよう！' },
     ],
     encounter: { rate: 0.055, enemies: ['offside_ghost', 'hand_monster', 'corner_crow', 'throwin_golem'], rare: { rate: 0.05, enemies: ['golden_ball'] } },
   },
@@ -1706,7 +1721,9 @@ var MAPS = {
       { x: 14, y: 9, tx: 2,  ty: 5 },
     ],
     exits: [
-      { x: 7, y: 16, to: 'field5', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'field5', tx: 7, ty: 2,
+        requireFlag: 'joined_itsuki',
+        lockedMsg: 'あめの ピッチの どこかに\nでんせつの GK イツキが いる。\n5にんめの なかまを\nむかえに いこう！' },
     ],
     encounter: { rate: 0.06, enemies: ['hand_monster', 'yellowcard_bat', 'throwin_golem', 'losstime_ghost'], rare: { rate: 0.05, enemies: ['metal_keeper'] } },
   },
@@ -3747,9 +3764,21 @@ function getEnding(state) {
 function objectiveFor(flags) {
   flags = flags || {};
   var spine = [
+    { flag: 'joined_ikuma',
+      bar: 'イクマを なかまに しよう！',
+      npc: 'はじまりの草原に いる\nはやての FW イクマに\nはなしかけて なかまに しよう！' },
     { flag: 'boss_magma',
       bar: 'ほのおの どうくつへ！',
       npc: 'みのりの村の おくに ある\nほのおの どうくつで\nマグマ・ゴーレムを たおそう！' },
+    { flag: 'joined_aoshi',
+      bar: 'アオシを なかまに しよう！',
+      npc: 'ナイタースタジアムに いる\nてんさい MF アオシに\nはなしかけて なかまに しよう！' },
+    { flag: 'joined_tomoki',
+      bar: 'トモキを なかまに しよう！',
+      npc: 'サンドコートに いる\nまもりの DF トモキに\nはなしかけて なかまに しよう！' },
+    { flag: 'joined_itsuki',
+      bar: 'イツキを なかまに しよう！',
+      npc: 'レイニーピッチに いる\nでんせつの GK イツキに\nはなしかけて なかまに しよう！' },
     { flag: 'boss_guardian',
       bar: 'スカイスタジアムへ！',
       npc: 'つぎは スカイスタジアムで\nガーディアンを たおそう！' },
@@ -8615,6 +8644,11 @@ function createFieldScene(state) {
     if (npc.joinId) {
       var already = (state.party || []).some(function (p) { return p.id === npc.joinId; });
       if (already) {
+        // 自己修復（A-3の保険）：万一 joined_ フラグ欠けのセーブでも、話しかければ回復する。
+        if (!state.flags) state.flags = {};
+        state.flags['joined_' + npc.joinId] = true;
+        if (npc.vanishFlag) state.flags[npc.vanishFlag] = true;
+        if (S.saveGame) S.saveGame(state);
         S.pushScene(S.createDialog(npc.afterPages || ['いっしょに がんばろう！']));
         return;
       }
