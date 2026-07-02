@@ -216,10 +216,15 @@ function clampCamera(desired, screen, mapPx) {
  */
 function pendingCutscene(map, flags) {
   flags = flags || {};
-  var cs = map && map.cutscene;
-  if (!cs || !cs.pages || !cs.pages.length) return null;
-  if (cs.flag && flags[cs.flag]) return null;
-  return cs;
+  var list = (map && map.cutscenes) || (map && map.cutscene ? [map.cutscene] : []);
+  for (var i = 0; i < list.length; i++) {
+    var cs = list[i];
+    if (!cs || !cs.pages || !cs.pages.length) continue;
+    if (cs.requireFlag && !flags[cs.requireFlag]) continue;
+    if (cs.flag && flags[cs.flag]) continue;
+    return cs;
+  }
+  return null;
 }
 
 // ── マップギミック（弾2）：純粋関数（テスト対象） ─────────────────────

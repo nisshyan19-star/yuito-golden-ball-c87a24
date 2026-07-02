@@ -94,6 +94,17 @@ test('pendingCutscene は cutscene の無いマップで null を返す', () => 
   assert.strictEqual(pendingCutscene(MAPS.field2, {}), null, 'cutscene 無しマップで null でない');
 });
 
+test('pendingCutscene: cutscenes 配列は requireFlag 未達をスキップし、条件を満たす最初を返す', () => {
+  const map = { cutscenes: [
+    { flag: 'a', requireFlag: 'need_a', pages: ['A'] },
+    { flag: 'b', requireFlag: 'need_b', pages: ['B'] },
+  ] };
+  assert.strictEqual(pendingCutscene(map, {}), null, '両方 requireFlag 未達→null');
+  assert.strictEqual(pendingCutscene(map, { need_a: true }).flag, 'a', 'a のみ条件成立');
+  assert.strictEqual(pendingCutscene(map, { need_a: true, need_b: true, a: true }).flag, 'b');
+  assert.strictEqual(pendingCutscene(map, { need_a: true, need_b: true, a: true, b: true }), null);
+});
+
 // ── ED強化：スタッフロール＋仲間ごとの別れ ───────────────────────────────
 test('getEnding にスタッフロールが含まれる', () => {
   const pages = getEnding({ party: [{ id: 'yuito', name: 'ユイト' }] });
