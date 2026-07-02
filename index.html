@@ -1286,6 +1286,72 @@ const ENEMIES = {
       defeat: '「しずまる… また\nみずの そこへ かえろう…」',
     },
   },
+
+  // === 第3章 S1：せかいたいかい ===
+  rival_ace: {
+    id: 'rival_ace', name: 'ライバルこくの エース', type: 'speed', art: 'phantom_striker',
+    hp: 90, atk: 22, def: 12, spd: 16, exp: 120, gold: 90,
+    appears: [20, 40],
+    drops: [{ id: 'mat_gold', chance: 0.5 }],
+  },
+  volg: {
+    id: 'volg', name: 'れっかの ヴォルグ', type: 'power', art: 'phantom_striker', isBoss: true,
+    hp: 320, atk: 26, def: 16, spd: 18, exp: 700, gold: 600,
+    drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_crystal', chance: 1.0 }],
+    quotes: {
+      intro: ['「せかいの かべは あつい…\nおれを こえて みせろ！」'],
+      defeat: '「みごとだ… きみたちが\nせかいいちだ。だが そらを みろ！」',
+    },
+  },
+
+  // === 第3章 S2：うちゅうせん ネビュラごう ===
+  mecha_soldier: {
+    id: 'mecha_soldier', name: 'メカ・ソルジャー', type: 'power', art: 'dark_kaiser',
+    hp: 110, atk: 24, def: 16, spd: 12, exp: 150, gold: 110,
+    appears: [30, 50],
+    drops: [{ id: 'mat_iron', chance: 0.6 }, { id: 'mat_crystal', chance: 0.3 }],
+  },
+  mecha_drone: {
+    id: 'mecha_drone', name: 'メカ・ドローン', type: 'speed', art: 'offside_ghost',
+    hp: 80, atk: 20, def: 10, spd: 22, exp: 130, gold: 90,
+    appears: [30, 50],
+    drops: [{ id: 'mat_iron', chance: 0.5 }],
+  },
+  zeros: {
+    id: 'zeros', name: 'メカ・エンペラー ゼロス', type: 'technique', art: 'dark_kaiser_rage', isBoss: true,
+    hp: 450, atk: 30, def: 22, spd: 16, exp: 1000, gold: 900,
+    drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_crystal', chance: 1.0 }, { id: 'mat_star', chance: 1.0 }],
+    phases: [
+      { atk: 30, def: 22, spd: 16 },
+      { hpRatio: 0.6, atk: 36, def: 24, spd: 19 },
+      { hpRatio: 0.3, atk: 42, def: 28, spd: 22 },
+    ],
+    quotes: {
+      intro: ['「ちきゅうの サッカーは\nわれわれ きかいが せいはする！」'],
+      phases: ['「システム、フルパワー!!」', '「ありえない… にんげんに\nまけるなど…!!」'],
+      defeat: '「なぜだ… なぜ きかいが\nこころに まけるのだ…」',
+    },
+  },
+  star_sentinel: {
+    id: 'star_sentinel', name: 'せいしんの まもりて', type: 'technique', art: 'gold_emperor',
+    hp: 140, atk: 28, def: 20, spd: 18, exp: 220, gold: 150,
+    appears: [40, 60], drops: [{ id: 'mat_star', chance: 0.4 }, { id: 'mat_crystal', chance: 0.4 }],
+  },
+  asterion: {
+    id: 'asterion', name: 'ほしくいの かみ アステリオン', type: 'technique', art: 'gold_emperor', isBoss: true,
+    hp: 560, atk: 34, def: 26, spd: 20, exp: 2000, gold: 1500,
+    drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_star', chance: 1.0 }],
+    phases: [
+      { atk: 34, def: 26, spd: 20 },
+      { hpRatio: 0.66, atk: 40, def: 28, spd: 24 },
+      { hpRatio: 0.33, atk: 48, def: 32, spd: 28 },
+    ],
+    quotes: {
+      intro: ['「おうごんの ボールは\nわが ほしの たから。\nにんげんには わたさぬ！」'],
+      phases: ['「ほしの ちからを\nみせてやろう！」', '「なぜ… にんげんの きずなが\nこれほど つよいのだ!?」'],
+      defeat: '「わかった…\nこの ボールは、みなを\nつなぐ ための ものだったのだな。」',
+    },
+  },
 };
 
 (function (root, api) {
@@ -3631,7 +3697,23 @@ var MAPS = {
       },
       {
         x: 7, y: 5, sprite: 'kaiser',
-        boss: { enemies: ['neo_kaiser'], winFlag: 'boss_neo_kaiser', vanishFlag: 'boss_neo_kaiser', ending: true },
+        boss: {
+          enemies: ['neo_kaiser'],
+          winFlag: 'boss_neo_kaiser',
+          vanishFlag: 'boss_neo_kaiser',
+          // ending は出さない。地続きで第3章（せかいたいかい）へ。
+          afterPages: [
+            'ネオ・カイザーは、やみの\nかなたへ きえていった……',
+            'よみがえった やみが、\nこんどこそ ほろびたのだ。',
+            'まちに ひかりが もどり、\nおうごんの ボールが\nふたたび こがねに かがやく。',
+            'そのとき――\nそらの おくで なにかが\nキラリと またたいた きがした。',
+            'ユイト「……きのせいかな。\nさあ、つぎは ほんものの\nせかいたいかいだ！」',
+            'ユイト「せかい一に なって\nこの おうごんの ボールで\nみんなを えがおに するぞ！」',
+            'こうして ユイトたちは\nにっぽん だいひょうとして\nグランドスタジアムへ むかった。',
+          ],
+          warpTo: 'wc_stadium', warpX: 7, warpY: 15,
+          setFlag: 'ch3_start',
+        },
         pages: [
           'ネオ・カイザーが\nしずかに たちあがった。',
           '「ダーク・カイザーは\nわが いちぶに すぎぬ。」',
@@ -3660,6 +3742,356 @@ var MAPS = {
       enemies: ['shadow_beast', 'curse_wisp'],
       rare: { rate: 0.04, enemies: ['chaos_orb'] },
     },
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  //  第3章 S1：せかいたいかい（グランドスタジアム）
+  //   同一マップ内の4試合NPCを requireFlag で一本道化する。
+  //   予選(wc_qualify)→準々(wc_quarter)→準決(wc_semi)→決勝ヴォルグ(boss_volg)。
+  //   決勝で勝つと ネビュラごう(nebula_f1) へ 地続きワープ。
+  // ══════════════════════════════════════════════════════════════
+  wc_stadium: {
+    id: 'wc_stadium',
+    name: 'グランドスタジアム',
+    cutscene: {
+      flag: 'cs_wc',
+      pages: [
+        '―― グランドスタジアム。\nせかいじゅうの つよ者が\nあつまる ゆめのぶたい。',
+        'ユイト「ここで せかい一を\nきめるんだ！」',
+      ],
+    },
+    grid: [
+      '################', // r0
+      '#......,.......#', // r1
+      '#......,.......#', // r2
+      '#......,.......#', // r3
+      '#......,.......#', // r4
+      '#......,.......#', // r5
+      '#......,.......#', // r6  ← 予選(4,6)／準々(8,6)
+      '#......,.......#', // r7
+      '#......,.......#', // r8
+      '#......,.......#', // r9
+      '#......,.......#', // r10 ← 準決(4,10)／決勝(8,10)／もどる到着(7,10)
+      '#......,.......#', // r11
+      '#......,.......#', // r12
+      '#......,.......#', // r13
+      '#......,.......#', // r14
+      '#......,.......#', // r15 ← 到着(7,15)＝やみのしろ から
+      '#......,.......#', // r16 ← 南出口(7,16)→ ch2_castle
+      '################', // r17
+    ],
+    npcs: [
+      {
+        x: 6, y: 15, sprite: 'coach', guide: true,
+        pages: ['いよいよ せかいたいかい！\nひとつずつ かって\nてっぺんを めざそう！'],
+      },
+      {
+        x: 4, y: 6, sprite: 'coach',
+        boss: { enemies: ['rival_ace'], winFlag: 'wc_qualify',
+          afterPages: ['よせん とっぱ！\nつぎは 準々けっしょうだ！'] },
+        pages: ['よせんの あいてだ！\nかって すすもう！'],
+      },
+      {
+        x: 8, y: 6, sprite: 'phantom_striker',
+        boss: { enemies: ['rival_ace', 'rival_ace'], winFlag: 'wc_quarter',
+          afterPages: ['準々けっしょう とっぱ！\nつぎは 準けっしょうだ！'] },
+        requireFlag: 'wc_qualify', lockedMsg: 'まず よせんに かとう！',
+        pages: ['準々けっしょうの あいてだ！'],
+      },
+      {
+        x: 4, y: 10, sprite: 'phantom_striker',
+        boss: { enemies: ['rival_ace', 'rival_ace'], winFlag: 'wc_semi',
+          afterPages: ['準けっしょう とっぱ！\nいよいよ けっしょうせん！'] },
+        requireFlag: 'wc_quarter', lockedMsg: '準々けっしょうが さきだ！',
+        pages: ['準けっしょう、あいては 2にん！'],
+      },
+      {
+        x: 8, y: 10, sprite: 'kaiser',
+        boss: {
+          enemies: ['volg'], winFlag: 'boss_volg', vanishFlag: 'boss_volg',
+          afterPages: [
+            'ユイトたちは せかい一に\nかがやいた！',
+            'そのとき――\nそらが われ、まっくろな\nうちゅうせんが あらわれた！',
+            '「ちきゅうの サッカーは\nわれわれ うちゅうぐんが\nいただく！」',
+            'ユイト「なんだ あれ…！？\nみんな、ネビュラごうに\nのりこむぞ！」',
+          ],
+          warpTo: 'nebula_f1', warpX: 7, warpY: 16, setFlag: 'wc_semi',
+        },
+        requireFlag: 'wc_semi', lockedMsg: '準けっしょうを かってから！',
+        pages: ['けっしょう！\nれっかの ヴォルグだ！'],
+      },
+    ],
+    objects: [
+      { x: 1,  y: 1,  type: 'goal', solid: true },
+      { x: 14, y: 1,  type: 'goal', solid: true },
+      { x: 5,  y: 8,  type: 'ball'  },
+      { x: 9,  y: 8,  type: 'ball'  },
+      { x: 2,  y: 13, type: 'flower' },
+      { x: 13, y: 13, type: 'flower' },
+    ],
+    exits: [
+      { x: 7, y: 16, to: 'ch2_castle', tx: 7, ty: 15, msg: 'やみのしろへ もどる…' },
+    ],
+    encounter: { rate: 0, enemies: [] },
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  //  第3章 S2：うちゅうせん ネビュラごう（3フロア一本道）
+  //   各フロアのボスNPCを たおすと 前進出口(requireFlag)が ひらく。
+  //   ブリッジ(nebula_f3)で ゼロス撃破→ star_boots(atk40)→ 星辰の神殿へワープ。
+  // ══════════════════════════════════════════════════════════════
+  nebula_f1: {
+    id: 'nebula_f1',
+    name: 'ネビュラごう 第1フロア',
+    ambient: 'embers',
+    cutscene: {
+      flag: 'cs_nebula',
+      pages: [
+        '―― うちゅうせん ネビュラごう。\nつめたい きんぞくの つうろが\nどこまでも つづく。',
+        'ユイト「この ふねを とめれば\nちきゅうは まもれる はずだ！」',
+      ],
+    },
+    grid: [
+      '################', // r0
+      '#......,.......#', // r1  ← 北出口(7,1)→ nebula_f2
+      '#......,.......#', // r2
+      '#......,.......#', // r3
+      '#......,.......#', // r4
+      '#......,.......#', // r5
+      '#......,.......#', // r6
+      '#......,.......#', // r7
+      '#......,.......#', // r8  ← きかいへい(7,8)
+      '#......,.......#', // r9
+      '#......,.......#', // r10
+      '#......,.......#', // r11
+      '#......,.......#', // r12
+      '#......,.......#', // r13
+      '#......,.......#', // r14
+      '#......,.......#', // r15
+      '#......,.......#', // r16 ← 到着(7,16)＝スタジアムから
+      '################', // r17
+    ],
+    npcs: [
+      {
+        x: 7, y: 8, sprite: 'coach',
+        boss: { enemies: ['mecha_soldier', 'mecha_drone'], winFlag: 'nebula_f1',
+          afterPages: ['きかいへいを たおした！\nおくへ すすもう！'] },
+        pages: ['きかいへいが ゆくてを ふさぐ！'],
+      },
+    ],
+    exits: [
+      { x: 7, y: 1,  to: 'nebula_f2', tx: 7, ty: 16, requireFlag: 'nebula_f1',
+        lockedMsg: 'きかいへいを たおさないと\nさきへ すすめない！' },
+      { x: 7, y: 16, to: 'wc_stadium', tx: 7, ty: 10, msg: 'スタジアムへ もどる…' },
+    ],
+    encounter: { rate: 0.09, enemies: ['mecha_soldier', 'mecha_drone'] },
+  },
+  nebula_f2: {
+    id: 'nebula_f2',
+    name: 'ネビュラごう 第2フロア',
+    ambient: 'embers',
+    grid: [
+      '################', // r0
+      '#......,.......#', // r1  ← 北出口(7,1)→ nebula_f3
+      '#......,.......#', // r2
+      '#......,.......#', // r3
+      '#......,.......#', // r4
+      '#......,.......#', // r5
+      '#......,.......#', // r6
+      '#......,.......#', // r7
+      '#......,.......#', // r8  ← きかいへい(7,8)
+      '#......,.......#', // r9
+      '#......,.......#', // r10
+      '#......,.......#', // r11
+      '#......,.......#', // r12
+      '#......,.......#', // r13
+      '#......,.......#', // r14
+      '#......,.......#', // r15
+      '#......,.......#', // r16 ← 到着(7,16)
+      '################', // r17
+    ],
+    npcs: [
+      {
+        x: 7, y: 8, sprite: 'phantom_striker',
+        boss: { enemies: ['mecha_soldier', 'mecha_soldier'], winFlag: 'nebula_f2',
+          afterPages: ['ここも とっぱ！\nブリッジは もう すぐだ！'] },
+        pages: ['さらに つよい きかいへい だ！'],
+      },
+    ],
+    exits: [
+      { x: 7, y: 1,  to: 'nebula_f3', tx: 7, ty: 16, requireFlag: 'nebula_f2',
+        lockedMsg: 'ここの きかいへいを\nたおしてから！' },
+      { x: 7, y: 16, to: 'nebula_f1', tx: 7, ty: 2, msg: '第1フロアへ もどる…' },
+    ],
+    encounter: { rate: 0.09, enemies: ['mecha_soldier', 'mecha_drone'] },
+  },
+  nebula_f3: {
+    id: 'nebula_f3',
+    name: 'ネビュラごう ブリッジ',
+    ambient: 'embers',
+    grid: [
+      '################', // r0
+      '#......,.......#', // r1
+      '#......,.......#', // r2
+      '#......,.......#', // r3  ← ゼロス(7,3)
+      '#......,.......#', // r4
+      '#......,.......#', // r5
+      '#......,.......#', // r6  ← きかいへい(7,6)
+      '#......,.......#', // r7
+      '#......,.......#', // r8
+      '#......,.......#', // r9
+      '#......,.......#', // r10
+      '#......,.......#', // r11
+      '#......,.......#', // r12
+      '#......,.......#', // r13
+      '#......,.......#', // r14
+      '#......,.......#', // r15
+      '#......,.......#', // r16 ← 到着(7,16)
+      '################', // r17
+    ],
+    npcs: [
+      {
+        x: 7, y: 6, sprite: 'phantom_striker',
+        boss: { enemies: ['mecha_soldier', 'mecha_drone', 'mecha_drone'], winFlag: 'nebula_f3',
+          afterPages: ['ブリッジへの みちが ひらいた！'] },
+        pages: ['ブリッジへの さいごの かべ！'],
+      },
+      {
+        x: 7, y: 3, sprite: 'kaiser',
+        boss: {
+          enemies: ['zeros'], winFlag: 'boss_zeros', vanishFlag: 'boss_zeros',
+          reward: { item: 'star_boots', amount: 1, label: 'せいなるブーツ' },
+          afterPages: [
+            'ゼロスは しずかに とまった。',
+            'どこからか こえが ひびく…',
+            '「よくぞ ここまで…\nおうごんの ボールの\nしんじつを みせよう。」',
+            'ひかりに つつまれ、ユイトたちは\nほしの かなたへ みちびかれた。',
+          ],
+          warpTo: 'star_shrine_1', warpX: 7, warpY: 16, setFlag: 'nebula_f3',
+        },
+        requireFlag: 'nebula_f3', lockedMsg: 'まず この フロアの\nきかいへいを たおそう！',
+        pages: ['メカ・エンペラー ゼロス！'],
+      },
+    ],
+    exits: [
+      { x: 7, y: 16, to: 'nebula_f2', tx: 7, ty: 2, msg: '第2フロアへ もどる…' },
+    ],
+    encounter: { rate: 0.07, enemies: ['mecha_soldier', 'mecha_drone'] },
+  },
+
+  // ── 第3章 S3：せいしんの しんでん（試練3つ→アステリオン→真ED） ──
+  star_shrine_1: {
+    id: 'star_shrine_1', name: 'せいしんの しんでん 試練の間', ambient: 'embers',
+    cutscene: { flag: 'cs_shrine', pages: [
+      '―― ほしの かなた、せいしんの しんでん。',
+      'おうごんの ボールの\nはじまりの ばしょ。',
+    ]},
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1  北出口(7,1)→star_shrine_2
+      'VMMMMMMMMMMMMMMV', // r2
+      'VMMTTMMMMMMTTMMV', // r3
+      'VMMTMMMMMMMMTMMV', // r4
+      'VMMMMMMMMMMMMMMV', // r5
+      'VMMMMMTTTTMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VMMTTMMMMMMTTMMV', // r8  試練1 まもりて(7,8)
+      'VMMTMMMMMMMMTMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VMMMMMMMMMMMMMMV', // r14
+      'VMMMMMMMMMMMMMMV', // r15
+      'VMMMMMMMMMMMMMMV', // r16  南出口(7,16)→nebula_f3
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      { x: 7, y: 8, sprite: 'phantom_striker',
+        boss: { enemies: ['star_sentinel'], winFlag: 'trial_1' },
+        pages: ['試練その1。\nまもりてを たおせ！'] },
+    ],
+    exits: [
+      { x: 7, y: 1, to: 'star_shrine_2', tx: 7, ty: 16, requireFlag: 'trial_1',
+        lockedMsg: '試練1を こえてから！' },
+      { x: 7, y: 16, to: 'nebula_f3', tx: 7, ty: 4, msg: 'ネビュラごうへ もどる…' },
+    ],
+    encounter: { rate: 0.09, enemies: ['star_sentinel'] },
+  },
+  star_shrine_2: {
+    id: 'star_shrine_2', name: 'せいしんの しんでん 星の回廊', ambient: 'embers',
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1  北出口(7,1)→star_shrine_3
+      'VMMMMMMMMMMMMMMV', // r2
+      'VMMTTMMMMMMTTMMV', // r3
+      'VMMTMMMMMMMMTMMV', // r4
+      'VMMMMMMMMMMMMMMV', // r5  star_mail チェスト(3,5)
+      'VMMMMMTTTTMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VMMTTMMMMMMTTMMV', // r8  試練2 まもりて×2(7,8)
+      'VMMTMMMMMMMMTMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VMMMMMMMMMMMMMMV', // r14
+      'VMMMMMMMMMMMMMMV', // r15
+      'VMMMMMMMMMMMMMMV', // r16  南出口(7,16)→star_shrine_1
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      { x: 7, y: 8, sprite: 'phantom_striker',
+        boss: { enemies: ['star_sentinel', 'star_sentinel'], winFlag: 'trial_2' },
+        pages: ['試練その2。\nまもりては 2たい！'] },
+    ],
+    chests: [
+      { id: 'shrine_star_mail', x: 3, y: 5, item: 'star_mail', amount: 1, label: 'せいなるよろい',
+        requireFlag: 'trial_1', lockedMsg: 'まだ ひらかない…' },
+    ],
+    exits: [
+      { x: 7, y: 1, to: 'star_shrine_3', tx: 7, ty: 16, requireFlag: 'trial_2',
+        lockedMsg: '試練2を こえてから！' },
+      { x: 7, y: 16, to: 'star_shrine_1', tx: 7, ty: 2, msg: '試練の間へ もどる…' },
+    ],
+    encounter: { rate: 0.09, enemies: ['star_sentinel'] },
+  },
+  star_shrine_3: {
+    id: 'star_shrine_3', name: 'せいしんの しんでん さいおく', ambient: 'embers',
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1
+      'VMMMMMMMMMMMMMMV', // r2
+      'VMMTTMMMMMMTTMMV', // r3  アステリオン(7,3)＝真ラスボス
+      'VMMTMMMMMMMMTMMV', // r4
+      'VMMMMMMMMMMMMMMV', // r5
+      'VMMMMMTTTTMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VMMTTMMMMMMTTMMV', // r8  試練3 まもりて×2(7,8)
+      'VMMTMMMMMMMMTMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VMMMMMMMMMMMMMMV', // r14
+      'VMMMMMMMMMMMMMMV', // r15
+      'VMMMMMMMMMMMMMMV', // r16  南出口(7,16)→star_shrine_2
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      { x: 7, y: 8, sprite: 'phantom_striker',
+        boss: { enemies: ['star_sentinel', 'star_sentinel'], winFlag: 'trial_3' },
+        pages: ['試練その3。\nさいごの まもりて！'] },
+      { x: 7, y: 3, sprite: 'kaiser',
+        boss: { enemies: ['asterion'], winFlag: 'boss_asterion', vanishFlag: 'boss_asterion',
+                ending: true },
+        requireFlag: 'trial_3', lockedMsg: '試練3を こえてから！',
+        pages: ['ほしくいの かみ アステリオン！\nさいしゅうけっせん だ！'] },
+    ],
+    exits: [
+      { x: 7, y: 16, to: 'star_shrine_2', tx: 7, ty: 2, msg: '星の回廊へ もどる…' },
+    ],
+    encounter: { rate: 0.07, enemies: ['star_sentinel'] },
   },
 };
 
@@ -3804,6 +4236,29 @@ function getEnding(state) {
     target.push('なかま … ' + mates);
   }
 
+  // ★ 真エンディング（アステリオン撃破＝第3章クリア）。第2章END分岐より先に判定する。
+  if (state && state.flags && state.flags.boss_asterion) {
+    var p3 = [
+      'ほしくいの かみ アステリオンは\nおうごんの ひかりの なかへ\nきえていった……',
+      'おうごんの ボールは\nもともと ほしの あいだを\nつなぐ たからものだった。',
+      'ユイト「これで うちゅうも\nちきゅうも、みんなで\nサッカーが できるんだ！」',
+      'せかいたいかいの ゆうしょうカップと\nほしの ちからが ひとつになり、\nちきゅうに へいわが もどった。',
+    ];
+    var fw3 = {
+      ikuma:  'イクマ「うちゅういちの ストライカーは\nおれたちだ！」',
+      aoshi:  'アオシ「ほしの かなたでも\nきみと パスを つなぎたい。」',
+      tomoki: 'トモキ「どんな てきからも\nみんなを まもって みせる。」',
+      itsuki: 'イツキ「この キセキを、\nずっと わすれないよ。」',
+    };
+    party.forEach(function (p) { if (fw3[p.id]) p3.push(fw3[p.id]); });
+    p3.push('ユイト「ありがとう、みんな。\nさあ、つぎの しあいへ！」');
+    _staffRoll(p3);
+    p3.push('そして…\nさいごまで あそんでくれた きみ！');
+    p3.push('だい3しょう\n「せかいいちへの みち、\nそして ほしの かなたへ」\nクリア！');
+    p3.push('― しんの クリア！ ―\n\nほんとうに ありがとう！');
+    return p3;
+  }
+
   // 第2章（追加弾5-A/E）：ネオ・カイザーを倒していれば「よみがえりし やみ」END。
   //   倒していなければ（フラグ無し）従来どおり 第1章END を返す。
   if (state && state.flags && state.flags.boss_neo_kaiser) {
@@ -3899,6 +4354,42 @@ function objectiveFor(flags) {
     { flag: 'boss_neo_kaiser',
       bar: 'やみのしろへ！',
       npc: 'やみのしろの ネオ・カイザーを\nたおして せかいを すくおう！' },
+    { flag: 'wc_qualify',
+      bar: 'せかいたいかい 予選！',
+      npc: 'だい3しょう スタート！\nグランドスタジアムで\nせかいたいかいの 予選を\nかちぬこう！' },
+    { flag: 'wc_quarter',
+      bar: 'じゅんじゅん決勝へ！',
+      npc: '予選とっぱ！\nつぎは じゅんじゅん決勝だ。\nつぎの あいてに かとう！' },
+    { flag: 'wc_semi',
+      bar: 'じゅん決勝へ！',
+      npc: 'じゅんじゅん決勝 とっぱ！\nじゅん決勝の あいてを\nやぶって 決勝へ すすもう！' },
+    { flag: 'boss_volg',
+      bar: '決勝せん ヴォルグ！',
+      npc: 'いよいよ 決勝せん！\nさいきょうの ストライカー\nヴォルグを たおして\nせかい一に なろう！' },
+    { flag: 'nebula_f1',
+      bar: 'うちゅうせんかん ネビュラ号 F1！',
+      npc: 'そらが われ うちゅう軍団が\nしゅうらい！\nうちゅうせんかん ネビュラ号の\nだい1フロアを とっぱしよう！' },
+    { flag: 'nebula_f2',
+      bar: 'ネビュラ号 F2へ！',
+      npc: 'だい1フロア とっぱ！\nだい2フロアの てきを\nかわして すすもう！' },
+    { flag: 'nebula_f3',
+      bar: 'ネビュラ号 F3へ！',
+      npc: 'だい2フロア とっぱ！\nだい3フロアの おくへ\nすすもう！' },
+    { flag: 'boss_zeros',
+      bar: 'ブリッジ ゼロス！',
+      npc: 'さいしんぶの ブリッジで\nメカ・エンペラー ゼロスを\nたおそう！\n(かちで でんせつの ブーツ)' },
+    { flag: 'trial_1',
+      bar: 'せいしんの しんでん 試練1！',
+      npc: 'ほしの かなたの\nせいしんの しんでんへ。\n試練その1を のりこえよう！' },
+    { flag: 'trial_2',
+      bar: '試練2へ！',
+      npc: '試練その1 クリア！\n試練その2に ちょうせん！\n(とちゅうで でんせつの よろい)' },
+    { flag: 'trial_3',
+      bar: '試練3へ！',
+      npc: '試練その2 クリア！\nさいごの 試練その3を\nのりこえよう！' },
+    { flag: 'boss_asterion',
+      bar: 'さいしゅうけっせん アステリオン！',
+      npc: 'さいおくで ほしくいの神\nアステリオンが まっている。\nおうごんの ボールの しんじつと\nむきあい さいごの たたかいへ！' },
   ];
   for (var i = 0; i < spine.length; i++) {
     if (!flags[spine[i].flag]) {
@@ -8752,6 +9243,16 @@ function createFieldScene(state) {
   function _talkTo(npc) {
     if (!S || !npc) return;
 
+    // ⓪ 進行ロック（第3章の試合ゲート等）：requireFlag 未達なら lockedMsg を出して止める。
+    //    ただし すでに クリア済み（winFlag が立っている）NPC は「もう すんだ相手」として素通しする。
+    if (npc.requireFlag && !(state.flags && state.flags[npc.requireFlag])) {
+      var _cleared = !!(npc.boss && npc.boss.winFlag && state.flags && state.flags[npc.boss.winFlag]);
+      if (!_cleared) {
+        S.pushScene(S.createDialog([npc.lockedMsg || 'まだ さきへは すすめないようだ…']));
+        return;
+      }
+    }
+
     // ① ショップ
     if (npc.shop) {
       if (typeof S.createShopScene === 'function') {
@@ -8809,6 +9310,8 @@ function createFieldScene(state) {
         S.pushScene(S.createBattleScene(state, null, {
           forced: b.enemies, winFlag: b.winFlag, vanishFlag: b.vanishFlag,
           ending: b.ending, reward: b.reward,
+          setFlag: b.setFlag, afterPages: b.afterPages,
+          warpTo: b.warpTo, warpX: b.warpX, warpY: b.warpY,
         }));
       } }));
       return;
@@ -11262,12 +11765,33 @@ function createBattleScene(state, enemyPool, opts) {
       if (opts.winFlag)    state.flags[opts.winFlag] = true;
       if (opts.vanishFlag) state.flags[opts.vanishFlag] = true;
     }
+    // 章の地続き遷移（第3章）：撃破後に追加フラグを立てる。
+    if (opts.setFlag) {
+      state.flags = state.flags || {};
+      state.flags[opts.setFlag] = true;
+    }
     if (S && S.saveGame) S.saveGame(state);
+
+    // 撃破後の追加ストーリーページ（イベント演出）を勝利メッセージへ連結。
+    if (Array.isArray(opts.afterPages)) pages = pages.concat(opts.afterPages);
 
     // 勝利後のルーティング
     // ボスラッシュ（追加弾4-D）：onWin が あれば 次の戦闘へ つなぐ判断を 呼び出し側に まかせる。
     // _showMessages は シーンを 積まない（内部 _msg）ので、onWin の中で popScene すること。
     if (typeof opts.onWin === 'function') { _showMessages(pages, function () { opts.onWin(state); }); return; }
+    // 章遷移ワープ（第3章突入）：撃破後に別マップの指定座標へ飛ばしてフィールドを作り直す。
+    if (opts.warpTo) {
+      _showMessages(pages, function () {
+        state.position = state.position || {};
+        state.position.map = opts.warpTo;
+        if (typeof opts.warpX === 'number') state.position.x = opts.warpX;
+        if (typeof opts.warpY === 'number') state.position.y = opts.warpY;
+        if (S && S.saveGame) S.saveGame(state);
+        if (S && S.popScene) S.popScene();
+        if (S && S.replaceScene && S.createFieldScene) S.replaceScene(S.createFieldScene(state));
+      });
+      return;
+    }
     if (opts.ending) { _showMessages(pages, _goEnding); return; }
     if (opts.winFlag || opts.vanishFlag) { _showMessages(pages, _returnToFieldRebuild); return; }
     _showMessages(pages, _popToField);
