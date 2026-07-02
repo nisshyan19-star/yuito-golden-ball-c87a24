@@ -2557,6 +2557,121 @@ var MAPS = {
     ],
     encounter: { rate: 0.07, enemies: ['mecha_soldier', 'mecha_drone'] },
   },
+
+  // ── 第3章 S3：せいしんの しんでん（試練3つ→アステリオン→真ED） ──
+  star_shrine_1: {
+    id: 'star_shrine_1', name: 'せいしんの しんでん 試練の間', ambient: 'embers',
+    cutscene: { flag: 'cs_shrine', pages: [
+      '―― ほしの かなた、せいしんの しんでん。',
+      'おうごんの ボールの\nはじまりの ばしょ。',
+    ]},
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1  北出口(7,1)→star_shrine_2
+      'VMMMMMMMMMMMMMMV', // r2
+      'VMMTTMMMMMMTTMMV', // r3
+      'VMMTMMMMMMMMTMMV', // r4
+      'VMMMMMMMMMMMMMMV', // r5
+      'VMMMMMTTTTMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VMMTTMMMMMMTTMMV', // r8  試練1 まもりて(7,8)
+      'VMMTMMMMMMMMTMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VMMMMMMMMMMMMMMV', // r14
+      'VMMMMMMMMMMMMMMV', // r15
+      'VMMMMMMMMMMMMMMV', // r16  南出口(7,16)→nebula_f3
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      { x: 7, y: 8, sprite: 'phantom_striker',
+        boss: { enemies: ['star_sentinel'], winFlag: 'trial_1' },
+        pages: ['試練その1。\nまもりてを たおせ！'] },
+    ],
+    exits: [
+      { x: 7, y: 1, to: 'star_shrine_2', tx: 7, ty: 16, requireFlag: 'trial_1',
+        lockedMsg: '試練1を こえてから！' },
+      { x: 7, y: 16, to: 'nebula_f3', tx: 7, ty: 4, msg: 'ネビュラごうへ もどる…' },
+    ],
+    encounter: { rate: 0.09, enemies: ['star_sentinel'] },
+  },
+  star_shrine_2: {
+    id: 'star_shrine_2', name: 'せいしんの しんでん 星の回廊', ambient: 'embers',
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1  北出口(7,1)→star_shrine_3
+      'VMMMMMMMMMMMMMMV', // r2
+      'VMMTTMMMMMMTTMMV', // r3
+      'VMMTMMMMMMMMTMMV', // r4
+      'VMMMMMMMMMMMMMMV', // r5  star_mail チェスト(3,5)
+      'VMMMMMTTTTMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VMMTTMMMMMMTTMMV', // r8  試練2 まもりて×2(7,8)
+      'VMMTMMMMMMMMTMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VMMMMMMMMMMMMMMV', // r14
+      'VMMMMMMMMMMMMMMV', // r15
+      'VMMMMMMMMMMMMMMV', // r16  南出口(7,16)→star_shrine_1
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      { x: 7, y: 8, sprite: 'phantom_striker',
+        boss: { enemies: ['star_sentinel', 'star_sentinel'], winFlag: 'trial_2' },
+        pages: ['試練その2。\nまもりては 2たい！'] },
+    ],
+    chests: [
+      { id: 'shrine_star_mail', x: 3, y: 5, item: 'star_mail', amount: 1, label: 'せいなるよろい',
+        requireFlag: 'trial_1', lockedMsg: 'まだ ひらかない…' },
+    ],
+    exits: [
+      { x: 7, y: 1, to: 'star_shrine_3', tx: 7, ty: 16, requireFlag: 'trial_2',
+        lockedMsg: '試練2を こえてから！' },
+      { x: 7, y: 16, to: 'star_shrine_1', tx: 7, ty: 2, msg: '試練の間へ もどる…' },
+    ],
+    encounter: { rate: 0.09, enemies: ['star_sentinel'] },
+  },
+  star_shrine_3: {
+    id: 'star_shrine_3', name: 'せいしんの しんでん さいおく', ambient: 'embers',
+    grid: [
+      'VVVVVVVVVVVVVVVV', // r0
+      'VMMMMMMMMMMMMMMV', // r1
+      'VMMMMMMMMMMMMMMV', // r2
+      'VMMTTMMMMMMTTMMV', // r3  アステリオン(7,3)＝真ラスボス
+      'VMMTMMMMMMMMTMMV', // r4
+      'VMMMMMMMMMMMMMMV', // r5
+      'VMMMMMTTTTMMMMMV', // r6
+      'VMMMMMMMMMMMMMMV', // r7
+      'VMMTTMMMMMMTTMMV', // r8  試練3 まもりて×2(7,8)
+      'VMMTMMMMMMMMTMMV', // r9
+      'VMMMMMMMMMMMMMMV', // r10
+      'VMMMMMMMMMMMMMMV', // r11
+      'VMMMMMMMMMMMMMMV', // r12
+      'VMMMMMMMMMMMMMMV', // r13
+      'VMMMMMMMMMMMMMMV', // r14
+      'VMMMMMMMMMMMMMMV', // r15
+      'VMMMMMMMMMMMMMMV', // r16  南出口(7,16)→star_shrine_2
+      'VVVVVVVVVVVVVVVV', // r17
+    ],
+    npcs: [
+      { x: 7, y: 8, sprite: 'phantom_striker',
+        boss: { enemies: ['star_sentinel', 'star_sentinel'], winFlag: 'trial_3' },
+        pages: ['試練その3。\nさいごの まもりて！'] },
+      { x: 7, y: 3, sprite: 'kaiser',
+        boss: { enemies: ['asterion'], winFlag: 'boss_asterion', vanishFlag: 'boss_asterion',
+                ending: true },
+        requireFlag: 'trial_3', lockedMsg: '試練3を こえてから！',
+        pages: ['ほしくいの かみ アステリオン！\nさいしゅうけっせん だ！'] },
+    ],
+    exits: [
+      { x: 7, y: 16, to: 'star_shrine_2', tx: 7, ty: 2, msg: '星の回廊へ もどる…' },
+    ],
+    encounter: { rate: 0.07, enemies: ['star_sentinel'] },
+  },
 };
 
 // ── 開発時アサート（グリッド整合の早期検出。Node でも例外を投げない安全側） ──

@@ -430,6 +430,26 @@ const ENEMIES = {
       defeat: '「なぜだ… なぜ きかいが\nこころに まけるのだ…」',
     },
   },
+  star_sentinel: {
+    id: 'star_sentinel', name: 'せいしんの まもりて', type: 'technique', art: 'gold_emperor',
+    hp: 140, atk: 28, def: 20, spd: 18, exp: 220, gold: 150,
+    appears: [40, 60], drops: [{ id: 'mat_star', chance: 0.4 }, { id: 'mat_crystal', chance: 0.4 }],
+  },
+  asterion: {
+    id: 'asterion', name: 'ほしくいの かみ アステリオン', type: 'technique', art: 'gold_emperor', isBoss: true,
+    hp: 560, atk: 34, def: 26, spd: 20, exp: 2000, gold: 1500,
+    drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_star', chance: 1.0 }],
+    phases: [
+      { atk: 34, def: 26, spd: 20 },
+      { hpRatio: 0.66, atk: 40, def: 28, spd: 24 },
+      { hpRatio: 0.33, atk: 48, def: 32, spd: 28 },
+    ],
+    quotes: {
+      intro: ['「おうごんの ボールは\nわが ほしの たから。\nにんげんには わたさぬ！」'],
+      phases: ['「ほしの ちからを\nみせてやろう！」', '「なぜ… にんげんの きずなが\nこれほど つよいのだ!?」'],
+      defeat: '「わかった…\nこの ボールは、みなを\nつなぐ ための ものだったのだな。」',
+    },
+  },
 };
 
 (function (root, api) {

@@ -111,3 +111,24 @@ test('ch3: boss_asterion 達成で真エンディングが返る', () => {
   assert.ok(text.includes('だい3しょう') || text.includes('アステリオン') || text.includes('しんの'),
     '真EDの文言が含まれる');
 });
+
+test('ch3-S3: star_shrine 各出口は直前試練フラグを要求する', () => {
+  const s1 = MAPS.star_shrine_1, s2 = MAPS.star_shrine_2, s3 = MAPS.star_shrine_3;
+  assert.ok(s1 && s2 && s3, '3フロアが存在する');
+  assert.strictEqual((s1.exits || []).find((e) => e.to === 'star_shrine_2').requireFlag, 'trial_1');
+  assert.strictEqual((s2.exits || []).find((e) => e.to === 'star_shrine_3').requireFlag, 'trial_2');
+});
+
+test('ch3-S3: star_mail は trial_1 解錠の宝箱にある', () => {
+  const chest = (MAPS.star_shrine_2.chests || []).find((c) => c.item === 'star_mail');
+  assert.ok(chest);
+  assert.strictEqual(chest.requireFlag, 'trial_1');
+});
+
+test('ch3-S3: アステリオン戦は ending:true で真EDを発火し trial_3 を要求', () => {
+  const boss = (MAPS.star_shrine_3.npcs || []).find((n) => n.boss && n.boss.enemies.includes('asterion'));
+  assert.ok(boss);
+  assert.strictEqual(boss.requireFlag, 'trial_3');
+  assert.strictEqual(boss.boss.winFlag, 'boss_asterion');
+  assert.strictEqual(boss.boss.ending, true);
+});
