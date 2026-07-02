@@ -15,7 +15,7 @@ test('4つのAPI＋SEテーブルをエクスポートする', () => {
 });
 
 test('SEテーブルは必要な効果音をすべて持つ', () => {
-  const need = ['move', 'confirm', 'cancel', 'attack', 'special', 'damage', 'heal', 'levelup', 'treasure', 'victory', 'defeat'];
+  const need = ['move', 'confirm', 'cancel', 'attack', 'special', 'damage', 'heal', 'levelup', 'treasure', 'victory', 'defeat', 'join'];
   need.forEach((name) => {
     assert.ok(Array.isArray(audio.SRPG_SE[name]) && audio.SRPG_SE[name].length > 0, `SE '${name}' が無い／空`);
   });

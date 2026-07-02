@@ -29,6 +29,8 @@ var SRPG_SE = {
   stairs:  [{ f: 587, d: 0.06, t: 'square', g: 0.18 }, { f: 784, d: 0.06, t: 'square', g: 0.18 }, { f: 1046, d: 0.12, t: 'square', g: 0.18 }],
   victory: [{ f: 523, d: 0.10, t: 'square', g: 0.22 }, { f: 659, d: 0.10, t: 'square', g: 0.22 }, { f: 784, d: 0.10, t: 'square', g: 0.22 }, { f: 1046, d: 0.26, t: 'square', g: 0.22 }],
   defeat:  [{ f: 392, d: 0.14, t: 'sawtooth', g: 0.2, df: 196 }, { f: 196, d: 0.22, t: 'sawtooth', g: 0.2, df: 98 }],
+  // 仲間加入ファンファーレ（物語編B）：ド→ミ→ソ→ド↑ の上昇アルペジオ（levelupより豪華）
+  join:    [{ f: 523, d: 0.10, t: 'square', g: 0.22 }, { f: 659, d: 0.10, t: 'square', g: 0.22 }, { f: 784, d: 0.10, t: 'square', g: 0.22 }, { f: 1046, d: 0.30, t: 'square', g: 0.24 }],
 };
 
 // AudioContext を必要時に生成（無い環境では null のまま）
