@@ -384,6 +384,23 @@ const ENEMIES = {
       defeat: '「しずまる… また\nみずの そこへ かえろう…」',
     },
   },
+
+  // === 第3章 S1：せかいたいかい ===
+  rival_ace: {
+    id: 'rival_ace', name: 'ライバルこくの エース', type: 'speed', art: 'phantom_striker',
+    hp: 90, atk: 22, def: 12, spd: 16, exp: 120, gold: 90,
+    appears: [20, 40],
+    drops: [{ id: 'mat_gold', chance: 0.5 }],
+  },
+  volg: {
+    id: 'volg', name: 'れっかの ヴォルグ', type: 'power', art: 'phantom_striker', isBoss: true,
+    hp: 320, atk: 26, def: 16, spd: 18, exp: 700, gold: 600,
+    drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_crystal', chance: 1.0 }],
+    quotes: {
+      intro: ['「せかいの かべは あつい…\nおれを こえて みせろ！」'],
+      defeat: '「みごとだ… きみたちが\nせかいいちだ。だが そらを みろ！」',
+    },
+  },
 };
 
 (function (root, api) {

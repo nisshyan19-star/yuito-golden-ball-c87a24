@@ -64,6 +64,24 @@ test('ch3: ネオ撃破で ch3_start フラグを立てる', () => {
   assert.strictEqual(bossNpc.boss.setFlag, 'ch3_start');
 });
 
+test('ch3-S1: wc_stadium の決勝NPCは wc_semi を要求し ネビュラ号へワープ', () => {
+  const st = MAPS.wc_stadium;
+  assert.ok(st, 'wc_stadium が存在する');
+  const finalNpc = (st.npcs || []).find((n) => n.boss && n.boss.enemies.includes('volg'));
+  assert.ok(finalNpc, '決勝(ヴォルグ)NPCがある');
+  assert.strictEqual(finalNpc.requireFlag, 'wc_semi');
+  assert.strictEqual(finalNpc.boss.winFlag, 'boss_volg');
+  assert.strictEqual(finalNpc.boss.warpTo, 'nebula_f1');
+});
+
+test('ch3-S1: wc_stadium は 予選→準々→準決 の順に requireFlag で一本道', () => {
+  const st = MAPS.wc_stadium;
+  const q = (st.npcs || []).find((n) => n.boss && n.boss.winFlag === 'wc_quarter');
+  const s = (st.npcs || []).find((n) => n.boss && n.boss.winFlag === 'wc_semi');
+  assert.strictEqual(q.requireFlag, 'wc_qualify', '準々は予選突破を要求');
+  assert.strictEqual(s.requireFlag, 'wc_quarter', '準決は準々突破を要求');
+});
+
 test('ch3: boss_asterion 達成で真エンディングが返る', () => {
   const state = {
     party: [{ id: 'yuito', name: 'ユイト' }, { id: 'ikuma', name: 'イクマ' }],

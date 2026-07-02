@@ -2322,6 +2322,97 @@ var MAPS = {
       rare: { rate: 0.04, enemies: ['chaos_orb'] },
     },
   },
+
+  // ══════════════════════════════════════════════════════════════
+  //  第3章 S1：せかいたいかい（グランドスタジアム）
+  //   同一マップ内の4試合NPCを requireFlag で一本道化する。
+  //   予選(wc_qualify)→準々(wc_quarter)→準決(wc_semi)→決勝ヴォルグ(boss_volg)。
+  //   決勝で勝つと ネビュラごう(nebula_f1) へ 地続きワープ。
+  // ══════════════════════════════════════════════════════════════
+  wc_stadium: {
+    id: 'wc_stadium',
+    name: 'グランドスタジアム',
+    cutscene: {
+      flag: 'cs_wc',
+      pages: [
+        '―― グランドスタジアム。\nせかいじゅうの つよ者が\nあつまる ゆめのぶたい。',
+        'ユイト「ここで せかい一を\nきめるんだ！」',
+      ],
+    },
+    grid: [
+      '################', // r0
+      '#......,.......#', // r1
+      '#......,.......#', // r2
+      '#......,.......#', // r3
+      '#......,.......#', // r4
+      '#......,.......#', // r5
+      '#......,.......#', // r6  ← 予選(4,6)／準々(8,6)
+      '#......,.......#', // r7
+      '#......,.......#', // r8
+      '#......,.......#', // r9
+      '#......,.......#', // r10 ← 準決(4,10)／決勝(8,10)／もどる到着(7,10)
+      '#......,.......#', // r11
+      '#......,.......#', // r12
+      '#......,.......#', // r13
+      '#......,.......#', // r14
+      '#......,.......#', // r15 ← 到着(7,15)＝やみのしろ から
+      '#......,.......#', // r16 ← 南出口(7,16)→ ch2_castle
+      '################', // r17
+    ],
+    npcs: [
+      {
+        x: 6, y: 15, sprite: 'coach', guide: true,
+        pages: ['いよいよ せかいたいかい！\nひとつずつ かって\nてっぺんを めざそう！'],
+      },
+      {
+        x: 4, y: 6, sprite: 'coach',
+        boss: { enemies: ['rival_ace'], winFlag: 'wc_qualify',
+          afterPages: ['よせん とっぱ！\nつぎは 準々けっしょうだ！'] },
+        pages: ['よせんの あいてだ！\nかって すすもう！'],
+      },
+      {
+        x: 8, y: 6, sprite: 'phantom_striker',
+        boss: { enemies: ['rival_ace', 'rival_ace'], winFlag: 'wc_quarter',
+          afterPages: ['準々けっしょう とっぱ！\nつぎは 準けっしょうだ！'] },
+        requireFlag: 'wc_qualify', lockedMsg: 'まず よせんに かとう！',
+        pages: ['準々けっしょうの あいてだ！'],
+      },
+      {
+        x: 4, y: 10, sprite: 'phantom_striker',
+        boss: { enemies: ['rival_ace', 'rival_ace'], winFlag: 'wc_semi',
+          afterPages: ['準けっしょう とっぱ！\nいよいよ けっしょうせん！'] },
+        requireFlag: 'wc_quarter', lockedMsg: '準々けっしょうが さきだ！',
+        pages: ['準けっしょう、あいては 2にん！'],
+      },
+      {
+        x: 8, y: 10, sprite: 'kaiser',
+        boss: {
+          enemies: ['volg'], winFlag: 'boss_volg', vanishFlag: 'boss_volg',
+          afterPages: [
+            'ユイトたちは せかい一に\nかがやいた！',
+            'そのとき――\nそらが われ、まっくろな\nうちゅうせんが あらわれた！',
+            '「ちきゅうの サッカーは\nわれわれ うちゅうぐんが\nいただく！」',
+            'ユイト「なんだ あれ…！？\nみんな、ネビュラごうに\nのりこむぞ！」',
+          ],
+          warpTo: 'nebula_f1', warpX: 7, warpY: 16, setFlag: 'wc_semi',
+        },
+        requireFlag: 'wc_semi', lockedMsg: '準けっしょうを かってから！',
+        pages: ['けっしょう！\nれっかの ヴォルグだ！'],
+      },
+    ],
+    objects: [
+      { x: 1,  y: 1,  type: 'goal', solid: true },
+      { x: 14, y: 1,  type: 'goal', solid: true },
+      { x: 5,  y: 8,  type: 'ball'  },
+      { x: 9,  y: 8,  type: 'ball'  },
+      { x: 2,  y: 13, type: 'flower' },
+      { x: 13, y: 13, type: 'flower' },
+    ],
+    exits: [
+      { x: 7, y: 16, to: 'ch2_castle', tx: 7, ty: 15, msg: 'やみのしろへ もどる…' },
+    ],
+    encounter: { rate: 0, enemies: [] },
+  },
 };
 
 // ── 開発時アサート（グリッド整合の早期検出。Node でも例外を投げない安全側） ──

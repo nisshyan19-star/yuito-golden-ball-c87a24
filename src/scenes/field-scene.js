@@ -1866,6 +1866,16 @@ function createFieldScene(state) {
   function _talkTo(npc) {
     if (!S || !npc) return;
 
+    // ⓪ 進行ロック（第3章の試合ゲート等）：requireFlag 未達なら lockedMsg を出して止める。
+    //    ただし すでに クリア済み（winFlag が立っている）NPC は「もう すんだ相手」として素通しする。
+    if (npc.requireFlag && !(state.flags && state.flags[npc.requireFlag])) {
+      var _cleared = !!(npc.boss && npc.boss.winFlag && state.flags && state.flags[npc.boss.winFlag]);
+      if (!_cleared) {
+        S.pushScene(S.createDialog([npc.lockedMsg || 'まだ さきへは すすめないようだ…']));
+        return;
+      }
+    }
+
     // ① ショップ
     if (npc.shop) {
       if (typeof S.createShopScene === 'function') {
