@@ -160,3 +160,19 @@ test('必須化: field1〜4 の南出口(7,16) に requireFlag/lockedMsg があ�
     assert.strictEqual(e.requireFlag, 'joined_' + npc.joinId, 'requireFlag と joined_+joinId が一致');
   });
 });
+
+test('加入演出: 仲間4人に joinStory が3ページ以上ある', () => {
+  const want = [
+    { map: 'field1', joinId: 'ikuma'  },
+    { map: 'field2', joinId: 'aoshi'  },
+    { map: 'field3', joinId: 'tomoki' },
+    { map: 'field4', joinId: 'itsuki' },
+  ];
+  want.forEach((w) => {
+    const npc = (MAPS[w.map].npcs || []).find((n) => n.joinId === w.joinId);
+    assert.ok(npc, w.map + ' に ' + w.joinId);
+    assert.ok(Array.isArray(npc.joinStory), w.joinId + ' に joinStory 配列');
+    assert.ok(npc.joinStory.length >= 3, w.joinId + ' の joinStory は3ページ以上');
+    npc.joinStory.forEach((p) => assert.ok(typeof p === 'string' && p.length > 0));
+  });
+});
