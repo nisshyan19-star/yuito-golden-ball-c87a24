@@ -227,6 +227,26 @@ function pendingCutscene(map, flags) {
   return null;
 }
 
+/**
+ * npcPagesFor: NPC の会話ページを進行フラグで選ぶ純関数（物語編C-3）。
+ *   variants の中から requireFlag を満たす「最後の（最も進んだ）」ものの pages を返す。
+ *   該当なし・variants 無しなら従来の npc.pages。
+ * @param {Object} npc   NPC 定義（pages / variants を持ちうる）
+ * @param {Object} flags state.flags
+ * @returns {Array} 表示するページ配列
+ */
+function npcPagesFor(npc, flags) {
+  flags = flags || {};
+  var pages = (npc && npc.pages) || [];
+  var vs = (npc && npc.variants) || [];
+  var chosen = null;
+  for (var i = 0; i < vs.length; i++) {
+    var v = vs[i];
+    if (v && v.requireFlag && flags[v.requireFlag]) chosen = v; // 最後に一致したものを採用
+  }
+  return (chosen && chosen.pages) ? chosen.pages : pages;
+}
+
 // ── マップギミック（弾2）：純粋関数（テスト対象） ─────────────────────
 
 /**
@@ -3389,6 +3409,7 @@ function createShootScene(state, opts) {
   isWalkable:       isWalkable,
   clampCamera:      clampCamera,
   pendingCutscene:  pendingCutscene,
+  npcPagesFor:      npcPagesFor,
   warpAt:           warpAt,
   conveyorAt:       conveyorAt,
   puzzleSolved:     puzzleSolved,
