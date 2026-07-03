@@ -9,6 +9,7 @@ const ITEMS = itemsMod.ITEMS || itemsMod;
 // 第2章まで全クリアの土台フラグ
 const CH2_DONE = {
   joined_ikuma: true, joined_aoshi: true, joined_tomoki: true, joined_itsuki: true,
+  secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
   boss_magma: true, boss_guardian: true, boss_kaiser: true,
   boss_dark_general: true, boss_ice: true, boss_forest: true, boss_neo_kaiser: true,
 };

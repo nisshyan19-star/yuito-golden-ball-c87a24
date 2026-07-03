@@ -15,20 +15,23 @@ test('objectiveFor: 何もしていない時は イクマ加入 を指す', () =
 });
 
 test('objectiveFor: イクマ加入後は ほのおの どうくつ を指す', () => {
-  const o = story.objectiveFor({ joined_ikuma: true });
+  const o = story.objectiveFor({ joined_ikuma: true, secret_puzzle: true });
   assert.ok(o.bar.includes('ほのお'), 'barに「ほのお」が含まれる: ' + o.bar);
   assert.ok(o.npc.includes('マグマ'), 'npc文にマグマが含まれる');
   assert.strictEqual(o.done, false);
 });
 
 test('objectiveFor: 4人加入＋マグマ撃破後は スカイスタジアム(ガーディアン) を指す', () => {
-  const o = story.objectiveFor(Object.assign({}, J, { boss_magma: true }));
+  const o = story.objectiveFor(Object.assign({}, J, {
+    secret_puzzle: true, boss_magma: true, boss_water: true,
+  }));
   assert.ok(o.bar.includes('スカイスタジアム'), 'bar: ' + o.bar);
   assert.ok(o.npc.includes('ガーディアン'));
 });
 
 test('objectiveFor: カイザー撃破後は こおりの とうげ(ヴォルク) を指す', () => {
   const o = story.objectiveFor(Object.assign({}, J, {
+    secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
   }));
   assert.ok(o.bar.includes('こおりの とうげ'), 'bar: ' + o.bar);
@@ -37,6 +40,7 @@ test('objectiveFor: カイザー撃破後は こおりの とうげ(ヴォルク
 
 test('objectiveFor: 将軍撃破後は こおりの とう(アイスゴーレム) を指す', () => {
   const o = story.objectiveFor(Object.assign({}, J, {
+    secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
     boss_magma: true, boss_guardian: true, boss_kaiser: true, boss_dark_general: true,
   }));
   assert.ok(o.bar.includes('こおりの とう'), 'bar: ' + o.bar);
@@ -45,6 +49,7 @@ test('objectiveFor: 将軍撃破後は こおりの とう(アイスゴーレム
 
 test('objectiveFor: アイス撃破後は もりの しんでん(ガイア) を指す', () => {
   const o = story.objectiveFor(Object.assign({}, J, {
+    secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true,
   }));
@@ -54,6 +59,7 @@ test('objectiveFor: アイス撃破後は もりの しんでん(ガイア) を�
 
 test('objectiveFor: 森撃破後は やみのしろ(ネオ・カイザー) を指す', () => {
   const o = story.objectiveFor(Object.assign({}, J, {
+    secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true, boss_forest: true,
   }));
@@ -63,6 +69,7 @@ test('objectiveFor: 森撃破後は やみのしろ(ネオ・カイザー) を�
 
 test('objectiveFor: 全部倒したら done=true', () => {
   const o = story.objectiveFor(Object.assign({}, J, {
+    secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true, boss_forest: true, boss_neo_kaiser: true,
     wc_qualify: true, wc_quarter: true, wc_semi: true, boss_volg: true,

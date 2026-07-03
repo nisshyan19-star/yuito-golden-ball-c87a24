@@ -229,6 +229,7 @@ const J = { joined_ikuma: true, joined_aoshi: true, joined_tomoki: true, joined_
 
 test('objectiveFor: boss_ice 済み・boss_forest 未なら もくひょうは「もりの しんでんへ！」', () => {
   const flags = Object.assign({}, J, {
+    secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true,
   });
@@ -239,6 +240,7 @@ test('objectiveFor: boss_ice 済み・boss_forest 未なら もくひょうは�
 
 test('objectiveFor: boss_forest も済むと つぎは「やみのしろへ！」', () => {
   const flags = Object.assign({}, J, {
+    secret_puzzle: true, boss_water: true, boss_emperor: true, challenge_clear: true,
     boss_magma: true, boss_guardian: true, boss_kaiser: true,
     boss_dark_general: true, boss_ice: true, boss_forest: true,
   });
