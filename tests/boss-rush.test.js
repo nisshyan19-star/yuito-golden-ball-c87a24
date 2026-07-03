@@ -117,3 +117,11 @@ test('grantReward で champion_spike が もちものに入る', () => {
   assert.strictEqual(s.inventory.champion_spike, before + 1, '1個もらえる');
   assert.ok(/チャンピオンシューズ/.test(summary), '表示名が summary に含まれる');
 });
+
+test('challenge_room のボスラッシュは 撃破済み2体（guardian, gold_emperor）へ軽量化', () => {
+  const npc = MAPS.challenge_room.npcs.find(n => n.bossRush);
+  assert.ok(npc, 'bossRush NPC が無い');
+  assert.deepStrictEqual(npc.bossRush.enemies, ['guardian', 'gold_emperor']);
+  assert.strictEqual(npc.bossRush.winFlag, 'challenge_clear');
+  assert.strictEqual(npc.bossRush.reward.item, 'champion_spike');
+});

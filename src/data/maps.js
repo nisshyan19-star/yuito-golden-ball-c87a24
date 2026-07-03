@@ -1928,19 +1928,19 @@ var MAPS = {
       {
         x: 7, y: 4, sprite: 'kaiser',
         bossRush: {
-          enemies: ['guardian', 'phantom_striker', 'gold_emperor', 'dark_kaiser'],
+          enemies: ['guardian', 'gold_emperor'],
           winFlag: 'challenge_clear',
           reward: { item: 'champion_spike', amount: 1, label: 'チャンピオンシューズ' },
         },
         pages: [
           'ここは ちょうせんの間。',
-          'これまで たおした ボスたちが\nつぎつぎに おそいかかる！',
-          'とちゅうで HP・MPは かいふく できない。\nぜんぶ たおせるか？',
-          'ボスラッシュに ちょうせん する？',
+          'ダーク・カイザーに いどむ まえの\nさいごの うでだめしだ！',
+          'これまで たおした ボスが\n2たい つづけて おそいかかる。\nとちゅうで HP・MPは かいふく できない！',
+          'うでだめしに ちょうせん する？',
         ],
         afterPages: [
-          'きみは すべての ボスを たおした\nしんの チャンピオンだ！',
-          'また ちょうせん するなら いつでも おいで！',
+          'うでだめし クリア！\nきみは カイザーに いどむ\nしかくを てに いれた！',
+          'いよいよ ダーク・カイザーだ。\nゆだんせず いどもう！',
         ],
       },
       {
