@@ -52,3 +52,30 @@ for (const [mapId, x, y, sprite, vanishFlag] of CAMEOS) {
     assert.ok(isFree(map, x, y, n), `(${x},${y}) が他要素と重複`);
   });
 }
+
+// ── C3: 各町に新NPC種を配置（会話のみ・joinId無し）──
+const TOWN_NPCS = [
+  ['town1', 5, 7, 'girl_pink'],
+  ['town1', 9, 10, 'grandpa'],
+  ['town1', 12, 15, 'vendor'],
+  ['town2', 6, 6, 'woman_brown'],
+  ['town2', 13, 9, 'boy_blue'],
+  ['town2', 2, 15, 'supporter'],
+  ['town3', 1, 8, 'reporter'],
+  ['town3', 13, 10, 'granny'],
+  ['village1', 16, 6, 'grandpa'],
+  ['village1', 8, 12, 'girl_pink'],
+];
+
+for (const [mapId, x, y, sprite] of TOWN_NPCS) {
+  test(`町NPC: ${mapId} (${x},${y}) に ${sprite}`, () => {
+    const map = MAPS[mapId];
+    const n = npcAt(mapId, x, y);
+    assert.ok(n, `${mapId}(${x},${y}) にNPCが無い`);
+    assert.strictEqual(n.sprite, sprite);
+    assert.ok(Array.isArray(n.pages) && n.pages.length > 0);
+    assert.strictEqual(n.joinId, undefined);
+    assert.ok(isWalkable(map, x, y), `(${x},${y}) が歩行不可`);
+    assert.ok(isFree(map, x, y, n), `(${x},${y}) が他要素と重複`);
+  });
+}
