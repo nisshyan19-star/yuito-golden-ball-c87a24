@@ -31,3 +31,24 @@ test('sprites.js に新NPCスプライト10種が生成されている', () => {
     assert.ok(SPRITES[key], `SPRITES.${key} が無い`);
   }
 });
+
+// ── C2: 加入前カメオ（仲間スプライトのまま手前マップに立つ・joinId無し）──
+const CAMEOS = [
+  ['town1',  9,  7, 'aoshi',  'joined_aoshi'],
+  ['field2', 13, 7, 'tomoki', 'joined_tomoki'],
+  ['field3', 12, 7, 'itsuki', 'joined_itsuki'],
+];
+
+for (const [mapId, x, y, sprite, vanishFlag] of CAMEOS) {
+  test(`カメオ: ${mapId} (${x},${y}) に ${sprite}（vanishFlag=${vanishFlag}, joinId無し）`, () => {
+    const map = MAPS[mapId];
+    const n = npcAt(mapId, x, y);
+    assert.ok(n, `${mapId}(${x},${y}) にカメオNPCが無い`);
+    assert.strictEqual(n.sprite, sprite);
+    assert.strictEqual(n.vanishFlag, vanishFlag);
+    assert.strictEqual(n.joinId, undefined, 'カメオに joinId を付けない');
+    assert.ok(Array.isArray(n.pages) && n.pages.length > 0);
+    assert.ok(isWalkable(map, x, y), `(${x},${y}) が歩行不可`);
+    assert.ok(isFree(map, x, y, n), `(${x},${y}) が他要素と重複`);
+  });
+}

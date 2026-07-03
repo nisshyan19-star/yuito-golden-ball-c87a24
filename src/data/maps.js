@@ -176,6 +176,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 13, y: 7, sprite: 'tomoki', vanishFlag: 'joined_tomoki',
+        pages: ['がっしり した まもりが\nおれの じまん。トモキだ。', 'また どこかで あおうぜ！'] },
       {
         x: 4, y: 8, sprite: 'aoshi', joinId: 'aoshi', vanishFlag: 'joined_aoshi',
         joinStory: [
@@ -268,6 +270,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 12, y: 7, sprite: 'itsuki', vanishFlag: 'joined_itsuki',
+        pages: ['ゴールは だれにも わたさない！', 'キーパーの イツキだ。\nきみの シュート、うけて みたいな。'] },
       {
         x: 5, y: 8, sprite: 'tomoki', joinId: 'tomoki', vanishFlag: 'joined_tomoki',
         joinStory: [
@@ -646,6 +650,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 9, y: 7, sprite: 'aoshi', vanishFlag: 'joined_aoshi',
+        pages: ['きみ、いい パスを だすね。\nおれは アオシ。', 'いつか いっしょに\nプレーしたいな。'] },
       {
         x: 6, y: 2, sprite: 'coach', guide: true,
         pages: ['こまったら いつでも\nコーチに きいてね！'],
