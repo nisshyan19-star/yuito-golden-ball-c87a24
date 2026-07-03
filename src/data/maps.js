@@ -2326,6 +2326,10 @@ var MAPS = {
       { x: 10, y: 13, type: 'flower' },
     ],
     exits: [
+      { x: 8, y: 15, to: 'wc_stadium', tx: 7, ty: 15,
+        requireFlag: 'boss_neo_kaiser',
+        lockedMsg: 'グランドスタジアムへは\nネオ・カイザーを たおしてから！',
+        msg: 'グランドスタジアムへ もどる…' },
       { x: 7, y: 16, to: 'shrine_forest_3f', tx: 8, ty: 2 },
     ],
     encounter: {
@@ -2421,6 +2425,10 @@ var MAPS = {
       { x: 13, y: 13, type: 'flower' },
     ],
     exits: [
+      { x: 9, y: 10, to: 'nebula_f1', tx: 7, ty: 15,
+        requireFlag: 'boss_volg',
+        lockedMsg: 'ネビュラごうへは\nヴォルグを たおしてから！',
+        msg: 'ネビュラごうへ のりこむ！' },
       { x: 7, y: 16, to: 'ch2_castle', tx: 7, ty: 15, msg: 'やみのしろへ もどる…' },
     ],
     encounter: { rate: 0, enemies: [] },
@@ -2565,6 +2573,10 @@ var MAPS = {
       },
     ],
     exits: [
+      { x: 8, y: 4, to: 'star_shrine_1', tx: 7, ty: 15,
+        requireFlag: 'boss_zeros',
+        lockedMsg: 'せいしんの しんでんへは\nゼロスを たおしてから！',
+        msg: 'せいしんの しんでんへ！' },
       { x: 7, y: 16, to: 'nebula_f2', tx: 7, ty: 2, msg: '第2フロアへ もどる…' },
     ],
     encounter: { rate: 0.07, enemies: ['mecha_soldier', 'mecha_drone'] },
