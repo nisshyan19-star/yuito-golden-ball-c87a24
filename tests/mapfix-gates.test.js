@@ -51,3 +51,10 @@ test('G5: field6 → challenge_room は最初から開く（requireFlag 無し�
   assert.ok(e, 'field6→challenge_room 出口が無い');
   assert.strictEqual(e.requireFlag, undefined);
 });
+
+test('secret_field の案内NPCに「したへ おす」解法ヒントがある', () => {
+  const hasHint = MAPS.secret_field.npcs.some(
+    n => Array.isArray(n.pages) && n.pages.some(p => p.includes('まっすぐ したへ'))
+  );
+  assert.ok(hasHint, '押しパズルの解法ヒントが見つからない');
+});
