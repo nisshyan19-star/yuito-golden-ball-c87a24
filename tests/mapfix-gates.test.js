@@ -36,3 +36,18 @@ test('G3: town3→field6 出口(x:7,y:16) は boss_emperor が必要', () => {
   assert.strictEqual(typeof e.lockedMsg, 'string');
   assert.ok(e.lockedMsg.length > 0, 'lockedMsg が非空文字列');
 });
+
+test('G4: field6 の kaiser ボスNPC は challenge_clear で封鎖', () => {
+  const kaiser = MAPS.field6.npcs.find(
+    n => n.boss && n.boss.winFlag === 'boss_kaiser'
+  );
+  assert.ok(kaiser, 'field6 の kaiser ボスNPC が無い');
+  assert.strictEqual(kaiser.requireFlag, 'challenge_clear');
+  assert.ok(kaiser.lockedMsg && kaiser.lockedMsg.length > 0);
+});
+
+test('G5: field6 → challenge_room は最初から開く（requireFlag 無し）', () => {
+  const e = (MAPS.field6.exits || []).find(x => x.to === 'challenge_room');
+  assert.ok(e, 'field6→challenge_room 出口が無い');
+  assert.strictEqual(e.requireFlag, undefined);
+});

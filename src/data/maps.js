@@ -532,6 +532,8 @@ var MAPS = {
     npcs: [
       {
         x: 7, y: 9, sprite: 'kaiser',
+        requireFlag: 'challenge_clear',
+        lockedMsg: 'ダーク・カイザー「まだ たたかう\nときでは ない…\nちょうせんの間で うでだめしを\nクリアしてから いどんで こい。」',
         boss: { enemies: ['dark_kaiser'], winFlag: 'boss_kaiser', vanishFlag: 'boss_kaiser', ending: true },
         pages: [
           'ダーク・カイザーが まちかまえていた！',
@@ -602,11 +604,7 @@ var MAPS = {
     //   到着は (7,15)＝とびら(7,16)の1つ上ではなく、もどりワープで (7,13) に着地させ
     //   即・再突入ループにならないようにする（exit は正面タイル判定）。
     exits: [
-      {
-        x: 7, y: 16, to: 'challenge_room', tx: 7, ty: 15,
-        requireFlag: 'boss_kaiser',
-        lockedMsg: 'おもい とびらだ。\nダーク・カイザーを たおすと ひらくらしい…',
-      },
+      { x: 7, y: 16, to: 'challenge_room', tx: 7, ty: 15 },
     ],
     encounter: { rate: 0.05, enemies: ['redcard_devil', 'trick_fox', 'stamina_zombie', 'pk_punisher'], rare: { rate: 0.05, enemies: ['metal_keeper'] } },
   },

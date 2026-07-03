@@ -49,13 +49,13 @@ test('field6 グリッドは全行16文字・18行のまま', () => {
   g.forEach((row, r) => assert.strictEqual(row.length, 16, 'field6 r' + r + ' の文字数'));
 });
 
-test('field6 の exits は ちょうせんの間ゲートのみ（追加弾4-D）', () => {
-  // ストーリー上は最終マップ。ラスボス撃破後に ひらく「ちょうせんの間」への
-  // とびらだけが ある（boss_kaiser でゲート）。
+test('field6 の exits は ちょうせんの間への1つのみ（追加弾4-D／G5でゲート撤去）', () => {
+  // ストーリー上は最終マップ。「ちょうせんの間」への とびらだけが ある。
+  // G5 で boss_kaiser ゲートは撤去され、最初から入れる（腕試し→カイザーの順）。
   const exits = MAPS.field6.exits;
   assert.strictEqual(exits.length, 1, 'とびらは1つ');
   assert.strictEqual(exits[0].to, 'challenge_room');
-  assert.strictEqual(exits[0].requireFlag, 'boss_kaiser');
+  assert.strictEqual(exits[0].requireFlag, undefined);
 });
 
 test('field6 に H かくし通路が1つある', () => {

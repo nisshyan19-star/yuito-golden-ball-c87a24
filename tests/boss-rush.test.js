@@ -41,12 +41,12 @@ test('challenge_room は ザコ戦なし（encounter.rate=0）', () => {
 });
 
 // ── field6 → challenge_room の とびら（boss_kaiser ゲート） ────────────
-test('field6 に boss_kaiser ゲートの とびらが あり challenge_room へつながる', () => {
-  const exits = MAPS.field6.exits || [];
-  const door = exits.find((e) => e.to === 'challenge_room');
-  assert.ok(door, 'challenge_room へのとびらが ある');
-  assert.strictEqual(door.requireFlag, 'boss_kaiser', 'ラスボス撃破フラグで ゲート');
-  assert.ok(door.lockedMsg, 'ロック時メッセージが ある');
+test('field6 → challenge_room の とびらは 最初から ひらいている', () => {
+  const door = (MAPS.field6.exits || []).find((e) => e.to === 'challenge_room');
+  assert.ok(door, 'field6→challenge_room の とびらが無い');
+  assert.strictEqual(door.tx, 7);
+  assert.strictEqual(door.ty, 15);
+  assert.strictEqual(door.requireFlag, undefined);
 });
 
 test('field6 → challenge_room の着地タイルが 歩ける', () => {
