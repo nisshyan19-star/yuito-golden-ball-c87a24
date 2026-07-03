@@ -123,27 +123,29 @@ test('各町に お店・宿屋・クエスト主・受け渡し相手 がそろ
 });
 
 // ── ワールド導線：field1→town1→field2→field3→town2→field4→field5→town3→field6 ──
-test('出口の連結が町を挟んだ順路になっている', () => {
+test('出口の連結が町を挟んだ順路になっている（追加弾5-A5で各マップに逆流出口を先頭付与）', () => {
   const to = (id) => MAPS[id].exits.map((e) => e.to);
+  // field1 は最初のマップ。逆流先が無いので前進のみ。
   assert.deepStrictEqual(to('field1'), ['town1']);
-  assert.deepStrictEqual(to('town1'),  ['field2', 'village1']);
-  assert.deepStrictEqual(to('field2'), ['field3']);
-  assert.deepStrictEqual(to('field3'), ['town2']);
+  // 以下は 追加弾5-A5（R1〜R8）で 先頭に「戻り先」への逆流出口が加わった。
+  assert.deepStrictEqual(to('town1'),  ['field1', 'field2', 'village1']);
+  assert.deepStrictEqual(to('field2'), ['town1', 'field3']);
+  assert.deepStrictEqual(to('field3'), ['field2', 'town2']);
   // town2 は北で field4 へ。Phase7-⑥で 西の岩場から 任意ダンジョン
-  // 「みずの どうくつ」(cave_water_1f)への 入口が 加わった。
-  assert.deepStrictEqual(to('town2'),  ['field4', 'cave_water_1f']);
-  assert.deepStrictEqual(to('field4'), ['field5']);
-  assert.deepStrictEqual(to('field5'), ['town3']);
+  // 「みずの どうくつ」(cave_water_1f)への 入口が 加わった。先頭は field3 への逆流。
+  assert.deepStrictEqual(to('town2'),  ['field3', 'field4', 'cave_water_1f']);
+  assert.deepStrictEqual(to('field4'), ['town2', 'field5']);
+  assert.deepStrictEqual(to('field5'), ['field4', 'town3']);
   // town3 は南で field6 へ。追加弾5（第2章）で 北の とびらが 加わり、
-  // boss_kaiser 撃破後に ch2_gate（やみのもん）へ つながる。
-  assert.deepStrictEqual(to('town3'),  ['field6', 'ch2_gate']);
-  // field6 は ストーリー上は 行き止まり。ただし 追加弾4-Dで ラスボス撃破後に
-  // ひらく「ちょうせんの間」への とびらが 加わった（boss_kaiser でゲート）。
-  assert.deepStrictEqual(to('field6'), ['challenge_room']);
+  // boss_kaiser 撃破後に ch2_gate（やみのもん）へ つながる。先頭は field5 への逆流。
+  assert.deepStrictEqual(to('town3'),  ['field5', 'field6', 'ch2_gate']);
+  // field6 は 追加弾4-Dで「ちょうせんの間」への とびら、5-A5で town3 への逆流が加わった。
+  assert.deepStrictEqual(to('field6'), ['town3', 'challenge_room']);
 });
 
 test('field5→town3 の出口はガーディアン撃破フラグでロックされている', () => {
-  const e = MAPS.field5.exits[0];
+  // 追加弾5-A5で exits[0] は field4 への逆流出口になったため to で引く。
+  const e = MAPS.field5.exits.find((x) => x.to === 'town3');
   assert.strictEqual(e.to, 'town3');
   assert.strictEqual(e.requireFlag, 'boss_guardian');
   assert.ok(e.lockedMsg);

@@ -49,13 +49,16 @@ test('field6 グリッドは全行16文字・18行のまま', () => {
   g.forEach((row, r) => assert.strictEqual(row.length, 16, 'field6 r' + r + ' の文字数'));
 });
 
-test('field6 の exits は ちょうせんの間への1つのみ（追加弾4-D／G5でゲート撤去）', () => {
-  // ストーリー上は最終マップ。「ちょうせんの間」への とびらだけが ある。
-  // G5 で boss_kaiser ゲートは撤去され、最初から入れる（腕試し→カイザーの順）。
+test('field6 の exits は ちょうせんの間への前進＋town3への逆流（追加弾4-D／G5＋5-A5）', () => {
+  // 「ちょうせんの間」への とびら（G5で boss_kaiser ゲート撤去・最初から入れる）に加え、
+  // 追加弾5-A5で 北の とびらから town3 へ もどれる（双方向化）。
   const exits = MAPS.field6.exits;
-  assert.strictEqual(exits.length, 1, 'とびらは1つ');
-  assert.strictEqual(exits[0].to, 'challenge_room');
-  assert.strictEqual(exits[0].requireFlag, undefined);
+  const fwd = exits.find((e) => e.to === 'challenge_room');
+  assert.ok(fwd, 'ちょうせんの間への とびら');
+  assert.strictEqual(fwd.requireFlag, undefined);
+  const back = exits.find((e) => e.to === 'town3');
+  assert.ok(back, 'town3 への 逆流出口');
+  assert.strictEqual(back.requireFlag, undefined, '逆流にゲートを付けない');
 });
 
 test('field6 に H かくし通路が1つある', () => {

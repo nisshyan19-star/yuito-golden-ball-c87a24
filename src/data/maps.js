@@ -234,6 +234,7 @@ var MAPS = {
       { x: 7, y: 14, dir: 'down' },
     ],
     exits: [
+      { x: 7, y: 1, to: 'town1', tx: 7, ty: 15, msg: 'ハーバータウンへ もどる…' },
       { x: 7, y: 16, to: 'field3', tx: 7, ty: 2,
         requireFlag: 'joined_aoshi',
         lockedMsg: 'スタジアムの どこかに\nてんさい MF アオシが いる。\nなかまに さそってから\nさきへ すすもう！' },
@@ -313,6 +314,7 @@ var MAPS = {
     pushGoals:  [ { x: 11, y: 13 } ],
     pushPuzzle: { solveFlag: 'field3_puzzle', clearMsg: 'ガコン！ どこかで\nたからばこの カギが はずれた おとが した！' },
     exits: [
+      { x: 7, y: 1, to: 'field2', tx: 7, ty: 15, msg: 'ナイタースタジアムへ もどる…' },
       { x: 7, y: 16, to: 'town2', tx: 7, ty: 2,
         requireFlag: 'joined_tomoki',
         lockedMsg: 'すなはまの どこかで\nまもりの DF トモキが\nきみを まっている。\nはなしかけて なかまに しよう！' },
@@ -398,6 +400,7 @@ var MAPS = {
       { x: 14, y: 9, tx: 2,  ty: 5 },
     ],
     exits: [
+      { x: 7, y: 1, to: 'town2', tx: 7, ty: 15, msg: 'フォレストタウンへ もどる…' },
       { x: 7, y: 16, to: 'field5', tx: 7, ty: 2,
         requireFlag: 'joined_itsuki',
         lockedMsg: 'あめの ピッチの どこかに\nでんせつの GK イツキが いる。\n5にんめの なかまを\nむかえに いこう！' },
@@ -474,6 +477,7 @@ var MAPS = {
       { x: 11, y: 14, type: 'flower' },
     ],
     exits: [
+      { x: 7, y: 1, to: 'field4', tx: 7, ty: 15, msg: 'レイニーピッチへ もどる…' },
       {
         x: 7, y: 16, to: 'town3', tx: 7, ty: 2,
         requireFlag: 'boss_guardian',
@@ -604,6 +608,7 @@ var MAPS = {
     //   到着は (7,15)＝とびら(7,16)の1つ上ではなく、もどりワープで (7,13) に着地させ
     //   即・再突入ループにならないようにする（exit は正面タイル判定）。
     exits: [
+      { x: 7, y: 1, to: 'town3', tx: 7, ty: 15, msg: 'クラウドタウンへ もどる…' },
       { x: 7, y: 16, to: 'challenge_room', tx: 7, ty: 15 },
     ],
     encounter: { rate: 0.05, enemies: ['redcard_devil', 'trick_fox', 'stamina_zombie', 'pk_punisher'], rare: { rate: 0.05, enemies: ['metal_keeper'] } },
@@ -731,6 +736,7 @@ var MAPS = {
       { x: 13, y: 8, to: 'secret_field', tx: 7, ty: 3, msg: 'ひかる ゆかに のった！\nまばゆい ひかりに つつまれる…' },
     ],
     exits: [
+      { x: 7, y: 1, to: 'field1', tx: 7, ty: 15, msg: 'はじまりの草原へ もどる…' },
       { x: 7, y: 16, to: 'field2', tx: 7, ty: 2,
         requireFlag: 'boss_magma',
         lockedMsg: 'スタジアムへの みちは\nまだ とおれない。\nまずは みのりの村の おくの\nほのおの どうくつで\nマグマ・ゴーレムを たおそう！' },
@@ -1403,6 +1409,7 @@ var MAPS = {
       { x: 5,  y: 14, type: 'ball' }, // PKコーチの足もとのボール（飾り・歩ける）
     ],
     exits: [
+      { x: 7, y: 1, to: 'field3', tx: 7, ty: 15, msg: 'サンドコートへ もどる…' },
       { x: 7, y: 16, to: 'field4', tx: 7, ty: 2,
         requireFlag: 'boss_water',
         lockedMsg: 'みずの ちからで とざされている。\nみずのどうくつの ぬしを たおすと\nみちが ひらきそうだ…' },
@@ -1710,6 +1717,7 @@ var MAPS = {
       { x: 13, y: 8, to: 'legend_arena', tx: 7, ty: 15, msg: 'でんせつの とびらが ひらいた…\nまばゆい ひかりに つつまれる！' },
     ],
     exits: [
+      { x: 6, y: 1, to: 'field5', tx: 7, ty: 15, msg: 'スカイスタジアムへ もどる…' },
       { x: 7, y: 16, to: 'field6', tx: 7, ty: 2,
         requireFlag: 'boss_emperor',
         lockedMsg: 'でんせつの アリーナの ぬしを\nたおさないと、この さきへは\nすすめないようだ…\nゴールド・エンペラーに いどもう！' },
