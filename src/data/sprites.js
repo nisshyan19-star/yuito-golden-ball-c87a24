@@ -177,6 +177,38 @@ var SPRITES = (function () {
     'W': '#ffd76e', 'b': '#1a1a1a',
   }, '', false);
 
+  // ── 町の人々（共通ボディの色替え・背番号なし）──
+  var girl_pink = buildChar({
+    'O':'#1c1015','H':'#8a5a3a','h':'#6e4428','g':'#523018','S':'#ffe0c4','s':'#f0c2a0','k':'#dc9e78','E':'#3a241a','m':'#c05070','U':'#ff9ec0','u':'#e87aa4','v':'#c85888','N':'#ff9ec0','P':'#d86a98','p':'#b04a78','L':'#f0c2a0','l':'#dc9e78','K':'#ffffff','c':'#e0a0c0','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var boy_blue = buildChar({
+    'O':'#0a0e18','H':'#3a2a1a','h':'#2a1e12','g':'#1a120a','S':'#ffe0c4','s':'#f0c2a0','k':'#dc9e78','E':'#2a3a5a','m':'#a85040','U':'#4a8ade','u':'#356ab8','v':'#254e8e','N':'#4a8ade','P':'#2a3f6a','p':'#1a2846','L':'#f0c2a0','l':'#dc9e78','K':'#ffffff','c':'#b8b8c0','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var granny = buildChar({
+    'O':'#1a1818','H':'#e8e8ee','h':'#c8c8d2','g':'#a8a8b4','S':'#f0d2b8','s':'#e0b89c','k':'#c89878','E':'#4a3a3a','m':'#a86070','U':'#b8a0c8','u':'#9a80ac','v':'#7a6090','N':'#b8a0c8','P':'#6a5878','p':'#4a3c56','L':'#e0b89c','l':'#c89878','K':'#8a7a6a','c':'#6a5c4e','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var grandpa = buildChar({
+    'O':'#181818','H':'#c0c0c6','h':'#9e9ea6','g':'#7c7c86','S':'#eccbb0','s':'#d8b090','k':'#c0946a','E':'#3a3030','m':'#9a6050','U':'#7a7050','u':'#5e5640','v':'#443e2c','N':'#7a7050','P':'#4a4436','p':'#322e24','L':'#d8b090','l':'#c0946a','K':'#5a4a3a','c':'#3e3228','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var woman_brown = buildChar({
+    'O':'#1a120a','H':'#7a4a24','h':'#5e381a','g':'#442810','S':'#ffdcc0','s':'#f0be9a','k':'#dc9a72','E':'#3a241a','m':'#b85868','U':'#4aa870','u':'#358858','v':'#256840','N':'#4aa870','P':'#3a6a4a','p':'#264a32','L':'#f0be9a','l':'#dc9a72','K':'#ffffff','c':'#b8c0b8','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var young_man = buildChar({
+    'O':'#0a0a0e','H':'#2a2426','h':'#1e1a1c','g':'#121012','S':'#f7d2a8','s':'#e6b487','k':'#cc8f5e','E':'#2a2420','m':'#a85040','U':'#f08a3a','u':'#d46a20','v':'#a84e14','N':'#f08a3a','P':'#3a3140','p':'#241e2a','L':'#e6b487','l':'#cc8f5e','K':'#ffffff','c':'#b8b8c0','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var referee = buildChar({
+    'O':'#0a0a0a','H':'#1a1a1a','h':'#101010','g':'#080808','S':'#f0d2b0','s':'#e0b78e','k':'#c89568','E':'#2a241a','m':'#a85040','U':'#2a2a2a','u':'#1a1a1a','v':'#0e0e0e','N':'#2a2a2a','P':'#1a1a1a','p':'#0a0a0a','L':'#e0b78e','l':'#c89568','K':'#e8e8e8','c':'#b0b0b0','W':'#ffff00','b':'#1a1a1a',
+  }, '', false);
+  var reporter = buildChar({
+    'O':'#0a0c14','H':'#2a241e','h':'#1e1a14','g':'#12100c','S':'#f7d2a8','s':'#e6b487','k':'#cc8f5e','E':'#2a241a','m':'#a85040','U':'#2e3850','u':'#1e2638','v':'#121826','N':'#2e3850','P':'#1e2638','p':'#12161f','L':'#e6b487','l':'#cc8f5e','K':'#1a1a1a','c':'#3a3a3a','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var vendor = buildChar({
+    'O':'#180e08','H':'#5a3a1a','h':'#442a12','g':'#301c0a','S':'#f7d2a8','s':'#e6b487','k':'#cc8f5e','E':'#3a241a','m':'#a85040','U':'#c8503a','u':'#a83a26','v':'#842a18','N':'#c8503a','P':'#4a3a28','p':'#2e2418','L':'#e6b487','l':'#cc8f5e','K':'#8a6a4a','c':'#6a4e34','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+  var supporter = buildChar({
+    'O':'#181408','H':'#3a2a1a','h':'#2a1e12','g':'#1a120a','S':'#f7d2a8','s':'#e6b487','k':'#cc8f5e','E':'#2a241a','m':'#a85040','U':'#ffd23a','u':'#e8b820','v':'#c89814','N':'#ffd23a','P':'#3a5a8a','p':'#26406a','L':'#e6b487','l':'#cc8f5e','K':'#ffffff','c':'#b8b8c0','W':'#ffffff','b':'#1a1a1a',
+  }, '', false);
+
   // ────────────────────────────────────────────────────────────
   // タイル5種（各16×16）— なめらかな陰影・規則的で上品なテクスチャ
   //   タイル境界が極端に目立たないよう端を揃える。
@@ -338,6 +370,16 @@ var SPRITES = (function () {
     shopkeep: shopkeep,
     keeper:   keeper,
     kaiser:   kaiser,
+    girl_pink:   girl_pink,
+    boy_blue:    boy_blue,
+    granny:      granny,
+    grandpa:     grandpa,
+    woman_brown: woman_brown,
+    young_man:   young_man,
+    referee:     referee,
+    reporter:    reporter,
+    vendor:      vendor,
+    supporter:   supporter,
     t_grass: t_grass,
     t_road:  t_road,
     t_wall:  t_wall,
