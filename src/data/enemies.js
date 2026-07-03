@@ -387,13 +387,13 @@ const ENEMIES = {
 
   // === 第3章 S1：せかいたいかい ===
   rival_ace: {
-    id: 'rival_ace', name: 'ライバルこくの エース', type: 'speed', art: 'phantom_striker',
+    id: 'rival_ace', name: 'ライバルこくの エース', type: 'speed', art: 'rival_ace',
     hp: 90, atk: 22, def: 12, spd: 16, exp: 120, gold: 90,
     appears: [20, 40],
     drops: [{ id: 'mat_gold', chance: 0.5 }],
   },
   volg: {
-    id: 'volg', name: 'れっかの ヴォルグ', type: 'power', art: 'phantom_striker', isBoss: true,
+    id: 'volg', name: 'れっかの ヴォルグ', type: 'power', art: 'volg', isBoss: true,
     hp: 320, atk: 26, def: 16, spd: 18, exp: 700, gold: 600,
     drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_crystal', chance: 1.0 }],
     quotes: {
@@ -404,19 +404,19 @@ const ENEMIES = {
 
   // === 第3章 S2：うちゅうせん ネビュラごう ===
   mecha_soldier: {
-    id: 'mecha_soldier', name: 'メカ・ソルジャー', type: 'power', art: 'dark_kaiser',
+    id: 'mecha_soldier', name: 'メカ・ソルジャー', type: 'power', art: 'mecha_soldier',
     hp: 110, atk: 24, def: 16, spd: 12, exp: 150, gold: 110,
     appears: [30, 50],
     drops: [{ id: 'mat_iron', chance: 0.6 }, { id: 'mat_crystal', chance: 0.3 }],
   },
   mecha_drone: {
-    id: 'mecha_drone', name: 'メカ・ドローン', type: 'speed', art: 'offside_ghost',
+    id: 'mecha_drone', name: 'メカ・ドローン', type: 'speed', art: 'mecha_drone',
     hp: 80, atk: 20, def: 10, spd: 22, exp: 130, gold: 90,
     appears: [30, 50],
     drops: [{ id: 'mat_iron', chance: 0.5 }],
   },
   zeros: {
-    id: 'zeros', name: 'メカ・エンペラー ゼロス', type: 'technique', art: 'dark_kaiser_rage', isBoss: true,
+    id: 'zeros', name: 'メカ・エンペラー ゼロス', type: 'technique', art: 'zeros', isBoss: true,
     hp: 450, atk: 30, def: 22, spd: 16, exp: 1000, gold: 900,
     drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_crystal', chance: 1.0 }, { id: 'mat_star', chance: 1.0 }],
     phases: [
@@ -431,12 +431,12 @@ const ENEMIES = {
     },
   },
   star_sentinel: {
-    id: 'star_sentinel', name: 'せいしんの まもりて', type: 'technique', art: 'gold_emperor',
+    id: 'star_sentinel', name: 'せいしんの まもりて', type: 'technique', art: 'star_sentinel',
     hp: 140, atk: 28, def: 20, spd: 18, exp: 220, gold: 150,
     appears: [40, 60], drops: [{ id: 'mat_star', chance: 0.4 }, { id: 'mat_crystal', chance: 0.4 }],
   },
   asterion: {
-    id: 'asterion', name: 'ほしくいの かみ アステリオン', type: 'technique', art: 'gold_emperor', isBoss: true,
+    id: 'asterion', name: 'ほしくいの かみ アステリオン', type: 'technique', art: 'asterion', isBoss: true,
     hp: 560, atk: 34, def: 26, spd: 20, exp: 2000, gold: 1500,
     drops: [{ id: 'mat_gold', chance: 1.0 }, { id: 'mat_star', chance: 1.0 }],
     phases: [
