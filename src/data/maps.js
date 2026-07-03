@@ -736,7 +736,9 @@ var MAPS = {
       { x: 7, y: 16, to: 'field2', tx: 7, ty: 2,
         requireFlag: 'boss_magma',
         lockedMsg: 'スタジアムへの みちは\nまだ とおれない。\nまずは みのりの村の おくの\nほのおの どうくつで\nマグマ・ゴーレムを たおそう！' },
-      { x: 1, y: 2, to: 'village1', tx: 10, ty: 1 },
+      { x: 1, y: 2, to: 'village1', tx: 10, ty: 1,
+        requireFlag: 'secret_puzzle',
+        lockedMsg: 'にしの むらへの みちが\nひかって とじている。\nかくしべやの ボールパズルを\nとくと ひらきそうだ…' },
     ],
     encounter: { rate: 0, enemies: [] },
   },
@@ -1403,7 +1405,9 @@ var MAPS = {
       { x: 5,  y: 14, type: 'ball' }, // PKコーチの足もとのボール（飾り・歩ける）
     ],
     exits: [
-      { x: 7, y: 16, to: 'field4', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'field4', tx: 7, ty: 2,
+        requireFlag: 'boss_water',
+        lockedMsg: 'みずの ちからで とざされている。\nみずのどうくつの ぬしを たおすと\nみちが ひらきそうだ…' },
       // 任意ダンジョン「みずの どうくつ」へ：西の岩場の入口(2,16)→cave_water_1f(8,15)に到着。
       { x: 2, y: 16, to: 'cave_water_1f', tx: 8, ty: 15 },
     ],
@@ -1708,7 +1712,9 @@ var MAPS = {
       { x: 13, y: 8, to: 'legend_arena', tx: 7, ty: 15, msg: 'でんせつの とびらが ひらいた…\nまばゆい ひかりに つつまれる！' },
     ],
     exits: [
-      { x: 7, y: 16, to: 'field6', tx: 7, ty: 2 },
+      { x: 7, y: 16, to: 'field6', tx: 7, ty: 2,
+        requireFlag: 'boss_emperor',
+        lockedMsg: 'でんせつの アリーナの ぬしを\nたおさないと、この さきへは\nすすめないようだ…\nゴールド・エンペラーに いどもう！' },
       // 第2章 入口（追加弾5-A）：きたの とびら→ ch2_gate。カイザー撃破で ひらく。
       {
         x: 7, y: 1, to: 'ch2_gate', tx: 7, ty: 15,
