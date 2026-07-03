@@ -87,6 +87,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 11, y: 11, sprite: 'boy_blue',
+        pages: ['ここは はじまりの そうげん！', 'ボールを けって みようよ！'] },
       {
         x: 4, y: 9, sprite: 'coach', pages: [
           'ようこそ ピッチランドへ！',
@@ -176,6 +178,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 2, y: 7, sprite: 'supporter',
+        pages: ['ナイターの あかりは まぶしいね！', 'いい しあいを みせて おくれ！'] },
       { x: 13, y: 7, sprite: 'tomoki', vanishFlag: 'joined_tomoki',
         pages: ['がっしり した まもりが\nおれの じまん。トモキだ。', 'また どこかで あおうぜ！'] },
       {
@@ -270,6 +274,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 2, y: 7, sprite: 'woman_brown',
+        pages: ['すなの うえは あしが とられるよ。', 'バランスが たいせつ！'] },
       { x: 12, y: 7, sprite: 'itsuki', vanishFlag: 'joined_itsuki',
         pages: ['ゴールは だれにも わたさない！', 'キーパーの イツキだ。\nきみの シュート、うけて みたいな。'] },
       {
@@ -352,6 +358,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 13, y: 6, sprite: 'granny',
+        pages: ['あめの ひは ボールが すべるよ。', 'きを つけて いくんだよ。'] },
       {
         x: 5, y: 8, sprite: 'itsuki', joinId: 'itsuki', vanishFlag: 'joined_itsuki',
         joinStory: [
@@ -447,6 +455,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 2, y: 7, sprite: 'reporter',
+        pages: ['そらの スタジアムへ ようこそ。', 'ガーディアンは つよいぞ、\nゆだんするな！'] },
       {
         x: 7, y: 9, sprite: 'keeper',
         boss: { enemies: ['guardian'], winFlag: 'boss_guardian', vanishFlag: 'boss_guardian' },
@@ -538,6 +548,8 @@ var MAPS = {
       '################', // r17
     ],
     npcs: [
+      { x: 2, y: 5, sprite: 'young_man',
+        pages: ['ここは やみの きはいが こい…', 'カイザーは まだ たたかえない。\nうでを みがいて こい！'] },
       {
         x: 7, y: 9, sprite: 'kaiser',
         requireFlag: 'challenge_clear',

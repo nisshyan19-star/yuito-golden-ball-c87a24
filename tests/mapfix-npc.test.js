@@ -79,3 +79,27 @@ for (const [mapId, x, y, sprite] of TOWN_NPCS) {
     assert.ok(isFree(map, x, y, n), `(${x},${y}) が他要素と重複`);
   });
 }
+
+// ── C4: 各フィールドに新NPC種を配置（会話のみ・joinId無し・boss無し）──
+const FIELD_NPCS = [
+  ['field1', 11, 11, 'boy_blue'],
+  ['field2', 2, 7, 'supporter'],
+  ['field3', 2, 7, 'woman_brown'],
+  ['field4', 13, 6, 'granny'],
+  ['field5', 2, 7, 'reporter'],
+  ['field6', 2, 5, 'young_man'],
+];
+
+for (const [mapId, x, y, sprite] of FIELD_NPCS) {
+  test(`フィールドNPC: ${mapId} (${x},${y}) に ${sprite}`, () => {
+    const map = MAPS[mapId];
+    const n = npcAt(mapId, x, y);
+    assert.ok(n, `${mapId}(${x},${y}) にNPCが無い`);
+    assert.strictEqual(n.sprite, sprite);
+    assert.ok(Array.isArray(n.pages) && n.pages.length > 0);
+    assert.strictEqual(n.joinId, undefined);
+    assert.strictEqual(n.boss, undefined, 'フィールドNPCはボスにしない');
+    assert.ok(isWalkable(map, x, y), `(${x},${y}) が歩行不可`);
+    assert.ok(isFree(map, x, y, n), `(${x},${y}) が他要素と重複`);
+  });
+}
