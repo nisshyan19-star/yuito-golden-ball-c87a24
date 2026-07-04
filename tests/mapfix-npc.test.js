@@ -103,3 +103,17 @@ for (const [mapId, x, y, sprite] of FIELD_NPCS) {
     assert.ok(isFree(map, x, y, n), `(${x},${y}) が他要素と重複`);
   });
 }
+
+// ── 審判(referee)を試合会場（世界大会スタジアム）に1体配置 ──
+test('審判: wc_stadium (11,15) に referee（会話のみ・joinId無し・boss無し）', () => {
+  const mapId = 'wc_stadium', x = 11, y = 15;
+  const map = MAPS[mapId];
+  const n = npcAt(mapId, x, y);
+  assert.ok(n, `${mapId}(${x},${y}) に審判NPCが無い`);
+  assert.strictEqual(n.sprite, 'referee');
+  assert.ok(Array.isArray(n.pages) && n.pages.length > 0);
+  assert.strictEqual(n.joinId, undefined);
+  assert.strictEqual(n.boss, undefined, '審判はボスにしない');
+  assert.ok(isWalkable(map, x, y), `(${x},${y}) が歩行不可`);
+  assert.ok(isFree(map, x, y, n), `(${x},${y}) が他要素と重複`);
+});
