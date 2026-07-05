@@ -27,6 +27,16 @@ const SKILLS = {
   ult_aoshi:  { id:'ult_aoshi',  name:'タクト・オブ・ゴッド',   user:'aoshi',  mp:0, type:'attack', power:2.0, target:'all',    kiai:100, learnLevel:null },
   ult_tomoki: { id:'ult_tomoki', name:'グランド・スマッシュ',   user:'tomoki', mp:0, type:'attack', power:3.0, target:'one',    kiai:100, learnLevel:null },
   ult_itsuki: { id:'ult_itsuki', name:'ミラクル・ヒール',       user:'itsuki', mp:0, type:'heal',   heal:200, target:'allies', kiai:100, learnLevel:null },
+
+  // ── 隠し仲間（げんす／ミキティー／ナナカ）の通常わざ ──
+  dark_drive:  { id:'dark_drive',  name:'ダーク・ドライブ',       user:'gensu',  mp:5, type:'attack', power:2.0, target:'one', learnLevel:1 },
+  siren_shot:  { id:'siren_shot',  name:'セイレーン・ショット',   user:'mikity', mp:5, type:'attack', power:2.0, target:'one', learnLevel:1 },
+  poka_punch:  { id:'poka_punch',  name:'ぽかぽかパンチ',         user:'nanaka', mp:2, type:'attack', power:0.6, target:'one', learnLevel:1 },
+
+  // ── 隠し仲間の必殺技 ──
+  ult_gensu:   { id:'ult_gensu',   name:'バイオレット・エンペラー', user:'gensu',  mp:0, type:'attack', power:3.8, target:'one', kiai:100, learnLevel:null },
+  ult_mikity:  { id:'ult_mikity',  name:'セイレーン・ブレイズ',     user:'mikity', mp:0, type:'attack', power:3.6, target:'one', kiai:100, learnLevel:null },
+  ult_nanaka:  { id:'ult_nanaka',  name:'イヤイヤ期',               user:'nanaka', mp:0, type:'attack', power:5.0, target:'all', kiai:100, learnLevel:null },
 };
 
 // ── 連携技（追加弾4-B・コンビ必殺技） ───────────────────────────────────
