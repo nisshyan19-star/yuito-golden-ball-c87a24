@@ -10,6 +10,10 @@ function _progression() {
   if (typeof require !== 'undefined') return require('../logic/progression.js');
   return (typeof window !== 'undefined' && window.SRPG) || {};
 }
+function _monster() {
+  if (typeof require !== 'undefined') return require('../logic/monster.js');
+  return (typeof window !== 'undefined' && window.SRPG) || {};
+}
 
 // 仲間をパーティに加える。
 // やさしい難易度なので、加入時にリーダー(ユイト)のレベル近くまで底上げして即戦力にする。
@@ -17,7 +21,8 @@ function _progression() {
 function joinAlly(state, id) {
   if (!state.party) state.party = [];
   if (!state.flags) state.flags = {};
-  if (state.party.some(function (p) { return p.id === id; })) return null;
+  if (!Array.isArray(state.roster)) state.roster = [];
+  if (state.party.concat(state.roster).some(function (p) { return p.id === id; })) return null;
 
   var GS = _gameState();
   var PR = _progression();
@@ -39,7 +44,9 @@ function joinAlly(state, id) {
   ch.mp = ch.maxMp;
   ch.dead = false;
 
-  state.party.push(ch);
+  var MO = _monster();
+  if (MO.addToRoster) { MO.addToRoster(state, ch); }
+  else { state.party.push(ch); }
   state.flags['joined_' + id] = true;
   return ch.name;
 }
