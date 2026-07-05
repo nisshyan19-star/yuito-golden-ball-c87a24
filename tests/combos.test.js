@@ -45,10 +45,13 @@ test('全コンビにユイトが含まれる（操作はユイト1人なので�
 });
 
 test('コンビは強力（単体・回復なしコンビは最強の必殺技より高威力）', () => {
-  // 必殺技のうち攻撃技の最大 power を基準にする（コンビはキアイ2本ぶんなので、それを超える価値が要る）。
+  // 必殺技のうち「単体」攻撃技の最大 power を基準にする（コンビはキアイ2本ぶんなので、それを超える価値が要る）。
+  // 全体技(target:'all')は威力を範囲と引き換えにする別カテゴリなので基準に含めない。
+  // 特にナナカ「イヤイヤ期」は敵全体をなぎ払うゲーム内最大power(5.0)だが、
+  // 単体コンビと比べる対象ではない（範囲技ゆえ単体コンビ超えを要求しない）。
   const ultMax = Object.keys(SKILLS)
     .map((k) => SKILLS[k])
-    .filter((s) => s.kiai && s.type === 'attack')
+    .filter((s) => s.kiai && s.type === 'attack' && s.target === 'one')
     .reduce((m, s) => Math.max(m, s.power || 0), 0);
   Object.keys(COMBOS).forEach((k) => {
     const c = COMBOS[k];
