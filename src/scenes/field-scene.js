@@ -36,14 +36,15 @@ function frontTile(x, y, facing) {
 
 /**
  * walkSideFlip: フィールド歩行スプライト(side)を左右反転して描くべきか。
- *   side素材は基本「左向き」で生成済み → 右移動のときだけ反転して右向きにする。
- *   ただしイクマの side 素材だけAI生成が「右向き」なので、逆に左移動のとき反転する。
+ *   side素材の実際の向きは、ユイトだけ「左向き」・他4人(ikuma/aoshi/tomoki/itsuki)は「右向き」。
+ *   （実画像検証で確定。以前は「右向きはイクマだけ」と誤メタデータで aoshi/tomoki/itsuki が逆を向いていた）
+ *   素材の向きと逆へ歩くときだけ反転する：右向き素材は左移動で反転、左向き素材(ユイト)は右移動で反転。
  * @param {string} id キャラID（yuito/ikuma/aoshi/tomoki/itsuki）
  * @param {string} facing 'up' | 'down' | 'left' | 'right'
  * @returns {boolean} 左右反転して描くなら true
  */
 function walkSideFlip(id, facing) {
-  var sideFacesRight = (id === 'ikuma');   // ikuma_side だけ右向き素材
+  var sideFacesRight = (id !== 'yuito');   // side素材が右向きなのはユイト以外の4人
   return sideFacesRight ? (facing === 'left') : (facing === 'right');
 }
 
@@ -2625,12 +2626,23 @@ function createFieldScene(state) {
       }
 
       // 5. NPC（＋頭上マーク＝話せる人/お店/鍛冶/仲間/ボス/クエストを一目でわかるように）
+      //    AI差し替えフック：S.NPC_ART[npc.sprite] に dataURL があれば drawImageSprite で
+      //    優先描画し、無ければ従来の色替えドット絵(SPRITES)へ自動フォールバック。
+      //    npc-art（field-art.js の NPC_ART）を足すだけでコード変更ゼロでAI絵に切り替わる
+      //    （OBJ_ART / WALK_ART と同じ思想）。NPCは静止＝正面1枚でよい。
+      var npcArt = S.NPC_ART || null;
       var npcs = map.npcs || [];
       for (var ni = 0; ni < npcs.length; ni++) {
         var npc = npcs[ni];
         var nsp = S.SPRITES[npc.sprite];
         S.drawShadow(ctx, offX + npc.x * TS + TS / 2, offY + npc.y * TS + TS - 3, 10, 4);
-        if (nsp) S.drawSprite(ctx, nsp, offX + npc.x * TS, offY + npc.y * TS, 1);
+        var drewNpcAI = false;
+        if (npcArt && npcArt[npc.sprite] && typeof S.drawImageSprite === 'function') {
+          var npcBoxH = TS * 1.35;                       // タイルより少し大きい存在感（隊列と同スケール）
+          drewNpcAI = S.drawImageSprite(ctx, 'npc_' + npc.sprite, npcArt[npc.sprite],
+                        offX + npc.x * TS + TS / 2, offY + npc.y * TS + TS - npcBoxH / 2 + 2, npcBoxH, false);
+        }
+        if (!drewNpcAI && nsp) S.drawSprite(ctx, nsp, offX + npc.x * TS, offY + npc.y * TS, 1);
         var mkind = npcMarkerKind(npc, state);
         if (mkind !== 'none') {
           _drawNpcMarker(ctx, mkind, offX + npc.x * TS, offY + npc.y * TS, TS, _gfx + ni * 0.6);
@@ -2714,8 +2726,8 @@ function createFieldScene(state) {
             drew = S.drawImageSprite(ctx, 'monwalk_' + act.baseId, artData, footCX, footBottom - mH / 2 + 2, mH);
           }
         } else if (walkArt) {
-          // 横向き(side)素材は基本「左向き」で生成済み＝右移動のときだけ左右反転して使い回す。
-          // ただしイクマの side 素材だけAI生成が「右向き」なので、反転条件を逆にする（左移動のとき反転）。
+          // 横向き(side)素材は1枚を左右反転して両向きに使い回す。素材の実向きはユイトだけ「左向き」・
+          // 他4人は「右向き」なので、反転要否は walkSideFlip() に集約（素材と逆向きへ歩くとき反転）。
           var dKey = act.id + ((act.facing === 'up') ? '_up'
                             : (act.facing === 'down') ? '_down'
                             : '_side');
