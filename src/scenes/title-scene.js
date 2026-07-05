@@ -102,9 +102,9 @@ function createTitleScene() {
 
   // 難易度の選択肢（v は settings.difficulty に入れる値）
   var DIFFS = [
-    { v: 'easy',   label: 'やさしい',   desc: 'てきが よわい・たおれても ぜんかいふく' },
-    { v: 'normal', label: 'ふつう',     desc: 'ちょうど いい てごたえ' },
-    { v: 'hard',   label: 'むずかしい', desc: 'てきが つよい・ほうしゅう おおい' },
+    { v: 'easy',   label: 'やさしい',   desc: 'てきは つよめ・たおれても ぜんかいふく' },
+    { v: 'normal', label: 'ふつう',     desc: 'てきが つよい・てごたえ あり' },
+    { v: 'hard',   label: 'むずかしい', desc: 'てきが とても つよい・ほうしゅう おおい' },
   ];
 
   // 難易度を決めて冒険を始める

@@ -158,10 +158,13 @@ function calcReward(enemies) {
  * @returns {{enemyHp:number, enemyAtk:number, reward:number, reviveHalf:boolean}}
  */
 function difficultyScale(diff) {
+  // ★2026-07-05 難易度ラダー底上げ（げんちゃん「今のむずかしいを やさしいの基準に」）。
+  //   全難易度で敵を強化。やさしい=旧むずかしい相当の強さだが、全滅しても全回復で
+  //   立て直せる思想（reviveHalf:false）は死守＝息子くんが詰まらない。むずかしいのみ半分復活。
   switch (diff) {
-    case 'easy': return { enemyHp: 0.8,  enemyAtk: 0.7, reward: 1.2, reviveHalf: false };
-    case 'hard': return { enemyHp: 1.35, enemyAtk: 1.4, reward: 1.5, reviveHalf: true  };
-    default:     return { enemyHp: 1.0,  enemyAtk: 1.0, reward: 1.0, reviveHalf: false };
+    case 'easy': return { enemyHp: 1.35, enemyAtk: 1.4, reward: 1.4, reviveHalf: false };
+    case 'hard': return { enemyHp: 2.0,  enemyAtk: 2.1, reward: 1.7, reviveHalf: true  };
+    default:     return { enemyHp: 1.6,  enemyAtk: 1.7, reward: 1.5, reviveHalf: false };
   }
 }
 

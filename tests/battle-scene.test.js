@@ -116,22 +116,35 @@ test('calcReward: 空配列は 0', () => {
 
 // ── difficultyScale ──────────────────────────────────────────────────
 
-test('difficultyScale: easy は敵が弱く報酬多め・全回復復活', () => {
+// ★2026-07-05 難易度ラダー底上げ：げんちゃん「今のむずかしいを やさしいの基準に」。
+//   全難易度で敵を強化（プレイヤーが簡単すぎると感じたため）。やさしい=旧むずかしい相当の
+//   強さだが、全滅しても全回復で立て直せる思想（息子くんが詰まらない）は死守。
+test('difficultyScale: easy は敵がしっかり手ごたえ（旧むずかしい相当）・全回復復活・報酬多め', () => {
   const s = difficultyScale('easy');
-  assert.ok(s.enemyHp < 1 && s.enemyAtk < 1);
+  assert.strictEqual(s.enemyHp, 1.35);   // 旧むずかしいの敵HP倍率を やさしいの基準に
+  assert.strictEqual(s.enemyAtk, 1.4);   // 旧むずかしいの敵攻撃倍率
   assert.ok(s.reward > 1);
-  assert.strictEqual(s.reviveHalf, false);
+  assert.strictEqual(s.reviveHalf, false); // やさしいは全回復で立て直し（詰まらない）
 });
 
-test('difficultyScale: hard は敵が強く報酬多め・半分復活', () => {
+test('difficultyScale: hard は敵が最も強く報酬多め・半分復活', () => {
   const s = difficultyScale('hard');
-  assert.ok(s.enemyHp > 1 && s.enemyAtk > 1);
+  assert.strictEqual(s.enemyHp, 2.0);
+  assert.strictEqual(s.enemyAtk, 2.1);
   assert.ok(s.reward > 1);
   assert.strictEqual(s.reviveHalf, true);
 });
 
-test('difficultyScale: normal/未知は等倍', () => {
+test('difficultyScale: normal/未知は やさしい超え・ふつうの手ごたえ', () => {
   const n = difficultyScale('normal');
-  assert.deepStrictEqual(n, { enemyHp: 1.0, enemyAtk: 1.0, reward: 1.0, reviveHalf: false });
+  assert.deepStrictEqual(n, { enemyHp: 1.6, enemyAtk: 1.7, reward: 1.5, reviveHalf: false });
   assert.deepStrictEqual(difficultyScale(undefined), n);
+});
+
+test('difficultyScale: 難易度が上がるほど敵が強い（easy < normal < hard）', () => {
+  const e = difficultyScale('easy');
+  const n = difficultyScale('normal');
+  const h = difficultyScale('hard');
+  assert.ok(e.enemyHp < n.enemyHp && n.enemyHp < h.enemyHp, '敵HP倍率が単調増加');
+  assert.ok(e.enemyAtk < n.enemyAtk && n.enemyAtk < h.enemyAtk, '敵攻撃倍率が単調増加');
 });
