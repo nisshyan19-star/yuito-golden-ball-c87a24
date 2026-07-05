@@ -18,7 +18,7 @@ test('yuito: 左移動のとき反転しない(false)＝左向き素材をその
 });
 
 // ── ikuma/aoshi/tomoki/itsuki（side素材＝右向き）：左移動のときだけ反転 ──
-['ikuma', 'aoshi', 'tomoki', 'itsuki'].forEach((id) => {
+['ikuma', 'aoshi', 'tomoki', 'itsuki', 'gensu', 'mikity', 'nanaka'].forEach((id) => {
   test(`${id}: 左移動のとき反転(true)＝右向き素材を左向きにする`, () => {
     assert.strictEqual(walkSideFlip(id, 'left'), true);
   });
@@ -28,7 +28,7 @@ test('yuito: 左移動のとき反転しない(false)＝左向き素材をその
 });
 
 // ── 上下移動では反転しない（全キャラ共通・side素材を使わない向き） ──────
-['yuito', 'ikuma', 'aoshi', 'tomoki', 'itsuki'].forEach((id) => {
+['yuito', 'ikuma', 'aoshi', 'tomoki', 'itsuki', 'gensu', 'mikity', 'nanaka'].forEach((id) => {
   test(`${id}: up/down では反転しない`, () => {
     assert.strictEqual(walkSideFlip(id, 'up'), false);
     assert.strictEqual(walkSideFlip(id, 'down'), false);
