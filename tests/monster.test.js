@@ -2,8 +2,8 @@ const test=require('node:test'); const assert=require('node:assert');
 const { maxParty, enemyToCharacter, canScout, scoutChance, addToRoster, swapInMonster, sendToRoster } = require('../src/logic/monster.js');
 
 // ── maxParty ─────────────────────────────────────────────────────────────────
-test('maxParty() === 5', () => {
-  assert.strictEqual(maxParty(), 5);
+test('maxParty() === 4', () => {
+  assert.strictEqual(maxParty(), 4);
 });
 
 // ── enemyToCharacter ─────────────────────────────────────────────────────────
@@ -139,17 +139,17 @@ test('scoutChance: 単調減少（hp大きいほど小さい）', () => {
 });
 
 // ── addToRoster ───────────────────────────────────────────────────────────────
-test('addToRoster: party 4人 → "party" に入る', () => {
+test('addToRoster: party 3人 → "party" に入る', () => {
   const char = { id:'mon_mon', name:'モン', type:'power', level:1, hp:30, maxHp:30, atk:8, def:5, spd:6, isMonster:true };
-  const state = { party: [{},{},{},{}], inventory:{}, gold:0, flags:{} };
+  const state = { party: [{},{},{}], inventory:{}, gold:0, flags:{} };
   const result = addToRoster(state, char);
   assert.strictEqual(result, 'party');
-  assert.strictEqual(state.party.length, 5);
+  assert.strictEqual(state.party.length, 4);
 });
 
-test('addToRoster: party 5人（満杯）→ "roster" に入る', () => {
+test('addToRoster: party 4人（満杯）→ "roster" に入る', () => {
   const char = { id:'mon2_mon', name:'モン2', type:'speed', level:1, hp:20, maxHp:20, atk:5, def:3, spd:12, isMonster:true };
-  const state = { party: [{},{},{},{},{}], inventory:{}, gold:0, flags:{} };
+  const state = { party: [{},{},{},{}], inventory:{}, gold:0, flags:{} };
   const result = addToRoster(state, char);
   assert.strictEqual(result, 'roster');
   assert.ok(Array.isArray(state.roster));

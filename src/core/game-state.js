@@ -121,7 +121,7 @@ var ACHIEVEMENTS = [
   { id:'beat_emperor',  name:'でんせつの エース',       desc:'ゴールド・エンペラーを たおした',  check: function (s) { return _flag(s, 'boss_emperor'); } },
   { id:'rare_golden',   name:'きらめき ハンター',       desc:'きらめきサッカーボール ほかく',    check: function (s) { return ((s.dex || {}).golden_ball || 0) >= 1; } },
   { id:'rare_metal',    name:'メタル ハンター',         desc:'メタルゴーレム ほかく',            check: function (s) { return ((s.dex || {}).metal_keeper || 0) >= 1; } },
-  { id:'full_party',    name:'さいきょうの チーム',     desc:'なかま 5にん あつめた',            check: function (s) { return ((s.party || []).length) >= 5; } },
+  { id:'full_party',    name:'さいきょうの チーム',     desc:'なかま 5にん あつめた',            check: function (s) { return (((s.party || []).length) + ((s.roster || []).length)) >= 5; } },
   { id:'rich',          name:'おかねもち',              desc:'500G いじょう もった',             check: function (s) { return (s.gold || 0) >= 500; } },
   { id:'level_15',      name:'たくましく せいちょう',   desc:'レベル15に とうたつ',              check: function (s) { return _maxLevel(s) >= 15; } },
   { id:'pk_master',     name:'PK せいは',               desc:'PKせんで かった',                  check: function (s) { return _flag(s, 'pk_master'); } },

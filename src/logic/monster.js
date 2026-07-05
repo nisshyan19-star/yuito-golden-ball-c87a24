@@ -3,7 +3,7 @@
 // トップレベルには function 宣言のみ（const/let 禁止）
 
 function maxParty() {
-  return 5;
+  return 4;
 }
 
 function enemyToCharacter(enemy) {
