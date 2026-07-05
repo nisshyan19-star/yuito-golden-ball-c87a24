@@ -80,9 +80,9 @@ function createNewGamePlus(prevState) {
   //   2しゅうめは field1〜4 の出口が joined_* でロックされるが、仲間は既に
   //   party に居るので再加入イベントは起こらない。復元しないと出口が永久ロック
   //   ＝詰みになる。ボス/ストーリー/宝フラグは持ち越さない（はじめから）。
-  var _JOINABLE = { ikuma: true, aoshi: true, tomoki: true, itsuki: true };
+  var _JOINABLE = { ikuma: true, aoshi: true, tomoki: true, itsuki: true, gensu: true, mikity: true, nanaka: true };
   var carriedFlags = {};
-  party.forEach(function (p) {
+  party.concat(roster).forEach(function (p) {
     if (p && _JOINABLE[p.id]) carriedFlags['joined_' + p.id] = true;
   });
   return {
