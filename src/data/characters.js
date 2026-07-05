@@ -84,6 +84,59 @@ const CHARACTERS = {
       dream: 'ぜったいに ゴールを わらせない むてきの まもり',
     },
   },
+
+  // ── 隠し仲間（各章の隠し部屋で加入）──
+  mikity: {
+    id:'mikity', name:'ミキティー', position:'攻撃特化(FW)', type:'speed',
+    base:   { hp:30, mp:12, atk:32, def:5,  spd:12 },
+    growth: { hp:6,  mp:2,  atk:3,  def:1,  spd:2  },
+    skills: ['siren_shot', 'ult_mikity'],
+    joinChapter: 1,
+    profile: {
+      age: 'おとな',
+      flavor: 'あでやかな てんさいストライカー',
+      bio: [
+        'ほのおの どうくつの おくで であう、なぞの おとなの ストライカー。',
+        'しなやかな みのこなしから くりだす シュートは チームいちの こうげきりょく。',
+        'よゆうの ほほえみで あいてを ほんろうし、いっしゅんで しょうぶを きめる。',
+      ],
+      dream: 'だれよりも うつくしく、だれよりも するどい いちげき',
+    },
+  },
+  nanaka: {
+    id:'nanaka', name:'ナナカ', position:'わがまま(FW)', type:'power',
+    base:   { hp:20, mp:10, atk:4,  def:4,  spd:6  },
+    growth: { hp:4,  mp:2,  atk:1,  def:1,  spd:1  },
+    skills: ['poka_punch', 'ult_nanaka'],
+    joinChapter: 2,
+    profile: {
+      age: '2さい',
+      flavor: 'ゆきぐにの ちいさな あばれんぼう',
+      bio: [
+        'ゆきぐにの タワーの おくに いた、あかちゃんみたいな なかま。',
+        'ふだんの こうげきは とっても よわいけど、きげんを そこねると たいへん。',
+        'ひっさつ「イヤイヤ期」が さくれつすると、てきぜんたいを まきこむ だいバクハツ。',
+      ],
+      dream: 'みんなに かまって もらって、いっぱい あそぶこと',
+    },
+  },
+  gensu: {
+    id:'gensu', name:'げんす', position:'助っ人(FW)', type:'power',
+    base:   { hp:42, mp:14, atk:30, def:12, spd:11 },
+    growth: { hp:8,  mp:3,  atk:2,  def:2,  spd:1  },
+    skills: ['dark_drive', 'ult_gensu'],
+    joinChapter: 3,
+    profile: {
+      age: 'なぞ',
+      flavor: 'むらさきの オーラを まとう さいきょうの すけっと',
+      bio: [
+        'ネビュラごうの かくしべやに ひそむ、むらさきの オーラを まとう すごうで。',
+        'こうげき・まもり・すべてが たかいレベルで まとまった さいきょうの すけっと。',
+        'めったに すがたを みせないが、みとめた チームには ぜんりょくで ちからを かす。',
+      ],
+      dream: 'ほんとうに つよい チームと ともに たたかうこと',
+    },
+  },
 };
 
 (function (root, api) {
