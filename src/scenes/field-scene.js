@@ -48,6 +48,18 @@ function walkSideFlip(id, facing) {
   return sideFacesRight ? (facing === 'left') : (facing === 'right');
 }
 
+// ミニマップに描く「隠しマップ入口(warp)」の紫点リストを返す純粋関数。
+// px/py はミニマップ左上原点(ox,oy)＋セルサイズcellでの画素座標。
+function minimapWarpDots(map, ox, oy, cell) {
+  var warps = (map && map.warps) || [];
+  var dots = [];
+  for (var i = 0; i < warps.length; i++) {
+    var w = warps[i];
+    dots.push({ px: ox + w.x * cell, py: oy + w.y * cell, color: '#d6aaff' });
+  }
+  return dots;
+}
+
 // npcMarkerKind: マップ上のNPCの頭上に出すマークの種類を決める。
 //   話しかけ処理 _talkTo と同じ優先順位（shop→forge→joinId→boss→bossRush→quest→会話）で判定する。
 //   純粋関数（副作用なし）＝ node --test で回帰できる。S.questStage 等に依存せず、
@@ -984,6 +996,12 @@ function _drawMinimap(ctx, S, map, px, py, VW, phase, y0) {
       if (ex == null || ex.x == null || ex.y == null) continue;
       ctx.fillRect(gx + ex.x * cell, gy + ex.y * cell, Math.max(2, cell), Math.max(2, cell));
     }
+  }
+  // 隠しマップ入口（warp）を紫マーカーで最初から常時表示
+  var warpDots = minimapWarpDots(map, gx, gy, cell);
+  for (var wi = 0; wi < warpDots.length; wi++) {
+    ctx.fillStyle = warpDots[wi].color;
+    ctx.fillRect(warpDots[wi].px, warpDots[wi].py, Math.max(2, cell), Math.max(2, cell));
   }
   // 自分（点滅する赤点）
   var blink = 0.5 + 0.5 * Math.sin((phase || 0) * 3);
@@ -3429,6 +3447,7 @@ function createShootScene(state, opts) {
   createJoinCutinScene: createJoinCutinScene,
   frontTile:        frontTile,
   walkSideFlip:     walkSideFlip,
+  minimapWarpDots:  minimapWarpDots,
   npcMarkerKind:    npcMarkerKind,
   isWalkable:       isWalkable,
   clampCamera:      clampCamera,
