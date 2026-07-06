@@ -551,7 +551,7 @@ var MAPS = {
       { x: 2, y: 5, sprite: 'young_man',
         pages: ['ここは やみの きはいが こい…', 'カイザーは まだ たたかえない。\nうでを みがいて こい！'] },
       {
-        x: 7, y: 9, sprite: 'kaiser',
+        x: 7, y: 9, sprite: 'dark_kaiser',
         requireFlag: 'challenge_clear',
         lockedMsg: 'ダーク・カイザー「まだ たたかう\nときでは ない…\nちょうせんの間で うでだめしを\nクリアしてから いどんで こい。」',
         boss: { enemies: ['dark_kaiser'], winFlag: 'boss_kaiser', vanishFlag: 'boss_kaiser', ending: true },
@@ -583,7 +583,7 @@ var MAPS = {
       },
       // 隠しボス（弾3）：かくし部屋に いる まぼろしの ストライカー。
       {
-        x: 2, y: 13, sprite: 'kaiser',
+        x: 2, y: 13, sprite: 'phantom_striker',
         boss: {
           enemies: ['phantom_striker'],
           winFlag: 'boss_phantom', vanishFlag: 'boss_phantom',
@@ -918,7 +918,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 9, y: 3, sprite: 'kaiser',
+        x: 9, y: 3, sprite: 'magma_golem',
         boss: {
           enemies: ['magma_golem'],
           winFlag: 'boss_magma', vanishFlag: 'boss_magma',
@@ -1080,7 +1080,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 8, y: 3, sprite: 'kaiser',
+        x: 8, y: 3, sprite: 'ice_golem',
         boss: {
           enemies: ['ice_golem'],
           winFlag: 'boss_ice', vanishFlag: 'boss_ice',
@@ -1237,7 +1237,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 8, y: 3, sprite: 'kaiser',
+        x: 8, y: 3, sprite: 'forest_guardian',
         boss: {
           enemies: ['forest_guardian'],
           winFlag: 'boss_forest', vanishFlag: 'boss_forest',
@@ -1569,7 +1569,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 8, y: 3, sprite: 'kaiser',
+        x: 8, y: 3, sprite: 'aqua_golem',
         boss: {
           enemies: ['aqua_golem'],
           winFlag: 'boss_water', vanishFlag: 'boss_water',
@@ -1901,7 +1901,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 7, y: 4, sprite: 'kaiser',
+        x: 7, y: 4, sprite: 'gold_emperor',
         boss: {
           enemies: ['gold_emperor'],
           winFlag: 'boss_emperor', vanishFlag: 'boss_emperor',
@@ -1979,7 +1979,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 7, y: 4, sprite: 'kaiser',
+        x: 7, y: 4, sprite: 'guardian',
         bossRush: {
           enemies: ['guardian', 'gold_emperor'],
           winFlag: 'challenge_clear',
@@ -2241,7 +2241,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 7, y: 4, sprite: 'kaiser',
+        x: 7, y: 4, sprite: 'dark_general',
         boss: {
           enemies: ['dark_general'],
           winFlag: 'boss_dark_general', vanishFlag: 'boss_dark_general',
@@ -2332,7 +2332,7 @@ var MAPS = {
         },
       },
       {
-        x: 7, y: 5, sprite: 'kaiser',
+        x: 7, y: 5, sprite: 'neo_kaiser',
         boss: {
           enemies: ['neo_kaiser'],
           winFlag: 'boss_neo_kaiser',
@@ -2439,21 +2439,21 @@ var MAPS = {
         pages: ['よせんの あいてだ！\nかって すすもう！'],
       },
       {
-        x: 8, y: 6, sprite: 'phantom_striker',
+        x: 8, y: 6, sprite: 'rival_ace',
         boss: { enemies: ['rival_ace', 'rival_ace'], winFlag: 'wc_quarter',
           afterPages: ['準々けっしょう とっぱ！\nつぎは 準けっしょうだ！'] },
         requireFlag: 'wc_qualify', lockedMsg: 'まず よせんに かとう！',
         pages: ['準々けっしょうの あいてだ！'],
       },
       {
-        x: 4, y: 10, sprite: 'phantom_striker',
+        x: 4, y: 10, sprite: 'rival_ace',
         boss: { enemies: ['rival_ace', 'rival_ace'], winFlag: 'wc_semi',
           afterPages: ['準けっしょう とっぱ！\nいよいよ けっしょうせん！'] },
         requireFlag: 'wc_quarter', lockedMsg: '準々けっしょうが さきだ！',
         pages: ['準けっしょう、あいては 2にん！'],
       },
       {
-        x: 8, y: 10, sprite: 'kaiser',
+        x: 8, y: 10, sprite: 'volg',
         boss: {
           enemies: ['volg'], winFlag: 'boss_volg', vanishFlag: 'boss_volg',
           afterPages: [
@@ -2563,7 +2563,7 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 7, y: 8, sprite: 'phantom_striker',
+        x: 7, y: 8, sprite: 'mecha_soldier',
         boss: { enemies: ['mecha_soldier', 'mecha_soldier'], winFlag: 'nebula_f2',
           afterPages: ['ここも とっぱ！\nブリッジは もう すぐだ！'] },
         pages: ['さらに つよい きかいへい だ！'],
@@ -2605,13 +2605,13 @@ var MAPS = {
     ],
     npcs: [
       {
-        x: 7, y: 6, sprite: 'phantom_striker',
+        x: 7, y: 6, sprite: 'mecha_soldier',
         boss: { enemies: ['mecha_soldier', 'mecha_drone', 'mecha_drone'], winFlag: 'nebula_f3',
           afterPages: ['ブリッジへの みちが ひらいた！'] },
         pages: ['ブリッジへの さいごの かべ！'],
       },
       {
-        x: 7, y: 3, sprite: 'kaiser',
+        x: 7, y: 3, sprite: 'zeros',
         boss: {
           enemies: ['zeros'], winFlag: 'boss_zeros', vanishFlag: 'boss_zeros',
           reward: { item: 'star_boots', amount: 1, label: 'せいなるブーツ' },
@@ -2665,7 +2665,7 @@ var MAPS = {
       'VVVVVVVVVVVVVVVV', // r17
     ],
     npcs: [
-      { x: 7, y: 8, sprite: 'phantom_striker',
+      { x: 7, y: 8, sprite: 'star_sentinel',
         boss: { enemies: ['star_sentinel'], winFlag: 'trial_1' },
         pages: ['試練その1。\nまもりてを たおせ！'] },
     ],
@@ -2699,7 +2699,7 @@ var MAPS = {
       'VVVVVVVVVVVVVVVV', // r17
     ],
     npcs: [
-      { x: 7, y: 8, sprite: 'phantom_striker',
+      { x: 7, y: 8, sprite: 'star_sentinel',
         boss: { enemies: ['star_sentinel', 'star_sentinel'], winFlag: 'trial_2' },
         pages: ['試練その2。\nまもりては 2たい！'] },
     ],
@@ -2737,10 +2737,10 @@ var MAPS = {
       'VVVVVVVVVVVVVVVV', // r17
     ],
     npcs: [
-      { x: 7, y: 8, sprite: 'phantom_striker',
+      { x: 7, y: 8, sprite: 'star_sentinel',
         boss: { enemies: ['star_sentinel', 'star_sentinel'], winFlag: 'trial_3' },
         pages: ['試練その3。\nさいごの まもりて！'] },
-      { x: 7, y: 3, sprite: 'kaiser',
+      { x: 7, y: 3, sprite: 'asterion',
         boss: { enemies: ['asterion'], winFlag: 'boss_asterion', vanishFlag: 'boss_asterion',
                 ending: true },
         requireFlag: 'trial_3', lockedMsg: '試練3を こえてから！',
